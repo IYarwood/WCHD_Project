@@ -18,10 +18,12 @@ class Fund(models.Model):
     mac_elig = models.BooleanField(blank=True)
 
     class Meta:
-        db_table = "FUNDS"
+        db_table = "Funds"
 
 
+class Testing(models.Model):
+    testing_name = models.CharField(max_length=200, blank=True)
 
-
-
+    class Meta:
+        db_table = "Testing"
 
