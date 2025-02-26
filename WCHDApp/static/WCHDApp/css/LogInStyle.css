@@ -1,0 +1,113 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
+    color: white;
+}
+
+
+body {
+    background: #15181e;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    font-family: Arial, sans-serif;
+}
+
+.navbar a {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 100%;
+    padding: 25px 9%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    background-color: #171a20 ;
+    padding: 15px 20px; 
+    text-decoration: none;
+    
+}
+.navbar:hover {
+    box-shadow: 0 15px 30px rgba(137, 207, 240, 0.3);
+}
+
+.login-container {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 30px;
+    border-radius: 15px;
+    box-shadow: 0px 0px 20px rgba(255, 255, 255, 0.2);
+    text-align: center;
+    width: 350px;
+    color: white;
+    
+}
+
+.forget_password {
+    color: slateblue
+}
+
+
+h2 {
+    font-size: 18px;
+    margin-bottom: 20px;
+}
+
+.input-container {
+    position: relative;
+    width: 100%;
+    display: flex;
+    align-items: center;
+}
+
+input {
+    width: 90%;
+    padding: 12px;
+    border: none;
+    border-radius: 25px;
+    outline: none;
+    padding-left: 40px;
+    background: rgba(255, 255, 255, 0.2);
+    color: rgb(255, 255, 255);
+    margin-bottom: 10px;
+}
+
+.icon {
+    position: absolute;
+    left: 15px;
+    top: 36%;    
+    transform: translateY(-50%);
+}
+
+.options { /*remember me option*/
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    margin-bottom: 20px;
+    
+}
+
+button {
+    display: inline-block;
+    padding: 10px 25px;
+    background: #89CFF0;
+    border: 2px solid #89CFF0;
+    border-radius: 40px;
+    box-shadow: 0 0 10px #89CFF0;
+    font-size: 16px;
+    color: #1f242d;
+    font-weight: 600;
+    transition: 0.5s;
+    text-align: center;
+    margin-left: center;
+    margin-bottom: 5px;
+    
+}
+
+button:hover {
+    background: none;
+    color: white;
+}

@@ -1,0 +1,21 @@
+{% load custom_filters %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ table_name }} Data</title>
+</head>
+<table border="1">
+    <tr>
+        {% for field in fields%}
+            <th>{{field}}</th>
+        {% endfor%}
+    </tr>
+    {% for row in data%}
+        <tr>
+        {% for field in fields%}
+            <td>{{row|get_item:field}}</td>
+        {% endfor%}
+        </tr>
+    {% endfor %}
+</table>
+
