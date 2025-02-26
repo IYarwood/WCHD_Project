@@ -4,13 +4,12 @@ from .models import Fund
 from .forms import FundForm, TableSelect
 from django.apps import apps
 
-# Create your views here.
 def index(request):
     if request.method == 'POST':
         form = TableSelect(request.POST)
         if form.is_valid():
             tableName = form.cleaned_data['table'] 
-            return redirect('tableView', tableName=tableName)
+            return redirect('tableView', tableName)
     else:
         form = TableSelect()
     return render(request, "WCHDApp/index.html", {'form': form})
@@ -32,12 +31,6 @@ def logIn(request):
 
 def tableView(request, tableName):
     model = apps.get_model('WCHDApp', tableName)
-    objects = model.objects.all().values()
+    values = model.objects.all().values()
     fields = [field.name for field in model._meta.get_fields()]
-    context = {
-            "fields": fields,   # List of field names (headers)
-            "data": objects,    # QuerySet as dictionaries
-            "tableName": tableName
-        }
-
-    return render(request, "WCHDApp/tableView.html", context)
+    return render(request, "WCHDApp/tableView.html", {"fields": fields, "data": values, "tableName": tableName})

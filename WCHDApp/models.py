@@ -1,7 +1,7 @@
 from django.db import models
 from djmoney.models.fields import MoneyField
 
-# Create your models here.
+
 class Fund(models.Model):
     """
     def __str__(self):

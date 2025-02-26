@@ -15,7 +15,10 @@ ENV PYTHONUNBUFFERED=1
  
 # Upgrade pip
 RUN pip install --upgrade pip 
+
+#So we can use psql tools
 RUN apt-get update && apt-get install -y postgresql-client
+
 # Copy the Django project  and install dependencies
 COPY requirements.txt  /WCHDApp/
  
