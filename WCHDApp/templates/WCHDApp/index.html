@@ -6,10 +6,9 @@
     <title>Index</title>
 </head>
 <body>
-    <form method="post">
-    {% csrf_token %}
-    {{form}}
-    <button type="submit">See Table</button>
-</form>
+    <h1>HUB</h1>
+    <a href="{% url 'viewTableSelect' %}">Table View Select</a>
+    <a href="{% url 'newFund' %}">Create Funds</a>
+    <a href="{% url 'newLine' %}">Create Lines</a>
 </body>
 </html>
