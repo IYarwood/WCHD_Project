@@ -48,5 +48,7 @@ def viewTableSelect(request):
 def tableView(request, tableName):
     model = apps.get_model('WCHDApp', tableName)
     values = model.objects.all().values()
-    fields = [field.name for field in model._meta.get_fields()]
-    return render(request, "WCHDApp/tableView.html", {"fields": fields, "data": values, "tableName": tableName})
+    fields = [field.name for field in model._meta.get_fields() if not field.auto_created]
+    foreignKeys = [field.name for field in model._meta.get_fields() if field.is_relation]
+    queryset = model.objects.select_related(*foreignKeys).all()
+    return render(request, "WCHDApp/tableView.html", {"fields": fields, "data": values, "tableName": tableName, "fkeys": foreignKeys, "qSet": queryset})

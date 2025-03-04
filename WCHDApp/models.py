@@ -3,10 +3,9 @@ from djmoney.models.fields import MoneyField
 
 
 class Fund(models.Model):
-    """
     def __str__(self):
         return self.fund_name
-    """
+
     SOFChoices = [("local", "Local"), ("state", "State"), ("federal", "Federal")]
     fund_id = models.SmallIntegerField(blank=True, primary_key=True)
     fund_name = models.CharField(max_length=255, blank=False)
