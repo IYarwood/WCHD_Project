@@ -37,10 +37,12 @@ class Line(models.Model):
     class Meta:
         db_table = "Lines"
     
+    def __str__(self): 
+        return f"{self.fund.fund_id}"
+    
 
 class Testing(models.Model):
     testing_name = models.CharField(max_length=200, blank=True)
 
     class Meta:
         db_table = "Testing"
-
