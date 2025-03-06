@@ -5,9 +5,7 @@ from .forms import FundForm, TableSelect, LineForm
 from django.apps import apps
 
 def index(request):
-    
     return render(request, "WCHDApp/index.html")
-
 
 def newFund(request):
     if request.method == 'POST':
@@ -33,7 +31,6 @@ def logIn(request):
     if request.method == 'POST':
         return redirect('index')
     return render(request, "WCHDApp/logIn.html")
-
 
 def viewTableSelect(request):
     if request.method == 'POST':

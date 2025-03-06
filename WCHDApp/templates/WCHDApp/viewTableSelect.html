@@ -1,16 +1,12 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>View Table Select</title>
-</head>
-<body>
+{% extends "WCHDApp/masterTemplate.html" %}
+
+{% block title %}View Table Select{% endblock %}
+
+{% block content %}    
     <form method="post">
     {% csrf_token %}
     {{form}}
     <button type="submit">See Table</button>
     </form>
     <a href="{% url 'index' %}">Home</a>
-</body>
-</html>
+{% endblock %}

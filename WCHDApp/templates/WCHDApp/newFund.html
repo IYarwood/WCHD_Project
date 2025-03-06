@@ -1,7 +1,12 @@
-<h1>New Fund</h1>
-<form method="post">
-    {% csrf_token %}
-    {{form}}
-    <button type="submit">Add Fund</button>
-</form>
-<a href="{% url 'index' %}">Home</a>
+{% extends "WCHDApp/masterTemplate.html" %}
+
+{% block title %}New Fund{% endblock %}
+
+{% block content %}
+    <h1>New Fund</h1>
+    <form method="post">
+        {% csrf_token %}
+        {{form}}
+        <button type="submit">Add Fund</button>
+    </form>
+{% endblock %}

@@ -1,14 +1,10 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Index</title>
-</head>
-<body>
+{% extends "WCHDApp/masterTemplate.html" %}
+
+{% block title %} Index {% endblock %}
+
+{% block content %}
     <h1>HUB</h1>
     <a href="{% url 'viewTableSelect' %}">Table View Select</a>
     <a href="{% url 'newFund' %}">Create Funds</a>
     <a href="{% url 'newLine' %}">Create Lines</a>
-</body>
-</html>
+{% endblock %}
