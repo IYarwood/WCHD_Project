@@ -1,0 +1,41 @@
+main {
+    height: 100%;
+    margin: 0;
+    display: flex;
+    align-items: center; 
+    justify-content: center; 
+
+}
+
+form{
+    text-align: center;
+}
+form input{
+    display: block;
+    margin-bottom: 5%;
+}
+
+ form input[type="checkbox"] {
+    cursor: pointer;
+    accent-color: #007bff;
+    margin-right: 5px;
+    vertical-align: middle;
+}
+
+form select{
+    margin-bottom: 5%;
+}
+
+button {
+    background: #007bff;
+    color: white;
+    padding: 10px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    width: 100%;
+}
+
+button:hover {
+    background: #0056b3;
+}

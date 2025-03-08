@@ -8,4 +8,5 @@ urlpatterns = [
     path("newLine/", views.newLine, name="newLine"),
     path("tableViewSelect/", views.viewTableSelect, name="viewTableSelect"),
     path("tableView/<str:tableName>/", views.tableView, name="tableView"),
+    path("testing/<str:tableName>/", views.testing, name="testing"),
 ]

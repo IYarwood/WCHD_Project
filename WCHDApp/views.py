@@ -2,6 +2,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.http import HttpResponse
 from .models import Fund
 from .forms import FundForm, TableSelect, LineForm
+from django.forms import modelform_factory
 from django.apps import apps
 
 def index(request):
@@ -59,3 +60,8 @@ def tableView(request, tableName):
             fieldNames.append(field.name)
 
     return render(request, "WCHDApp/tableView.html", {"fields": fieldNames, "data": values, "tableName": tableName})
+
+def testing(request, tableName):
+    model = apps.get_model('WCHDApp', tableName)
+    form = modelform_factory(model, fields="__all__")
+    return render(request, "WCHDApp/testing.html", {"form": form})

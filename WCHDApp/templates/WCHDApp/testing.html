@@ -1,0 +1,21 @@
+{% extends "WCHDApp/masterTemplate.html" %}
+{% load static %}
+
+
+{% block title %}New Line{% endblock %}
+
+{% block content %}
+    <link rel="stylesheet" type="text/css" href="{% static 'WCHDAPP/css/testing.css' %}"> 
+    
+    <form method="post">
+        {% csrf_token %}
+        {% for field in form %}
+            <div class="formGroup">
+                {{ field.label_tag }}
+                {{ field }}
+            </div>
+        {% endfor %}
+        <button type="submit">Submit</button>
+    </form>
+{% endblock %}
+

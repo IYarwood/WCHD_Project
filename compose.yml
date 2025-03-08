@@ -16,7 +16,7 @@ services:
    build: .
    container_name: WCHD-Container
    ports:
-     - "8000:8000"
+     - "8080:8080"
    volumes:
      - .:/WCHDApp
    depends_on:
