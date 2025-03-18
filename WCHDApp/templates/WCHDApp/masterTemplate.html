@@ -1,15 +1,19 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %} WCHD {% endblock %}</title>
+    <link rel="stylesheet" type="text/css" href="{% static 'WCHDAPP/css/masterStyling.css' %}"> 
 </head>
 <body>
     <nav>
         <ul>
             <li><a href="{% url 'index' %}">Home</a></li>
             <li><a href="{% url 'viewTableSelect' %}">Table View Select</a></li>
+            <li><a href="{% url 'newFund' %}">Create Funds</a></li>
+            <li><a href="{% url 'newLine' %}">Create Lines</a></li>
         </ul>
     </nav>
     <main>

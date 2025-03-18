@@ -63,5 +63,11 @@ def tableView(request, tableName):
 
 def testing(request, tableName):
     model = apps.get_model('WCHDApp', tableName)
-    form = modelform_factory(model, fields="__all__")
+    if request.method == 'POST':
+        form = modelform_factory(model, fields="__all__")(request.POST)
+        form.save()
+        return redirect('index')
+    else:
+        form = modelform_factory(model, fields="__all__")
     return render(request, "WCHDApp/testing.html", {"form": form})
+

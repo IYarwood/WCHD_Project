@@ -5,17 +5,19 @@
 {% block title %}New Line{% endblock %}
 
 {% block content %}
-    <link rel="stylesheet" type="text/css" href="{% static 'WCHDAPP/css/testing.css' %}"> 
+    <link rel="stylesheet" type="text/css" href="{% static 'WCHDAPP/css/formStyling.css' %}"> 
+    <div class="FormContainer">
+        <form method="post">
+            {% csrf_token %}
+            {% for field in form %}
+                <div class="FormGroup">
+                    {{ field.label_tag }}
+                    {{ field }}
+                </div>
+            {% endfor %}
+            <button type="submit">Submit</button>
+        </form>
+    </div>
     
-    <form method="post">
-        {% csrf_token %}
-        {% for field in form %}
-            <div class="formGroup">
-                {{ field.label_tag }}
-                {{ field }}
-            </div>
-        {% endfor %}
-        <button type="submit">Submit</button>
-    </form>
 {% endblock %}
 
