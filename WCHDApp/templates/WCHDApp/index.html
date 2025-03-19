@@ -1,10 +1,12 @@
 {% extends "WCHDApp/masterTemplate.html" %}
+{% load static %}
 
 {% block title %} Index {% endblock %}
 
 {% block content %}
-    <h1>HUB</h1>
-    <a href="{% url 'viewTableSelect' %}">Table View Select</a>
-    <a href="{% url 'newFund' %}">Create Funds</a>
-    <a href="{% url 'newLine' %}">Create Lines</a>
+    <link rel="stylesheet" type="text/css" href="{% static 'WCHDAPP/css/hubStyles.css' %}"> 
+    <div class="main">
+        <h1>HUB</h1>
+    </div>
+    
 {% endblock %}

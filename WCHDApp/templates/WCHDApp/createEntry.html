@@ -1,0 +1,23 @@
+{% extends "WCHDApp/masterTemplate.html" %}
+{% load static %}
+
+
+{% block title %}Create {{tableName}}{% endblock %}
+
+{% block content %}
+    <link rel="stylesheet" type="text/css" href="{% static 'WCHDAPP/css/formStyling.css' %}"> 
+    <div class="FormContainer">
+        <form method="post">
+            {% csrf_token %}
+            {% for field in form %}
+                <div class="FormGroup">
+                    {{ field.label_tag }}
+                    {{ field }}
+                </div>
+            {% endfor %}
+            <button type="submit">Submit</button>
+        </form>
+    </div>
+    
+{% endblock %}
+

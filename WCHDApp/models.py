@@ -96,6 +96,7 @@ class Employee(models.Model):
 
 class Testing(models.Model):
     testing_name = models.CharField(max_length=200, blank=True)
+    fund_year = models.IntegerField(blank=True, null = True)
 
     class Meta:
         db_table = "Testing"

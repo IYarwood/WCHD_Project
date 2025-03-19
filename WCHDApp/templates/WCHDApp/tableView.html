@@ -16,7 +16,11 @@
         {% for row in data%}
             <tr>
             {% for field in fields%}
-                <td>{{row|get_item:field}}</td>
+                {% if field in decimalFields %}
+                    <td style="text-align: right;">{{row|get_item:field}}</td>
+                {% else %}
+                    <td>{{row|get_item:field}}</td>
+                {% endif %}
             {% endfor%}
             </tr>
         {% endfor %}
