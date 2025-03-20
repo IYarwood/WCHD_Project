@@ -7,6 +7,120 @@ from django.apps import apps
 from django.db.models import DecimalField
 from django.contrib.auth import authenticate, login
 from django.contrib import messages
+from reportlab.lib.pagesizes import letter
+from reportlab.lib import colors
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image, Table, TableStyle
+from io import BytesIO
+
+def generate_pdf(request, tableName):
+    buffer = BytesIO()
+
+    # Create a PDF
+    doc = SimpleDocTemplate(buffer, pagesize=letter)
+    elements = []
+    styles = getSampleStyleSheet()
+
+
+    title_style = ParagraphStyle(
+        "TitleStyle",
+        parent=styles["Title"],
+        fontSize=16,
+        spaceAfter=11,
+        fontName="Helvetica-Bold"
+    )
+
+    subtitle_style = ParagraphStyle(
+        "SubtitleStyle",
+        parent=styles["Normal"],
+        fontSize=11,
+        textColor=colors.black,
+        spaceAfter=6,
+        fontName="Helvetica-Oblique"
+    )
+
+
+    #logo = Image("logo.png", width=80, height=80)
+    #logo.hAlign = 'LEFT'
+    #elements.append(logo)
+
+    elements.append(Spacer(1, 12))
+
+    # Report Title
+    elements.append(Paragraph("Washington County Health Department", title_style))
+    elements.append(Paragraph(
+        "List of Active Grants. Active means they have been awarded and the final expenditure report has not yet been approved.",
+        subtitle_style
+    ))
+
+    elements.append(Spacer(1, 12))
+
+    model = apps.get_model('WCHDApp', tableName)
+    values = model.objects.all().values()
+    fields = model._meta.get_fields()
+    fieldNames = []
+    decimalFields = []
+    aliasNames = []
+    for field in fields:
+        if field.is_relation:
+            if field.auto_created:
+                continue
+            else:
+                parentModel = apps.get_model('WCHDApp', field.name)
+                fkName = parentModel._meta.pk.name
+                fkAlias = parentModel._meta.pk.verbose_name
+                aliasNames.append(fkAlias)
+                fieldNames.append(fkName)
+
+        else:
+            if isinstance(field, DecimalField):
+                decimalFields.append(field.name)
+            aliasNames.append(field.verbose_name)  
+            fieldNames.append(field.name)
+
+
+    # Create a table with Fund names and details
+    data = [
+        fieldNames,
+    ]
+    for row in values:
+        line = []
+        for field in fields:
+            line.append(row.field)
+        data.append(line)
+
+
+    # Table Styling
+    table = Table(data, colWidths=[80, 70, 70, 70, 70, 50, 100, 50, 90, 40])
+    table.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, 0), colors.darkgray),
+        ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+        ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+        ("BOTTOMPADDING", (0, 0), (-1, 0), 5),
+        ("BACKGROUND", (0, 1), (-1, -1), colors.whitesmoke),
+        ("GRID", (0, 0), (-1, -1), 1, colors.black),
+        ("FONTSIZE", (0, 0), (-1, -1), 10),
+        ("TOPPADDING", (0, 0), (-1, 0), 10),
+    ]))
+
+    elements.append(table)
+
+    # Totals (below table)
+    elements.append(Spacer(1, 12))
+    elements.append(Paragraph("<b>Total Active Grants:</b> $571,880.00", styles["Normal"]))
+    elements.append(Paragraph("<b>Total Amount for Project:</b> $19,144.00", styles["Normal"]))
+
+    #Build PDF
+    doc.build(elements)
+
+    # Get the PDF value from buffer
+    buffer.seek(0)
+    response = HttpResponse(buffer, content_type="application/pdf")
+    response["Content-Disposition"] = 'attachment; filename="active_grants.pdf"'
+
+    return response
+
 
 def index(request):
     return render(request, "WCHDApp/index.html")
