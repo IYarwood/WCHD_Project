@@ -8,7 +8,7 @@ class FundSource(models.TextChoices):
 
 #REMINDER TO TAKE OUT null=True and blank=True from all instances of dept once we have a department populated
 class Dept(models.Model):
-    dept_id = models.SmallIntegerField(primary_key=True)
+    dept_id = models.SmallIntegerField(primary_key=True, verbose_name="Department")
     dept_name = models.CharField(max_length=255)
  
     def __str__(self):
@@ -23,7 +23,7 @@ class Fund(models.Model):
     fund_name = models.CharField(max_length=255, blank=False)
     fund_cash_balance = models.DecimalField(max_digits=15, decimal_places=2)
     dept = models.ForeignKey(Dept, on_delete=models.CASCADE, null=True, blank=True)
-    sof = models.CharField(max_length=10, blank = False, choices=FundSource.choices)
+    sof = models.CharField(max_length=10, blank = False, choices=FundSource.choices, verbose_name="Source of Funds")
     mac_elig = models.BooleanField(blank=False)
  
     def __str__(self):

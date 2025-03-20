@@ -27,7 +27,7 @@
         <form method="POST">
             {% csrf_token %}
             <div class="input-container">
-                <input type="email" name = "email" placeholder="Email" required>
+                <input type="text" name="username" placeholder="Username" required>  <!-- Changed from email to username -->
                 <span class="icon">&#9993;</span>
             </div>
             <div class="input-container">
@@ -40,6 +40,9 @@
             </div>
             <button type="submit">LOG IN</button>
         </form>
+        {% for message in messages %}
+            <p>{{ message }}</p>
+        {% endfor %}
     </div>
 </body>
 </html>

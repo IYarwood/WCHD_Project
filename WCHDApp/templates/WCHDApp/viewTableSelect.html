@@ -6,6 +6,7 @@
     <form method="post">
     {% csrf_token %}
     {{form}}
-    <button type="submit">See Table</button>
+    <button type="submit" name = "button" id="seeTable" value = "seeTable">See Table</button>
+    <button type="submit" name = "button" id="create" value = "create">Create</button>
     </form>
 {% endblock %}

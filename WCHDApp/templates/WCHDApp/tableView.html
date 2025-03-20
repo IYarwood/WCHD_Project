@@ -9,7 +9,7 @@
     <link rel="stylesheet" type="text/css" href="{% static 'WCHDAPP/css/tableStyling.css' %}"> 
     <table border="1">
         <tr>
-            {% for field in fields%}
+            {% for field in aliasNames%}
                 <th>{{field}}</th>
             {% endfor%}
         </tr>
