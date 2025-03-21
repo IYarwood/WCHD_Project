@@ -81,12 +81,14 @@ def generate_pdf(request, tableName):
 
     # Create a table with Fund names and details
     data = [
-        fieldNames,
+        aliasNames,
     ]
+    
     for row in values:
+        print(row)
         line = []
-        for field in fields:
-            line.append(row.field)
+        for field in fieldNames:
+            line.append(row[field])
         data.append(line)
 
 
