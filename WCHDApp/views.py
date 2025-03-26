@@ -180,11 +180,17 @@ def viewTableSelect(request):
 
 def tableView(request, tableName):
     model = apps.get_model('WCHDApp', tableName)
-    values = model.objects.all().values()
+    values = model.objects.all()
     fields = model._meta.get_fields()
     fieldNames = []
     decimalFields = []
     aliasNames = []
+
+    calculatedProperties = {
+        "Fund": [("fundBalanceMinus3", "Fund Balance Minus 3")],
+        "Testing": [("fundBalanceMinus3", "Fund Balance Minus 3")]
+    }
+    
     for field in fields:
         if field.is_relation:
             if field.auto_created:
@@ -195,12 +201,15 @@ def tableView(request, tableName):
                 fkAlias = parentModel._meta.pk.verbose_name
                 aliasNames.append(fkAlias)
                 fieldNames.append(fkName)
-
         else:
             if isinstance(field, DecimalField):
                 decimalFields.append(field.name)
             aliasNames.append(field.verbose_name)  
             fieldNames.append(field.name)
+    if tableName in calculatedProperties:
+                for property in calculatedProperties[tableName]:
+                    aliasNames.append(property[1])
+                    fieldNames.append(property[0])
     return render(request, "WCHDApp/tableView.html", {"fields": fieldNames, "aliasNames": aliasNames, "data": values, "tableName": tableName, "decimalFields": decimalFields})
 
 def createSelect(request):
@@ -217,9 +226,6 @@ def createEntry(request, tableName):
     model = apps.get_model('WCHDApp', tableName)
     if request.method == 'POST':
         form = modelform_factory(model, fields="__all__")(request.POST)
-        #Can use something like this 
-        #date = request.POST.get('fund_year')
-        #print(date)
         if form.is_valid():
             form.save()
             return redirect('index')

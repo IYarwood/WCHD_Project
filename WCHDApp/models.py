@@ -26,9 +26,13 @@ class Fund(models.Model):
     sof = models.CharField(max_length=10, blank = False, choices=FundSource.choices, verbose_name="Source of Funds")
     mac_elig = models.BooleanField(blank=False, verbose_name="Medicaid Administrative Claiming Eligibility")
  
+    @property
+    def fundBalanceMinus3(self):
+        return self.fund_cash_balance - 3
+    
     def __str__(self):
         return self.fund_name
-
+    
     class Meta:
         db_table = "Funds"
 
@@ -94,9 +98,81 @@ class Employee(models.Model):
     class Meta:
         db_table = "Employees"
 
+class People(models.Model):  
+    name_id = models.AutoField(primary_key=True, verbose_name="Customer/Vendor")
+    name = models.CharField(max_length=255, verbose_name="Name") 
+    address = models.CharField(max_length=255, verbose_name="Address")
+    city = models.CharField(max_length=100, verbose_name="City")
+    state = models.CharField(max_length=2, verbose_name="State")
+    zip_code = models.CharField(max_length=10, verbose_name="Zip Code")
+    phone = models.CharField(max_length=12, verbose_name="Phone Number")
+    email = models.EmailField(verbose_name="Email")
+    primary_contact = models.CharField(max_length=255, blank=True, null=True, verbose_name="Primary Contact") 
+    ein = models.CharField(max_length=10, blank=True, null=True, verbose_name="EIN")  
+    account_number = models.CharField(max_length=50, blank=True, null=True, verbose_name="Account Number")
+ 
+    def __str__(self):
+        return self.name
+    
+    class Meta:
+        db_table = "Peoples"
+ 
+class Invoice(models.Model):
+    invoice_number = models.AutoField(primary_key=True, verbose_name="Invoice Number")
+    invoice_amount = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Invoice Amount")
+    description = models.TextField(verbose_name="Description")
+    people = models.ForeignKey(People, on_delete=models.CASCADE)
+    date = models.DateField(verbose_name="Date")
+    fund = models.ForeignKey(Fund, on_delete=models.CASCADE)
+    paid = models.BooleanField(default=False,verbose_name="Paid")
+    void = models.BooleanField(default=False, verbose_name="Void")
+ 
+    def __str__(self):
+        return f"Invoice {self.invoice_number} - {self.vendor_customer.name}"
+    
+    class Meta:
+        db_table = "Invoices"
+ 
+class PurchaseOrder(models.Model):
+    po_num = models.AutoField(primary_key=True, verbose_name="Purchase Order Number")
+    people = models.ForeignKey(People, on_delete=models.CASCADE)
+    amount = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Amount")
+    date = models.DateField(verbose_name="Date")
+    type = models.CharField(max_length=20, choices=[('Issue', 'Issue'), ('Pay', 'Pay')], verbose_name="Type")
+    comment = models.TextField(blank=True, null=True, verbose_name="Comment")
+    warrant = models.CharField(max_length=50, blank=True, null=True, verbose_name="Warrant")  
+    prid = models.CharField(max_length=50, blank=True, null=True, verbose_name="Program ID")  
+    grli = models.CharField(max_length=50, blank=True, null=True, verbose_name="Grant Line Item")  
+    odhafr = models.CharField(max_length=50, blank=True, null=True, verbose_name="Annual Financial Report")
+ 
+    def __str__(self):
+        return f"PO {self.po_num} - {self.business.name}"
+    
+    class Meta:
+        db_table = "PurchaseOrders"
+ 
+class Voucher(models.Model):
+    voucher_id = models.AutoField(primary_key=True, verbose_name="Voucher ID")
+    people = models.ForeignKey(People, on_delete=models.CASCADE)
+    amount = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Amount")
+    date = models.DateField(verbose_name="Date")
+    paid = models.BooleanField(default=False, verbose_name="Paid")
+ 
+    def __str__(self):
+        return f"Voucher {self.voucher_id} - {self.vendor.name}"
+    
+    class Meta:
+        db_table = "Vouchers"
+
 class Testing(models.Model):
     testing_name = models.CharField(max_length=200, blank=True)
     fund_year = models.IntegerField(blank=True, null = True)
+    fund = models.ForeignKey(Fund, on_delete=models.CASCADE)
+    
+    @property
+    def fundBalanceMinus3(self):
+        return self.fund.fund_cash_balance - 3
 
     class Meta:
         db_table = "Testing"
+
