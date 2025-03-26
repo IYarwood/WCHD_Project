@@ -12,4 +12,5 @@ urlpatterns = [
     path("createEntry/<str:tableName>/", views.createEntry, name="createEntry"),
     path("testing/<str:tableName>/", views.testing, name="testing"),
     path('generate_pdf/<str:tableName>/', views.generate_pdf, name='generate_pdf'),
+    path('reports/', views.reports, name='reports'),
 ]

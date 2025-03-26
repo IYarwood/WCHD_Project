@@ -122,7 +122,16 @@ def generate_pdf(request, tableName):
     response["Content-Disposition"] = 'attachment; filename="active_grants.pdf"'
 
     return response
-
+def reports(request):
+    if request.method == "POST":
+        form = TableSelect(request.POST)
+        if form.is_valid():
+            tableName = form.cleaned_data['table'] 
+            print("HELLO")
+            return redirect('generate_pdf', tableName)
+    else:
+        form = TableSelect()
+    return render(request, "WCHDApp/reports.html", {'form': form})
 
 def index(request):
     return render(request, "WCHDApp/index.html")
@@ -210,6 +219,7 @@ def tableView(request, tableName):
                 for property in calculatedProperties[tableName]:
                     aliasNames.append(property[1])
                     fieldNames.append(property[0])
+                    decimalFields.append(property[0])
     return render(request, "WCHDApp/tableView.html", {"fields": fieldNames, "aliasNames": aliasNames, "data": values, "tableName": tableName, "decimalFields": decimalFields})
 
 def createSelect(request):

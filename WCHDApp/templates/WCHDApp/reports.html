@@ -1,0 +1,12 @@
+{% extends "WCHDApp/masterTemplate.html" %}
+
+{% block title %}Reports{% endblock %}
+
+{% block content %}    
+    <h1>Reports</h1>
+    <form method="post">
+        {% csrf_token %}
+        {{form}}
+        <button type="submit">Make Report</button>
+    </form>
+{% endblock %}
