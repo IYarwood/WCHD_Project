@@ -164,6 +164,127 @@ class Voucher(models.Model):
     class Meta:
         db_table = "Vouchers"
 
+class ActivityList(models.Model):
+    program_id = models.AutoField(primary_key=True, verbose_name="Program ID")
+    program = models.CharField(max_length=100, verbose_name="Program")
+    odhafr = models.CharField(max_length=10, verbose_name="ODHAFR")
+    dept = models.ForeignKey(Dept, on_delete=models.CASCADE)
+    fund = models.ForeignKey(Fund, on_delete=models.CASCADE)
+    rev_gen = models.BooleanField(default=False, verbose_name="Revenue Generating")
+    active = models.BooleanField(default=True, verbose_name="Active")
+    fphs = models.CharField(max_length=20,verbose_name= "Foundational Public Health Service")
+ 
+ 
+    class Meta:
+            db_table = "Activity List"
+ 
+class Payroll(models.Model):
+    payroll_id = models.CharField(primary_key=True, max_length=12, verbose_name="Payroll ID")
+    beg_date = models.DateField(verbose_name="Beginning Date")
+    end_date = models.DateField(verbose_name="End Date")
+    employee = models.ForeignKey(Employee, on_delete=models.CASCADE)
+    activityList = models.ForeignKey(ActivityList, on_delete=models.CASCADE)
+    fund = models.ForeignKey(Fund, on_delete=models.CASCADE)
+    hours = models.DecimalField(max_digits=6, decimal_places=2, verbose_name="Hours")
+    pay_amount = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Pay Amount")
+    vacation_used = models.DecimalField(max_digits=6, decimal_places=2, verbose_name="Vacation Used")
+    sick_used = models.DecimalField(max_digits=6, decimal_places=2, verbose_name="Sick Used")
+    comp_time_used = models.DecimalField(max_digits=6, decimal_places=2, verbose_name="Comp Time Used")
+    other_hours = models.DecimalField(max_digits=6, decimal_places=2, verbose_name="Other Hours")
+    other_rate = models.DecimalField(max_digits=6, decimal_places=2, verbose_name="Other Rate")
+    #I will add this as a property
+    #pay_rate = models.ForeignKey(Employee, on_delete=models.CASCADE)
+ 
+    class Meta:
+            db_table = "Payroll"
+ 
+class Grants(models.Model):
+    grant_id = models.AutoField(primary_key=True, verbose_name="Grant ID")
+    grant_name = models.CharField(max_length=30, verbose_name="Grant Name")
+    fund = models.ForeignKey(Fund, on_delete=models.CASCADE)
+    grant_year = models.PositiveSmallIntegerField(verbose_name="Grant Year")
+    cfda = models.CharField(max_length=8, verbose_name="Catalog of Federal Domestic Assistance")
+    program_name = models.CharField(max_length=150, verbose_name="Program Name")
+    award_amount = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Award Amount")
+    pt_no = models.CharField(max_length=8, verbose_name="Pass Through Number")
+    active = models.BooleanField(default=True, verbose_name="Active")
+    beg_date = models.DateField(verbose_name="Beginning Date")
+    end_date = models.DateField(verbose_name="End Date")
+    fsid = models.CharField(max_length=10, verbose_name="FSID")
+    funder = models.CharField(max_length=50, verbose_name="Funder")
+ 
+    class Meta:
+            db_table = "Grants"
+
+class BudgetActions(models.Model):
+    ba_id = models.AutoField(primary_key=True, verbose_name="Budget Action ID")
+    ba_date = models.DateField(verbose_name="Budget Action Date")
+    fssf_from = models.CharField(max_length=20, verbose_name="FSSF From") #may want foreign key: line_id from Lines later
+    fssf_to = models.CharField(max_length=20, verbose_name="FSSF To")  #same as fssf_from
+    comment = models.CharField(max_length=255, verbose_name="Comment")
+    amount = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Amount")
+    approved = models.BooleanField(default=False, verbose_name="Approved")
+
+    #Had to change, cant have 2 auto fields ig
+    fs_res_no = models.IntegerField(verbose_name="FS Res Number") #field type might change
+ 
+    class Meta:
+        db_table = "Budget Actions"
+ 
+class Carryover(models.Model):
+    co_id = models.AutoField(primary_key=True, verbose_name="Carryover ID")
+    fund = models.ForeignKey(Fund, on_delete=models.CASCADE)
+    fy = models.IntegerField(verbose_name="Fiscal Year") #fiscal year, max length 4
+    co_amount = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Carryover Amount")
+    encumbered = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Encumbered")
+    year_end_balance = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Year-End Balance")
+    dept = models.ForeignKey(Dept, on_delete=models.CASCADE)
+    beg_balance = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Beginning Balance")
+    fy_beg_date = models.DateField(verbose_name="Fiscal Year Beginning Date")
+    fy_end_date = models.DateField(verbose_name="Fiscal Year End Date")
+ 
+    class Meta:
+            db_table = "Carryover"
+ 
+class HealthInsurance(models.TextChoices):
+    single = 'Single'
+    waived = 'Waived'
+    emp_spouse = 'Emp-Spouse'
+    emp_child = 'Emp-Child'
+    family = 'Family'
+ 
+class LifeInsurance(models.TextChoices):
+    ineligible = 'Ineligible'
+    rate1 = 'Rate 1'
+    rate2 = 'Rate 2'
+ 
+class Benefits(models.Model):
+    employee = models.ForeignKey(Employee, on_delete=models.CASCADE)
+    hrs_per_pay = models.DecimalField(max_digits=6, decimal_places=2, verbose_name="Hours Per Pay")
+    pers = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Public Employee Retirement System")
+    medicare = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Medicare")
+    wc = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Workman's Compensation")
+    vac_elig = models.BooleanField(default=True, verbose_name="Vacation Eligible") #not sure on default
+    vacation = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Vacation")
+    plar = models.DecimalField(max_digits=8, decimal_places=2, verbose_name="Paid Leave Accumulation Rate")  
+    sick = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Sick Leave")
+    holiday = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Holiday Hours")
+    total_hrly = models.DecimalField(max_digits=15, decimal_places=2,verbose_name="Total Hourly")
+    percent_leave = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Percent Leave")
+    monthly_hours = models.DecimalField(max_digits=6, decimal_places=2, verbose_name="Monthly Hours")
+    ins_type = models.CharField(max_length=10, choices=HealthInsurance.choices, verbose_name="Insurance Type")
+    board_ins_share = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Board Insurance Share")
+    board_share_hrly = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Board Share Hourly")
+    life_rate = models.CharField(max_length=10, choices=LifeInsurance.choices, verbose_name="Life Insurance Rate")
+    life_hrly = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Life Hourly")
+    salary = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Salary")
+    fringe = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Fringe")
+    total_comp = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Total Compensation")
+ 
+    class Meta:
+            db_table = "Benefits"
+ 
+
 class Testing(models.Model):
     testing_name = models.CharField(max_length=200, blank=True)
     fund_year = models.IntegerField(blank=True, null = True)
