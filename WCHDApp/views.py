@@ -222,7 +222,8 @@ def tableView(request, tableName):
     #Any property that we define in models need to go here so our logic can include them in the table
     calculatedProperties = {
         #"Fund": [("fundBalanceMinus3", "Fund Balance Minus 3")],
-        "Testing": [("fundBalanceMinus3", "Fund Balance Minus 3")]
+        "Testing": [("fundBalanceMinus3", "Fund Balance Minus 3")],
+        "Benefits": [("pers", "Public Employee Retirement System"), ("medicare", "Medicare")],
     }
 
     #This is used to decide which fields we want to show in the accumulator based on each model
@@ -269,7 +270,11 @@ def tableView(request, tableName):
         accumulator = 0
         for value in values:
             accumulator += getattr(value, field)
-    return render(request, "WCHDApp/tableView.html", {"fields": fieldNames, "aliasNames": aliasNames, "data": values, "tableName": tableName, "decimalFields": decimalFields, "accumulator": accumulator})
+        context = {"fields": fieldNames, "aliasNames": aliasNames, "data": values, "tableName": tableName, "decimalFields": decimalFields, "accumulator": accumulator}
+    else:
+        context = {"fields": fieldNames, "aliasNames": aliasNames, "data": values, "tableName": tableName, "decimalFields": decimalFields}
+
+    return render(request, "WCHDApp/tableView.html", context)
 
 #Also depricated, will clean soon
 def createSelect(request):

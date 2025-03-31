@@ -77,7 +77,7 @@ class Item(models.Model):
         db_table = "Items"
     
 class Employee(models.Model):
-    emp_id = models.IntegerField(primary_key=True, verbose_name="Employee ID")
+    employee_id = models.IntegerField(primary_key=True, verbose_name="Employee ID")
     first_name = models.CharField(max_length=255, verbose_name="First Name")
     surname = models.CharField(max_length=255, verbose_name="Surname")
     dept = models.ForeignKey(Dept, on_delete=models.CASCADE, null=True, blank=True)
@@ -262,7 +262,7 @@ class LifeInsurance(models.TextChoices):
 class Benefits(models.Model):
     employee = models.ForeignKey(Employee, on_delete=models.CASCADE)
     hrs_per_pay = models.DecimalField(max_digits=6, decimal_places=2, verbose_name="Hours Per Pay")
-    pers = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Public Employee Retirement System")
+    #pers = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Public Employee Retirement System")
     medicare = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Medicare")
     wc = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Workman's Compensation")
     vac_elig = models.BooleanField(default=True, verbose_name="Vacation Eligible") #not sure on default
@@ -282,6 +282,18 @@ class Benefits(models.Model):
     fringe = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Fringe")
     total_comp = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Total Compensation")
  
+    @property
+    def pers(self):
+        value = round((float(self.employee.pay_rate) * 0.14), 2)
+        return f"{value:.2f}"
+    
+    """
+    @property
+    def medicare(self):
+        value = round(float(self.employee.pay_rate) * 0.0145,2)
+        return f"{value:.2f}"
+    """
+
     class Meta:
             db_table = "Benefits"
  
