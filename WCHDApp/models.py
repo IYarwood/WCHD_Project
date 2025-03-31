@@ -92,7 +92,7 @@ class Employee(models.Model):
     yos = models.FloatField(verbose_name="Years of Service")
     job_title = models.CharField(max_length=255, verbose_name="Job Title")
     pay_rate = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Pay Rate")
- 
+
     def __str__(self):
         return f"{self.first_name} {self.surname}"
     
@@ -263,37 +263,124 @@ class Benefits(models.Model):
     employee = models.ForeignKey(Employee, on_delete=models.CASCADE)
     hrs_per_pay = models.DecimalField(max_digits=6, decimal_places=2, verbose_name="Hours Per Pay")
     #pers = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Public Employee Retirement System")
-    medicare = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Medicare")
-    wc = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Workman's Compensation")
+    #medicare = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Medicare")
+    #wc = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Workman's Compensation")
     vac_elig = models.BooleanField(default=True, verbose_name="Vacation Eligible") #not sure on default
-    vacation = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Vacation")
-    plar = models.DecimalField(max_digits=8, decimal_places=2, verbose_name="Paid Leave Accumulation Rate")  
-    sick = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Sick Leave")
-    holiday = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Holiday Hours")
-    total_hrly = models.DecimalField(max_digits=15, decimal_places=2,verbose_name="Total Hourly")
-    percent_leave = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Percent Leave")
-    monthly_hours = models.DecimalField(max_digits=6, decimal_places=2, verbose_name="Monthly Hours")
+    #vacation = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Vacation")
+    #plar = models.DecimalField(max_digits=8, decimal_places=2, verbose_name="Paid Leave Accumulation Rate")  
+    #sick = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Sick Leave")
+    #holiday = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Holiday Hours")
+    #total_hrly = models.DecimalField(max_digits=15, decimal_places=2,verbose_name="Total Hourly")
+    #percent_leave = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Percent Leave")
+    #monthly_hours = models.DecimalField(max_digits=6, decimal_places=2, verbose_name="Monthly Hours")
     ins_type = models.CharField(max_length=10, choices=HealthInsurance.choices, verbose_name="Insurance Type")
     board_ins_share = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Board Insurance Share")
-    board_share_hrly = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Board Share Hourly")
+    #board_share_hrly = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Board Share Hourly")
     life_rate = models.CharField(max_length=10, choices=LifeInsurance.choices, verbose_name="Life Insurance Rate")
-    life_hrly = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Life Hourly")
-    salary = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Salary")
-    fringe = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Fringe")
-    total_comp = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Total Compensation")
+    #life_hrly = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Life Hourly")
+    #salary = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Salary")
+    #fringe = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Fringe")
+    #total_comp = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Total Compensation")
  
     @property
     def pers(self):
         value = round((float(self.employee.pay_rate) * 0.14), 2)
         return f"{value:.2f}"
     
-    """
     @property
     def medicare(self):
         value = round(float(self.employee.pay_rate) * 0.0145,2)
         return f"{value:.2f}"
-    """
+    
+    #CHECK WHERE TO GET HOURS FROM
+    @property
+    def wc(self):
+        value = round(0.22/float(self.hrs_per_pay),2)
+        return f"{value:.2f}"
 
+    @property
+    def plar(self):
+        yos = self.employee.yos
+        factor = 0.03875
+        if yos >= 8 and yos < 15:
+            factor = 0.0575
+        elif yos >= 15 and yos < 25:
+            factor = 0.0775
+        elif yos >=25:
+            factor = 0.096
+        value = round(float(yos) * factor,2)
+        return f"{value:.2f}"
+
+    @property
+    def vacation(self):
+        if self.vac_elig:
+            value = round(float(self.plar) * float(self.employee.pay_rate), 2)
+        else:
+            value = 0
+        return f"{value:.2f}"
+    
+    #CHECK THIS IS WHAT IS MEANT
+    @property
+    def sick(self):
+        value = round(float(self.employee.pay_rate) * 0.0575,2)
+        return f"{value:.2f}"
+
+    @property
+    def holiday (self):
+        value = round((96*(float(self.employee.pay_rate)+ float(self.pers) + float(self.medicare) + float(self.wc)))  / (float(self.hrs_per_pay)*26), 2)
+        return f"{value:.2f}"
+
+    @property
+    def total_hrly(self):
+        value = float(self.employee.pay_rate) + float(self.pers) + float(self.medicare) + float(self.wc) + float(self.vacation) + float(self.sick) + float(self.holiday)
+        return f"{value:.2f}"
+
+    @property
+    def percent_leave(self):
+        value = ((float(self.vacation) + float(self.sick) + float(self.holiday))/float(self.total_hrly))* float(100)
+        return f"{value:.2f}"
+    
+    @property
+    def monthly_hours(self):
+        value = round(float(self.hrs_per_pay) * 4, 2)
+        return f"{value:.2f}"
+    
+    @property
+    def board_share_hrly(self):
+        if float(self.monthly_hours) > 0 :
+            value = round(float(self.board_ins_share) / float(self.monthly_hours),2)
+        else:
+            value = 0
+        return f"{value:.2f}"
+    
+    @property
+    def life_hourly(self):
+        rate = self.life_rate
+        if rate == LifeInsurance.ineligible:
+            factor = 0
+        elif rate == LifeInsurance.rate1:
+            factor = 3.42
+        elif rate == LifeInsurance.rate2:
+            factor = 1.71
+        
+        value = float(factor)/float(self.monthly_hours)
+        return f"{value:.2f}"
+    
+    @property
+    def salary(self):
+        value = round(float(self.employee.pay_rate) * float(self.hrs_per_pay),2)
+        return f"{value:.2f}"
+    
+    @property
+    def fringes(self):
+        value = round(((float(self.pers) + float(self.medicare))*float(self.hrs_per_pay)*26) + (float(self.board_ins_share)*12),2)
+        return f"{value:.2f}"
+    
+    @property
+    def total_comp(self):
+        value = round(float(self.salary) + float(self.fringes), 2)
+        return f"{value:.2f}"
+    
     class Meta:
             db_table = "Benefits"
  
