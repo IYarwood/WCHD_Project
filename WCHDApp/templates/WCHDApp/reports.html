@@ -1,8 +1,10 @@
 {% extends "WCHDApp/masterTemplate.html" %}
+{% load static %}
 
 {% block title %}Reports{% endblock %}
 
-{% block content %}    
+{% block content %}  
+    <link rel="stylesheet" type="text/css" href="{% static 'WCHDAPP/css/formStyling.css' %}">   
     <h1>Reports</h1>
     <form method="post">
         {% csrf_token %}

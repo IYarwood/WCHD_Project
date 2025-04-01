@@ -2,12 +2,12 @@
 
 {% block title %}View Table Select{% endblock %}
 
-{% block content %}    
+{% block content %}   
+    <h1>Table Select</h1>
     <form method="post">
     {% csrf_token %}
     {{form}}
     <button type="submit" name = "button" id="seeTable" value = "seeTable">See Table</button>
     <button type="submit" name = "button" id="create" value = "create">Create</button>
-    <button type="submit" name = "button" id="import" value = "import">Import</button>
     </form>
 {% endblock %}

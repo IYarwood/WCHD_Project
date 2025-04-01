@@ -13,4 +13,5 @@ urlpatterns = [
     path("testing/", views.testing, name="testing"),
     path('generate_pdf/<str:tableName>/', views.generate_pdf, name='generate_pdf'),
     path('reports/', views.reports, name='reports'),
+    path('imports/', views.imports, name='imports'),
 ]
