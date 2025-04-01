@@ -1,7 +1,7 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import HttpResponse
 from .models import Fund, Testing
-from .forms import FundForm, TableSelect, LineForm
+from .forms import FundForm, TableSelect, LineForm, InputSelect
 from django.forms import modelform_factory
 from django.apps import apps
 from django.db.models import DecimalField
@@ -200,6 +200,8 @@ def viewTableSelect(request):
                 return redirect('tableView', tableName)
             elif button == "create":
                 return redirect('createEntry', tableName)
+            elif button == "import":
+                return redirect('testing', tableName)
     else:
         form = TableSelect()
     return render(request, "WCHDApp/viewTableSelect.html", {'form': form})
@@ -310,54 +312,65 @@ def createEntry(request, tableName):
     return render(request, "WCHDApp/createEntry.html", {"form": form, "tableName": tableName})
 
 def testing(request):
-    file = pd.read_csv("WCHDApp/Book1.csv")
-    columns = file.columns
-    row = file.iloc[0]
-    data = []
-    fields = Testing._meta.get_fields()
-    lookUpFields = []
-    fks = []
-    for field in fields:
-        #Logic for foreign keys
-        if field.is_relation:
-            fks.append(field.name)
-            if field.auto_created:
-                continue
-            else:
-                #Grab related model. This is why foreign keys have to be named after the model 
-                parentModel = apps.get_model('WCHDApp', field.name)
+    if request.method == 'POST':
+        form = InputSelect(request.POST, request.FILES)
+        if form.is_valid():
+            tableName = form.cleaned_data['table']
+            selectedFile = form.cleaned_data['file']
+            file = pd.read_csv(selectedFile)
+            columns = file.columns
+            row = file.iloc[0]
+            data = []
+            model = apps.get_model('WCHDApp', tableName)
+            fields = model._meta.get_fields()
+            lookUpFields = []
+            fks = []
+            for field in fields:
+                #Logic for foreign keys
+                if field.is_relation:
+                    fks.append(field.name)
+                    if field.auto_created:
+                        continue
+                    else:
+                        #Grab related model. This is why foreign keys have to be named after the model 
+                        parentModel = apps.get_model('WCHDApp', field.name)
 
-                #Get the related models primary key
-                fkName = parentModel._meta.pk.name
-                #fks.append(fkName)
-                #Primary keys verbose name
-                fkAlias = parentModel._meta.pk.verbose_name
-        else:
-            lookUpFields.append(field)
-    
+                        #Get the related models primary key
+                        fkName = parentModel._meta.pk.name
+                        #fks.append(fkName)
+                        #Primary keys verbose name
+                        fkAlias = parentModel._meta.pk.verbose_name
+                else:
+                    lookUpFields.append(field)
+            
 
-    print(fks)
-    for i in range(len(file)):
-        dict = {}
-        row = file.iloc[i]
-        for column in columns:
-            dict[column] = row[column]
-        data.append(dict)
-        
+            print(fks)
+            for i in range(len(file)):
+                dict = {}
+                row = file.iloc[i]
+                for column in columns:
+                    dict[column] = row[column]
+                data.append(dict)
+                
+            
+            for line in data:
+                for key in line:
+                    if type(line[key]) == np.int64:
+                        line[key] = int(line[key])
+                    if key in fks:
+                        parentModel = apps.get_model('WCHDApp', key)
+                        print("Grab the object linked")
+                        line[key] = parentModel.objects.get(pk=line[key])
+                print(line)
+                obj, _ = Testing.objects.update_or_create(
+                    **line,
+                    defaults = line
+                )
+            
+            
+    else:
+        form = InputSelect()
     
-    for line in data:
-        for key in line:
-            if type(line[key]) == np.int64:
-                line[key] = int(line[key])
-            if key in fks:
-                parentModel = apps.get_model('WCHDApp', key)
-                print("Grab the object linked")
-                line[key] = parentModel.objects.get(pk=line[key])
-        print(line)
-        obj, _ = Testing.objects.update_or_create(
-            **line,
-            defaults = line
-        )
         
-    return render(request, "WCHDApp/testing.html", {"file": file})
+    return render(request, "WCHDApp/testing.html", {"form": form})
 

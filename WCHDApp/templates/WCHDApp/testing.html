@@ -6,7 +6,11 @@
 
 {% block content %}
     <link rel="stylesheet" type="text/css" href="{% static 'WCHDAPP/css/formStyling.css' %}"> 
-    {{file}}
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        {{form}}
+        <button type="submit" name = "button" id="import" value = "import">Import</button>
+    </form>
     
 {% endblock %}
 

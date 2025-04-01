@@ -24,3 +24,17 @@ class TableSelect(forms.Form):
     for model in models:
         modelsDict[model.__name__] = model.__name__
     table = forms.ChoiceField(choices=modelsDict, label="Select Table", required=True)
+
+class InputSelect(forms.Form):
+    #Pulling models
+    models = apps.get_app_config('WCHDApp').get_models()
+    modelsDict= {}
+    for model in models:
+        modelsDict[model.__name__] = model.__name__
+    
+    table = forms.ChoiceField(choices=modelsDict, label="Select Table", required=True)
+    file = forms.FileField(
+        label="Upload CSV File",
+        required=True,
+        widget=forms.ClearableFileInput(attrs={'accept': '.csv'})
+    )
