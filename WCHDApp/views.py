@@ -13,6 +13,7 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image, Table, TableStyle
 from io import BytesIO
 import pandas as pd
+import numpy as np
 
 def generate_pdf(request, tableName):
     buffer = BytesIO()
@@ -312,20 +313,51 @@ def testing(request):
     file = pd.read_csv("WCHDApp/Book1.csv")
     columns = file.columns
     row = file.iloc[0]
-    name = row[columns[0]]
     data = []
+    fields = Testing._meta.get_fields()
+    lookUpFields = []
+    fks = []
+    for field in fields:
+        #Logic for foreign keys
+        if field.is_relation:
+            fks.append(field.name)
+            if field.auto_created:
+                continue
+            else:
+                #Grab related model. This is why foreign keys have to be named after the model 
+                parentModel = apps.get_model('WCHDApp', field.name)
 
+                #Get the related models primary key
+                fkName = parentModel._meta.pk.name
+                #fks.append(fkName)
+                #Primary keys verbose name
+                fkAlias = parentModel._meta.pk.verbose_name
+        else:
+            lookUpFields.append(field)
+    
+
+    print(fks)
     for i in range(len(file)):
         dict = {}
         row = file.iloc[i]
         for column in columns:
             dict[column] = row[column]
         data.append(dict)
+        
     
     for line in data:
+        for key in line:
+            if type(line[key]) == np.int64:
+                line[key] = int(line[key])
+            if key in fks:
+                parentModel = apps.get_model('WCHDApp', key)
+                print("Grab the object linked")
+                line[key] = parentModel.objects.get(pk=line[key])
+        print(line)
         obj, _ = Testing.objects.update_or_create(
+            **line,
             defaults = line
         )
-    
+        
     return render(request, "WCHDApp/testing.html", {"file": file})
 
