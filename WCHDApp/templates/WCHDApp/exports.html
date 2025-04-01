@@ -1,0 +1,16 @@
+{% extends "WCHDApp/masterTemplate.html" %}
+{% load static %}
+
+
+{% block title %}Exports{% endblock %}
+
+{% block content %}
+    <link rel="stylesheet" type="text/css" href="{% static 'WCHDAPP/css/formStyling.css' %}"> 
+    <h1>Exports</h1>
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        {{form}}
+        <button type="submit" name = "button" id="export" value = "export">Export</button>
+    </form>
+    {{message}}
+{% endblock %}

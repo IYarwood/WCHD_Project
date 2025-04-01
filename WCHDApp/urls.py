@@ -14,4 +14,5 @@ urlpatterns = [
     path('generate_pdf/<str:tableName>/', views.generate_pdf, name='generate_pdf'),
     path('reports/', views.reports, name='reports'),
     path('imports/', views.imports, name='imports'),
+    path('exports/', views.exports, name='exports'),
 ]
