@@ -1,6 +1,6 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import HttpResponse
-from .models import Fund
+from .models import Fund, Testing
 from .forms import FundForm, TableSelect, LineForm
 from django.forms import modelform_factory
 from django.apps import apps
@@ -12,6 +12,7 @@ from reportlab.lib import colors
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image, Table, TableStyle
 from io import BytesIO
+import pandas as pd
 
 def generate_pdf(request, tableName):
     buffer = BytesIO()
@@ -224,6 +225,7 @@ def tableView(request, tableName):
         #"Fund": [("fundBalanceMinus3", "Fund Balance Minus 3")],
         "Testing": [("fundBalanceMinus3", "Fund Balance Minus 3")],
         "Benefits": [("pers", "Public Employee Retirement System"), ("medicare", "Medicare"),("wc", "Workers Comp"), ("plar", "Paid Leave Accumulation Rate"), ("vacation", "Vacation"), ("sick", "Sick Leave"), ("holiday", "Holiday Leave"), ("total_hrly", "Total Hourly Cost"), ("percent_leave", "Percent Leave"), ("monthly_hours", "Monthly Hours"), ("board_share_hrly", "Board Share Hourly"), ("life_hourly", "Life Hourly"), ("salary", "Salary"), ("fringes", "Fringes"), ("total_comp", "Total Compensation")],
+        "Payroll": [("pay_rate", "Pay Rate")]
     }
 
     #This is used to decide which fields we want to show in the accumulator based on each model
@@ -306,16 +308,24 @@ def createEntry(request, tableName):
         form = modelform_factory(model, fields="__all__")
     return render(request, "WCHDApp/createEntry.html", {"form": form, "tableName": tableName})
 
-def testing(request, tableName):
-    model = apps.get_model('WCHDApp', tableName)
-    if request.method == 'POST':
-        form = modelform_factory(model, fields="__all__")(request.POST)
-        if form.is_valid():
-            form.save()
-            return redirect('index')
-        else:
-            print(form.errors)
-    else:
-        form = modelform_factory(model, fields="__all__")
-    return render(request, "WCHDApp/testing.html", {"form": form})
+def testing(request):
+    file = pd.read_csv("WCHDApp/Book1.csv")
+    columns = file.columns
+    row = file.iloc[0]
+    name = row[columns[0]]
+    data = []
+
+    for i in range(len(file)):
+        dict = {}
+        row = file.iloc[i]
+        for column in columns:
+            dict[column] = row[column]
+        data.append(dict)
+    
+    for line in data:
+        obj, _ = Testing.objects.update_or_create(
+            defaults = line
+        )
+    
+    return render(request, "WCHDApp/testing.html", {"file": file})
 

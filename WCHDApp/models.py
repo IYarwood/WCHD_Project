@@ -1,6 +1,7 @@
 from django.db import models
 from djmoney.models.fields import MoneyField
 
+
 class FundSource(models.TextChoices):
     FEDERAL = 'FEDERAL'
     STATE = 'STATE'
@@ -195,7 +196,11 @@ class Payroll(models.Model):
     other_rate = models.DecimalField(max_digits=6, decimal_places=2, verbose_name="Other Rate")
     #I will add this as a property
     #pay_rate = models.ForeignKey(Employee, on_delete=models.CASCADE)
- 
+    
+    @property
+    def pay_rate(self):
+        return self.employee.pay_rate
+    
     class Meta:
             db_table = "Payroll"
  
@@ -389,7 +394,7 @@ class Testing(models.Model):
     testing_name = models.CharField(max_length=200, blank=True)
     fund_year = models.IntegerField(blank=True, null = True)
     fund = models.ForeignKey(Fund, on_delete=models.CASCADE)
-    
+
     @property
     def fundBalanceMinus3(self):
         return self.fund.fund_cash_balance - 3
