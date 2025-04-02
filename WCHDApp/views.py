@@ -1,7 +1,7 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import HttpResponse
 from .models import Fund, Testing
-from .forms import FundForm, TableSelect, LineForm, InputSelect
+from .forms import FundForm, TableSelect, LineForm, InputSelect, ExportSelect
 from django.forms import modelform_factory
 from django.apps import apps
 from django.db.models import DecimalField
@@ -383,18 +383,25 @@ def imports(request):
 def exports(request):
     message = ""
     if request.method == 'POST':
-        form = TableSelect(request.POST)
+        form = ExportSelect(request.POST)
         if form.is_valid():
             tableName = form.cleaned_data['table']
+            fileName = form.cleaned_data['fileName']
             model = apps.get_model('WCHDApp', tableName)
             data = model.objects.all().values()
             exportData = pd.DataFrame.from_records(data)
-            exportData.to_csv("mymodel_export.csv", index=False)
 
+            #From what I read the 2 commented lines are how we can show it in a new tab before download
+            #However, its raw text apparently browsers dont like not immediately downloading csv, could be useful for our reports though
+            response = HttpResponse(content_type='text/csv')
+            #response = HttpResponse(content_type='text/text')
+            #response['Content-Disposition'] = f'inline; filename="{fileName}.csv"'
+            response['Content-Disposition'] = f'attachment; filename="{fileName}.csv"'
 
+            exportData.to_csv(path_or_buf=response, index=False)
+            return response
     else:
-        form = TableSelect()
-    
+        form = ExportSelect()
         
     return render(request, "WCHDApp/exports.html", {"form": form, "message": message})
 

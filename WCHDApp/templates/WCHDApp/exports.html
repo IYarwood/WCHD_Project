@@ -7,7 +7,7 @@
 {% block content %}
     <link rel="stylesheet" type="text/css" href="{% static 'WCHDAPP/css/formStyling.css' %}"> 
     <h1>Exports</h1>
-    <form method="post" enctype="multipart/form-data">
+    <form method="post" enctype="multipart/form-data" target="_blank">
         {% csrf_token %}
         {{form}}
         <button type="submit" name = "button" id="export" value = "export">Export</button>

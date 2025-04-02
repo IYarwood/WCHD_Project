@@ -38,3 +38,13 @@ class InputSelect(forms.Form):
         required=True,
         widget=forms.ClearableFileInput(attrs={'accept': '.csv'})
     )
+
+class ExportSelect(forms.Form):
+    #Pulling models
+    models = apps.get_app_config('WCHDApp').get_models()
+    modelsDict= {}
+    for model in models:
+        modelsDict[model.__name__] = model.__name__
+    
+    table = forms.ChoiceField(choices=modelsDict, label="Select Table", required=True)
+    fileName = forms.CharField(max_length=20, label="File Name (do not include .csv)")
