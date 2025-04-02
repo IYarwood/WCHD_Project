@@ -6,7 +6,7 @@
 {% block content %}  
     <link rel="stylesheet" type="text/css" href="{% static 'WCHDAPP/css/formStyling.css' %}">   
     <h1>Reports</h1>
-    <form method="post">
+    <form method="post" target = "_blank">
         {% csrf_token %}
         {{form}}
         <button type="submit">Make Report</button>

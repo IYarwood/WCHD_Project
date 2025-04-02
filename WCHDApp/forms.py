@@ -48,3 +48,4 @@ class ExportSelect(forms.Form):
     
     table = forms.ChoiceField(choices=modelsDict, label="Select Table", required=True)
     fileName = forms.CharField(max_length=20, label="File Name (do not include .csv)")
+

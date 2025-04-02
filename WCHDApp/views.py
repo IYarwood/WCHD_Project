@@ -119,8 +119,11 @@ def generate_pdf(request, tableName):
 
     # Get the PDF value from buffer
     buffer.seek(0)
-    response = HttpResponse(buffer, content_type="application/pdf")
-    response["Content-Disposition"] = 'attachment; filename="active_grants.pdf"'
+    pdf_data = buffer.getvalue()
+    buffer.close()
+
+    response = HttpResponse(pdf_data, content_type='application/pdf')
+    response['Content-Disposition'] = f'inline; filename="testing.pdf"'
 
     return response
 
@@ -410,57 +413,6 @@ def testing(request):
         form = InputSelect(request.POST, request.FILES)
         if form.is_valid():
             tableName = form.cleaned_data['table']
-            selectedFile = form.cleaned_data['file']
-            file = pd.read_csv(selectedFile)
-            columns = file.columns
-            row = file.iloc[0]
-            data = []
-            model = apps.get_model('WCHDApp', tableName)
-            fields = model._meta.get_fields()
-            lookUpFields = []
-            fks = []
-            for field in fields:
-                #Logic for foreign keys
-                if field.is_relation:
-                    fks.append(field.name)
-                    if field.auto_created:
-                        continue
-                    else:
-                        #Grab related model. This is why foreign keys have to be named after the model 
-                        parentModel = apps.get_model('WCHDApp', field.name)
-
-                        #Get the related models primary key
-                        fkName = parentModel._meta.pk.name
-                        #fks.append(fkName)
-                        #Primary keys verbose name
-                        fkAlias = parentModel._meta.pk.verbose_name
-                else:
-                    lookUpFields.append(field)
-            
-
-            print(fks)
-            for i in range(len(file)):
-                dict = {}
-                row = file.iloc[i]
-                for column in columns:
-                    dict[column] = row[column]
-                data.append(dict)
-                
-            
-            for line in data:
-                for key in line:
-                    if type(line[key]) == np.int64:
-                        line[key] = int(line[key])
-                    if key in fks:
-                        parentModel = apps.get_model('WCHDApp', key)
-                        print("Grab the object linked")
-                        line[key] = parentModel.objects.get(pk=line[key])
-                print(line)
-                obj, _ = Testing.objects.update_or_create(
-                    **line,
-                    defaults = line
-                )
-            
             
     else:
         form = InputSelect()
