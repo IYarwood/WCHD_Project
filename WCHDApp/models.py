@@ -390,6 +390,27 @@ class Benefits(models.Model):
             db_table = "Benefits"
  
 
+class transactionType(models.TextChoices):
+    revenue = "Revenue"
+    expense = "Expense"
+class paymentType(models.TextChoices):
+    cash = "Cash"
+    card = "Card"
+class Transaction(models.Model):
+    fund = models.ForeignKey(Fund, on_delete=models.CASCADE)
+    line = models.ForeignKey(Line, on_delete=models.CASCADE)
+    item = models.ForeignKey(Item, on_delete=models.CASCADE)
+    date = models.DateTimeField(verbose_name="Date")
+    type = models.CharField(max_length=10, choices=transactionType.choices, verbose_name="Type")
+    people = models.ForeignKey(People, on_delete=models.CASCADE)
+    amount = models.IntegerField(verbose_name="Amount")
+    payType = models.CharField(max_length=10, choices=paymentType.choices, verbose_name="Payment Type")
+    comment = models.CharField(max_length = 500, verbose_name="Comment")
+
+    class Meta:
+            db_table = "Transactions"
+
+
 class Testing(models.Model):
     testing_name = models.CharField(max_length=200, blank=True)
     fund_year = models.IntegerField(blank=True, null = True)

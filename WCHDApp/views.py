@@ -408,6 +408,8 @@ def exports(request):
         
     return render(request, "WCHDApp/exports.html", {"form": form, "message": message})
 
+def transactions(request):
+    return render(request, "WCHDApp/transactions.html")
 def testing(request):
     if request.method == 'POST':
         form = InputSelect(request.POST, request.FILES)
