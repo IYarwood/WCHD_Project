@@ -16,7 +16,7 @@ body {
     font-family: Arial, sans-serif;
 }
 
-.navbar p {
+.navbar a {
     position: fixed;
     left: 0;
     top: 0;
