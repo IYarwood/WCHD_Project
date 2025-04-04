@@ -103,7 +103,7 @@ class Employee(models.Model):
         db_table = "Employees"
 
 class People(models.Model):  
-    name_id = models.AutoField(primary_key=True, verbose_name="Customer/Vendor")
+    people_id = models.AutoField(primary_key=True, verbose_name="Customer/Vendor")
     name = models.CharField(max_length=255, verbose_name="Name") 
     address = models.CharField(max_length=255, verbose_name="Address")
     city = models.CharField(max_length=100, verbose_name="City")

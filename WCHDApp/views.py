@@ -428,8 +428,53 @@ def transactionsLine(request, fundID):
 def transactionsItem(request, fundID, lineID):
     itemModel = apps.get_model('WCHDApp', "Item")
     itemValues = itemModel.objects.filter(fund=fundID, line=lineID)
-    
+    if request.method == "POST":
+        itemID = request.POST.get('itemSelect')
+        return redirect(transactionsView, fundID, lineID, itemID)
     return render(request, "WCHDApp/transactionsItem.html", {"fund": fundID, "line": lineID, "items":itemValues})
+
+def transactionsView(request, fundID, lineID, itemID):
+    transactionModel = apps.get_model('WCHDApp', "transaction")
+    transactionValues = transactionModel.objects.filter(fund=fundID, line=lineID, item_id=itemID)
+    #Getting just field names from model
+    fields = transactionModel._meta.get_fields()
+
+    #Lists to sort fields for styling
+    fieldNames = []
+    decimalFields = []
+    aliasNames = []
+
+    for field in fields:
+
+        #Logic for foreign keys
+        if field.is_relation:
+            if field.auto_created:
+                continue
+            else:
+                #Grab related model. This is why foreign keys have to be named after the model 
+                parentModel = apps.get_model('WCHDApp', field.name)
+
+                #Get the related models primary key
+                fkName = parentModel._meta.pk.name
+
+                #Primary keys verbose name
+                fkAlias = parentModel._meta.pk.verbose_name
+
+                aliasNames.append(fkAlias)
+                fieldNames.append(fkName)
+        else:
+            #Decimal field logic so we can style them in html
+            if isinstance(field, DecimalField):
+                decimalFields.append(field.name)
+            aliasNames.append(field.verbose_name)  
+            fieldNames.append(field.name)
+
+    #Getting values based on if we defined them in summedFields in order to make accumulator
+        context = {"fields": fieldNames, "aliasNames": aliasNames, "data": transactionValues, "decimalFields": decimalFields}
+    else:
+        context = {"fields": fieldNames, "aliasNames": aliasNames, "data": transactionValues, "decimalFields": decimalFields}
+
+    return render(request, "WCHDApp/transactionsView.html", {"fund": fundID, "line": lineID, "item": itemID, "transactions": transactionValues,"fields": fieldNames, "aliasNames": aliasNames, "data": transactionValues, "decimalFields": decimalFields})
 
 
 def testing(request):

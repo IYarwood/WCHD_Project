@@ -11,9 +11,10 @@
     <p>Line: {{line}}</p>
     <form method="POST" action="{% url 'transactionsItem' fund line %}">
         {% csrf_token %}
-        <select name="lineSelect" onchange="this.form.submit()">
+        <select name="itemSelect" onchange="this.form.submit()">
+            <option default>Select Item</option>
             {% for item in items %}
-                <option>{{item}}</option>
+                <option value="{{item.item_id}}">{{item}}</option>
             {% endfor %}
         </select>
       </form>

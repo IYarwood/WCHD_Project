@@ -1,0 +1,35 @@
+{% extends "WCHDApp/masterTemplate.html" %}
+{% load static %}
+{% load custom_filters %}
+
+
+{% block title %}Transactions{% endblock %}
+
+{% block content %}
+    <link rel="stylesheet" type="text/css" href="{% static 'WCHDAPP/css/formStyling.css' %}"> 
+    <h1>Transactions</h1>
+    <p>Fund: {{fund}}</p>
+    <p>Line: {{line}}</p>
+    <p>Item: {{item}}</p>
+    <link rel="stylesheet" type="text/css" href="{% static 'WCHDAPP/css/tableStyling.css' %}"> 
+    <table border="1">
+        <tr>
+            {% for field in aliasNames%}
+                <th>{{field}}</th>
+            {% endfor%}
+        </tr>
+        {% for row in data%}
+            <tr>
+            {% for field in fields%}
+                {% if field in decimalFields %}
+                    <td style="text-align: right;">{{row|get_attr:field}}</td>
+                {% else %}
+                    <td>{{row|get_attr:field}}</td>
+                {% endif %}
+            {% endfor%}
+            </tr>
+        {% endfor %}
+    </table>
+
+    <h3>Accumulator:</h3>
+{% endblock %}

@@ -17,5 +17,6 @@ urlpatterns = [
     path('exports/', views.exports, name='exports'),
     path('transactionsFund/', views.transactionsFund, name='transactionsFund'),
     path('transactionsLine/<str:fundID>/', views.transactionsLine, name='transactionsLine'),
-    path('transactionsItem/<str:fundID>/<str:lineID>', views.transactionsItem, name='transactionsItem'),
+    path('transactionsItem/<str:fundID>/<str:lineID>/', views.transactionsItem, name='transactionsItem'),
+    path('transactionsView/<str:fundID>/<str:lineID>/<str:itemID>', views.transactionsView, name='transactionsView'),
 ]
