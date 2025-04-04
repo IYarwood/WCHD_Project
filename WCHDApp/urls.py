@@ -15,5 +15,7 @@ urlpatterns = [
     path('reports/', views.reports, name='reports'),
     path('imports/', views.imports, name='imports'),
     path('exports/', views.exports, name='exports'),
-    path('transactions/', views.transactions, name='transactions'),
+    path('transactionsFund/', views.transactionsFund, name='transactionsFund'),
+    path('transactionsLine/<str:fundID>/', views.transactionsLine, name='transactionsLine'),
+    path('transactionsItem/<str:fundID>/<str:lineID>', views.transactionsItem, name='transactionsItem'),
 ]

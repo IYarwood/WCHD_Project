@@ -32,6 +32,7 @@ class Fund(models.Model):
     def fundBalanceMinus3(self):
         return self.fund_cash_balance - 3
     """
+    
     def __str__(self):
         return self.fund_name
     
@@ -53,6 +54,7 @@ class Line(models.Model):
     gen_ledger = models.IntegerField(blank=False, verbose_name="General Ledger")
     county_code = models.CharField(max_length = 4, verbose_name="County Code")
 
+    
     def __str__(self): 
         return self.line_name
     

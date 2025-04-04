@@ -14,6 +14,7 @@ from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image, Tabl
 from io import BytesIO
 import pandas as pd
 import numpy as np
+import json
 
 def generate_pdf(request, tableName):
     buffer = BytesIO()
@@ -408,8 +409,29 @@ def exports(request):
         
     return render(request, "WCHDApp/exports.html", {"form": form, "message": message})
 
-def transactions(request):
-    return render(request, "WCHDApp/transactions.html")
+def transactionsFund(request):
+    fundModel = apps.get_model('WCHDApp', "Fund")
+    fundValues = fundModel.objects.all()
+    if request.method == "POST":
+        fundID = request.POST.get('fundSelect')
+        return redirect(transactionsLine, fundID)
+    return render(request, "WCHDApp/transactionsFund.html", {"funds": fundValues})
+
+def transactionsLine(request, fundID):
+    lineModel = apps.get_model('WCHDApp', "Line")
+    lineValues = lineModel.objects.filter(fund=fundID)
+    if request.method == "POST":
+        lineID = request.POST.get('lineSelect')
+        return redirect(transactionsItem, fundID, lineID)
+    return render(request, "WCHDApp/transactionsLine.html", {"fund": fundID, "lines": lineValues})
+
+def transactionsItem(request, fundID, lineID):
+    itemModel = apps.get_model('WCHDApp', "Item")
+    itemValues = itemModel.objects.filter(fund=fundID, line=lineID)
+    
+    return render(request, "WCHDApp/transactionsItem.html", {"fund": fundID, "line": lineID, "items":itemValues})
+
+
 def testing(request):
     if request.method == 'POST':
         form = InputSelect(request.POST, request.FILES)
