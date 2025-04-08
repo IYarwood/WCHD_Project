@@ -398,6 +398,7 @@ class transactionType(models.TextChoices):
 class paymentType(models.TextChoices):
     cash = "Cash"
     card = "Card"
+    check = "Check"
 class Transaction(models.Model):
     fund = models.ForeignKey(Fund, on_delete=models.CASCADE)
     line = models.ForeignKey(Line, on_delete=models.CASCADE)
