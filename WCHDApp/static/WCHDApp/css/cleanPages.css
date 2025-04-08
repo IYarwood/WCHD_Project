@@ -1,0 +1,113 @@
+/* Reset default margins and padding */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f4;
+    color: #333;
+    line-height: 1.6;
+}
+
+/* Main Content Styling */
+main {
+    max-width: 800px;
+    margin: 20px auto;
+    padding: 20px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+h1 {
+    text-align: center;
+    margin-bottom: 20px;
+    color: #2c3e50;
+}
+
+/* Form Styling */
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px; /* Increased gap for better separation of boxes */
+}
+
+div { /* Targets the div wrapping the label and select */
+    background-color: #f9f9f9;
+    border: 2px solid #ddd;
+    border-radius: 6px;
+    padding: 15px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+label {
+    font-weight: bold;
+    color: #2c3e50;
+    display: block; /* Ensures label takes full width */
+    margin-bottom: 10px;
+}
+
+select {
+    padding: 10px; /* Corrected value */
+    font-size: 16px;
+    border: 2px solid #ccc;
+    border-radius: 4px;
+    background-color: #fff;
+    width: 100%;
+    max-width: 300px;
+    cursor: pointer;
+    transition: border-color 0.3s;
+}
+
+select:focus {
+    outline: none;
+    border-color: #3498db;
+    box-shadow: 0 0 5px rgba(52, 152, 219, 0.5);
+}
+
+/* Button Styling */
+button {
+    padding: 12px 24px;
+    font-size: 16px;
+    border: 2px solid #ccc;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.3s, border-color 0.3s;
+    background-color: #f9f9f9;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+button#seeTable {
+    border-color: #3498db;
+    color: #3498db;
+}
+
+button#seeTable:hover {
+    background-color: #3498db;
+    color: #fff;
+}
+
+button#create {
+    border-color: #27ae60;
+    color: #27ae60;
+}
+
+button#create:hover {
+    background-color: #27ae60;
+    color: #fff;
+}
+
+/* Responsive Design */
+@media (max-width: 600px) {
+    main {
+        margin: 10px;
+        padding: 15px;
+    }
+
+    select {
+        max-width: 100%;
+    }
+}

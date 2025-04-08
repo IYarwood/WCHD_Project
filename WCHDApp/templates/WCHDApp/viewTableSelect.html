@@ -1,9 +1,13 @@
 {% extends "WCHDApp/masterTemplate.html" %}
+{% load static %}
 
 {% block title %}View Table Select{% endblock %}
 
 {% block content %}   
+    <link rel="stylesheet" type="text/css" href="{% static 'WCHDApp/css/cleanPages.css' %}">
+
     <h1>Table Select</h1>
+    
     <form method="post">
     {% csrf_token %}
     {{form}}
