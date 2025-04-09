@@ -6,6 +6,7 @@ from django.forms import modelform_factory
 from django.apps import apps
 from django.db.models import DecimalField
 from django.contrib.auth import authenticate, login
+from django.contrib.auth.decorators import permission_required
 from django.contrib import messages
 from reportlab.lib.pagesizes import letter
 from reportlab.lib import colors
@@ -129,6 +130,7 @@ def generate_pdf(request, tableName):
     return response
 
 #This view is used to select what table we want to create a report from
+@permission_required('WCHDApp.has_full_access', raise_exception=True)
 def reports(request):
     if request.method == "POST":
         #TableSelect is a form I defined in forms.py
@@ -191,6 +193,7 @@ def logIn(request):
     return render(request, "WCHDApp/logIn.html")
 
 #Logic to get what tables we want to see/create from. Same thing as reports
+@permission_required('WCHDApp.has_full_access', raise_exception=True)
 def viewTableSelect(request):
     if request.method == 'POST':
         form = TableSelect(request.POST)
@@ -209,6 +212,7 @@ def viewTableSelect(request):
     return render(request, "WCHDApp/viewTableSelect.html", {'form': form})
 
 #This function decides what data we use in our tables in tableView.html
+@permission_required('WCHDApp.has_full_access', raise_exception=True)
 def tableView(request, tableName):
 
     #Grabbing the model selected in viewTableSelect
@@ -284,6 +288,7 @@ def tableView(request, tableName):
     return render(request, "WCHDApp/tableView.html", context)
 
 #Also depricated, will clean soon
+@permission_required('WCHDApp.has_full_access', raise_exception=True)
 def createSelect(request):
     if request.method == 'POST':
         form = TableSelect(request.POST)
@@ -295,6 +300,8 @@ def createSelect(request):
     return render(request, "WCHDApp/createSelect.html", {'form': form})
 
 #New system to dynamically create forms based of model
+
+@permission_required('WCHDApp.has_full_access', raise_exception=True)
 def createEntry(request, tableName):
     #Grabbing selected model in viewTableSelect
     model = apps.get_model('WCHDApp', tableName)
@@ -313,6 +320,7 @@ def createEntry(request, tableName):
         form = modelform_factory(model, fields="__all__")
     return render(request, "WCHDApp/createEntry.html", {"form": form, "tableName": tableName})
 
+@permission_required('WCHDApp.has_full_access', raise_exception=True)
 def imports(request):
     message = ""
     if request.method == 'POST':
@@ -384,6 +392,7 @@ def imports(request):
         
     return render(request, "WCHDApp/imports.html", {"form": form, "message": message})
 
+@permission_required('WCHDApp.has_full_access', raise_exception=True)
 def exports(request):
     message = ""
     if request.method == 'POST':
@@ -409,33 +418,17 @@ def exports(request):
         
     return render(request, "WCHDApp/exports.html", {"form": form, "message": message})
 
-def transactionsFund(request):
-    fundModel = apps.get_model('WCHDApp', "Fund")
-    fundValues = fundModel.objects.all()
-    if request.method == "POST":
-        fundID = request.POST.get('fundSelect')
-        return redirect(transactionsLine, fundID)
-    return render(request, "WCHDApp/transactionsFund.html", {"funds": fundValues})
-
-def transactionsLine(request, fundID):
-    lineModel = apps.get_model('WCHDApp', "Line")
-    lineValues = lineModel.objects.filter(fund=fundID)
-    if request.method == "POST":
-        lineID = request.POST.get('lineSelect')
-        return redirect(transactionsItem, fundID, lineID)
-    return render(request, "WCHDApp/transactionsLine.html", {"fund": fundID, "lines": lineValues})
-
-def transactionsItem(request, fundID, lineID):
+def transactionsItem(request):
     itemModel = apps.get_model('WCHDApp', "Item")
-    itemValues = itemModel.objects.filter(fund=fundID, line=lineID)
+    itemValues = itemModel.objects.all()
     if request.method == "POST":
         itemID = request.POST.get('itemSelect')
-        return redirect(transactionsView, fundID, lineID, itemID)
-    return render(request, "WCHDApp/transactionsItem.html", {"fund": fundID, "line": lineID, "items":itemValues})
+        return redirect(transactionsView,itemID)
+    return render(request, "WCHDApp/transactionsItem.html", {"items":itemValues})
 
-def transactionsView(request, fundID, lineID, itemID):
+def transactionsView(request,itemID):
     transactionModel = apps.get_model('WCHDApp', "transaction")
-    transactionValues = transactionModel.objects.filter(fund=fundID, line=lineID, item_id=itemID)
+    transactionValues = transactionModel.objects.filter(item_id=itemID)
     #Getting just field names from model
     fields = transactionModel._meta.get_fields()
 
@@ -469,23 +462,30 @@ def transactionsView(request, fundID, lineID, itemID):
             aliasNames.append(field.verbose_name)  
             fieldNames.append(field.name)
 
-    #Getting values based on if we defined them in summedFields in order to make accumulator
-        context = {"fields": fieldNames, "aliasNames": aliasNames, "data": transactionValues, "decimalFields": decimalFields}
-    else:
-        context = {"fields": fieldNames, "aliasNames": aliasNames, "data": transactionValues, "decimalFields": decimalFields}
-
-    return render(request, "WCHDApp/transactionsView.html", {"fund": fundID, "line": lineID, "item": itemID, "transactions": transactionValues,"fields": fieldNames, "aliasNames": aliasNames, "data": transactionValues, "decimalFields": decimalFields})
-
+    return render(request, "WCHDApp/transactionsView.html", {"item": itemID, "transactions": transactionValues,"fields": fieldNames, "aliasNames": aliasNames, "data": transactionValues, "decimalFields": decimalFields})
 
 def testing(request):
-    if request.method == 'POST':
-        form = InputSelect(request.POST, request.FILES)
-        if form.is_valid():
-            tableName = form.cleaned_data['table']
-            
-    else:
-        form = InputSelect()
-    
+    if (request.user.is_superuser):
+        if request.method == 'POST':
+            form = InputSelect(request.POST, request.FILES)
+            if form.is_valid():
+                tableName = form.cleaned_data['table']
+                
+        else:
+            form = InputSelect()
         
-    return render(request, "WCHDApp/testing.html", {"form": form})
+            
+        return render(request, "WCHDApp/testing.html", {"form": form})
+    else:
+        return redirect(noPrivileges)
 
+def checkPrivileges(request):
+    print("Checking privileges")
+    if (request.user.is_staff):
+        print("Staff")
+        return redirect(noPrivileges)  
+    else:
+        return None 
+    
+def noPrivileges(request, exception):
+    return render(request, "WCHDApp/noPrivileges.html")

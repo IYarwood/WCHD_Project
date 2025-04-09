@@ -7,9 +7,8 @@
 {% block content %}
     <link rel="stylesheet" type="text/css" href="{% static 'WCHDAPP/css/formStyling.css' %}"> 
     <h1>Transactions</h1>
-    <p>Fund: {{fund}}</p>
-    <p>Line: {{line}}</p>
-    <form method="POST" action="{% url 'transactionsItem' fund line %}">
+
+    <form method="POST" action="{% url 'transactionsItem' %}">
         {% csrf_token %}
         <select name="itemSelect" onchange="this.form.submit()">
             <option default>Select Item</option>

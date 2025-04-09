@@ -413,6 +413,11 @@ class Transaction(models.Model):
     class Meta:
             db_table = "Transactions"
 
+class AccessControl(models.Model):
+    title = models.CharField(max_length=100)
+
+    class Meta:
+        permissions = [("has_full_access", "Has full access to all views")]
 
 class Testing(models.Model):
     testing_name = models.CharField(max_length=200, blank=True)
