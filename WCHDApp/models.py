@@ -9,7 +9,7 @@ class FundSource(models.TextChoices):
 
 #REMINDER TO TAKE OUT null=True and blank=True from all instances of dept once we have a department populated
 class Dept(models.Model):
-    dept_id = models.SmallIntegerField(primary_key=True, verbose_name="Department")
+    dept_id = models.SmallIntegerField(primary_key=True, verbose_name="Department ID")
     dept_name = models.CharField(max_length=255, verbose_name="Department Name")
  
     def __str__(self):
@@ -22,10 +22,10 @@ class Fund(models.Model):
     SOFChoices = [("local", "Local"), ("state", "State"), ("federal", "Federal")]
     fund_id = models.SmallIntegerField(blank=True, primary_key=True, verbose_name = "Fund ID")
     fund_name = models.CharField(max_length=255, blank=False, verbose_name= "Fund Name")
-    fund_cash_balance = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Fund Cash Balance")
+    fund_cash_balance = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Cash Balance")
     dept = models.ForeignKey(Dept, on_delete=models.CASCADE, null=True, blank=True)
-    sof = models.CharField(max_length=10, blank = False, choices=FundSource.choices, verbose_name="Source of Funds")
-    mac_elig = models.BooleanField(blank=False, verbose_name="Medicaid Administrative Claiming Eligibility")
+    sof = models.CharField(max_length=10, blank = False, choices=FundSource.choices, verbose_name="SoF")
+    mac_elig = models.BooleanField(blank=False, verbose_name="MACE")
  
     """
     @property
@@ -45,10 +45,10 @@ class Line(models.Model):
     fund = models.ForeignKey(Fund, on_delete=models.CASCADE)
     fund_year = models.SmallIntegerField(blank=False, verbose_name="Fund Year")
     line_name = models.CharField(max_length=255, verbose_name="Line Name")
-    line_budgeted = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Line Budgeted")
-    line_encumbered = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Line Encumbered")
-    line_budget_spent = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Line Budget Spent")
-    line_total_income = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Line Total Income")
+    line_budgeted = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Budgeted")
+    line_encumbered = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Encumbered")
+    line_budget_spent = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Budget Spent")
+    line_total_income = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Total Income")
     dept = models.ForeignKey(Dept, on_delete=models.CASCADE, null=True, blank=True)
     cofund = models.CharField(max_length=3, verbose_name="CoFund")
     gen_ledger = models.IntegerField(blank=False, verbose_name="General Ledger")
@@ -68,7 +68,7 @@ class Item(models.Model):
     line = models.ForeignKey(Line, on_delete=models.CASCADE)
     fund_year = models.IntegerField(verbose_name="Fund Year")
     item_name = models.CharField(max_length=255, verbose_name="Item Name")
-    line_item = models.CharField(max_length=255, verbose_name="Line Item")
+    line_item = models.CharField(max_length=255, verbose_name="Line")
     category = models.CharField(max_length=50, verbose_name="Category")
     fee_based = models.BooleanField(verbose_name="Fee Based")
     month = models.IntegerField(verbose_name="Month")
@@ -89,10 +89,10 @@ class Employee(models.Model):
     state = models.CharField(max_length=2, verbose_name="State")
     zip_code = models.IntegerField(verbose_name="Zip Code")
     phone = models.CharField(max_length=12, verbose_name="Phone Number")
-    dob = models.DateField(verbose_name="Date of Birth")
-    ssn = models.CharField(max_length=11, verbose_name="Social Security Number")
+    dob = models.DateField(verbose_name="DoB")
+    ssn = models.CharField(max_length=11, verbose_name="SSN")
     hire_date = models.DateField(verbose_name="Hire Date")
-    yos = models.FloatField(verbose_name="Years of Service")
+    yos = models.FloatField(verbose_name="YoS")
     job_title = models.CharField(max_length=255, verbose_name="Job Title")
     pay_rate = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Pay Rate")
 
