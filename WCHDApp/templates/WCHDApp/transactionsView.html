@@ -30,4 +30,17 @@
     </table>
 
     <h3>Accumulator:</h3>
+
+    <div class="FormContainer">
+        <form method="post">
+            {% csrf_token %}
+            {% for field in form %}
+                <div class="FormGroup">
+                    {{ field.label_tag }}
+                    {{ field }}
+                </div>
+            {% endfor %}
+            <button type="submit">Submit</button>
+        </form>
+    </div>
 {% endblock %}

@@ -1,6 +1,6 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import HttpResponse
-from .models import Fund, Testing
+from .models import Fund, Testing, Item
 from .forms import FundForm, TableSelect, LineForm, InputSelect, ExportSelect
 from django.forms import modelform_factory
 from django.apps import apps
@@ -424,11 +424,13 @@ def transactionsItem(request):
     if request.method == "POST":
         itemID = request.POST.get('itemSelect')
         return redirect(transactionsView,itemID)
+    
     return render(request, "WCHDApp/transactionsItem.html", {"items":itemValues})
 
 def transactionsView(request,itemID):
     transactionModel = apps.get_model('WCHDApp', "transaction")
     transactionValues = transactionModel.objects.filter(item_id=itemID)
+
     #Getting just field names from model
     fields = transactionModel._meta.get_fields()
 
@@ -462,7 +464,29 @@ def transactionsView(request,itemID):
             aliasNames.append(field.verbose_name)  
             fieldNames.append(field.name)
 
-    return render(request, "WCHDApp/transactionsView.html", {"item": itemID, "transactions": transactionValues,"fields": fieldNames, "aliasNames": aliasNames, "data": transactionValues, "decimalFields": decimalFields})
+    TransactionForm = modelform_factory(transactionModel, exclude=(["fund", "line", "item"]))
+    item = Item.objects.get(pk=itemID)
+    fund = item.fund
+    line = item.line
+
+    if request.method == 'POST':
+        form = TransactionForm(request.POST)
+        if form.is_valid():
+            # Create the instance but don't save it yet
+            transaction = form.save(commit=False)
+
+            # Attach the fund and line from the item
+            transaction.fund = fund
+            transaction.line = line
+            transaction.item = item
+
+            # Now save it
+            transaction.save()
+
+    else:
+        form = TransactionForm()
+
+    return render(request, "WCHDApp/transactionsView.html", {"item": itemID, "transactions": transactionValues,"fields": fieldNames, "aliasNames": aliasNames, "data": transactionValues, "decimalFields": decimalFields, "form":form})
 
 def testing(request):
     if (request.user.is_superuser):
