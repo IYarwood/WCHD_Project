@@ -27,7 +27,7 @@ h1 {
 .box {
     width: 150px;
     height: 100px;
-    background-color: #ff4747;
+    background-color: #3498db;
     color: rgb(0, 0, 0);
     display: flex;
     align-items: center;

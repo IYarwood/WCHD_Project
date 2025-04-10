@@ -9,17 +9,20 @@ nav {
     display: flex;
     justify-content: space-around;
     align-items: center;
+   
 }
 
 nav ul {
     list-style: none;
     padding: 0;
     margin: 0;
+    
 }
 
 nav ul li {
     display: inline-block;
     margin: 0 15px;
+    
 }
 
 nav ul li a {
