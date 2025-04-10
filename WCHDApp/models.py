@@ -138,7 +138,7 @@ class Invoice(models.Model):
         db_table = "Invoices"
  
 class PurchaseOrder(models.Model):
-    po_num = models.AutoField(primary_key=True, verbose_name="Purchase Order Number")
+    po_num = models.AutoField(primary_key=True, verbose_name="PO Number")
     people = models.ForeignKey(People, on_delete=models.CASCADE)
     amount = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Amount")
     date = models.DateField(verbose_name="Date")
@@ -146,8 +146,8 @@ class PurchaseOrder(models.Model):
     comment = models.TextField(blank=True, null=True, verbose_name="Comment")
     warrant = models.CharField(max_length=50, blank=True, null=True, verbose_name="Warrant")  
     prid = models.CharField(max_length=50, blank=True, null=True, verbose_name="Program ID")  
-    grli = models.CharField(max_length=50, blank=True, null=True, verbose_name="Grant Line Item")  
-    odhafr = models.CharField(max_length=50, blank=True, null=True, verbose_name="Annual Financial Report")
+    grli = models.CharField(max_length=50, blank=True, null=True, verbose_name="GLI")  
+    odhafr = models.CharField(max_length=50, blank=True, null=True, verbose_name="ODHAFR")
  
     def __str__(self):
         return f"PO {self.po_num} - {self.business.name}"
@@ -176,7 +176,7 @@ class ActivityList(models.Model):
     fund = models.ForeignKey(Fund, on_delete=models.CASCADE)
     rev_gen = models.BooleanField(default=False, verbose_name="Revenue Generating")
     active = models.BooleanField(default=True, verbose_name="Active")
-    fphs = models.CharField(max_length=20,verbose_name= "Foundational Public Health Service")
+    fphs = models.CharField(max_length=20,verbose_name= "FPHS")
  
  
     class Meta:
@@ -196,8 +196,6 @@ class Payroll(models.Model):
     comp_time_used = models.DecimalField(max_digits=6, decimal_places=2, verbose_name="Comp Time Used")
     other_hours = models.DecimalField(max_digits=6, decimal_places=2, verbose_name="Other Hours")
     other_rate = models.DecimalField(max_digits=6, decimal_places=2, verbose_name="Other Rate")
-    #I will add this as a property
-    #pay_rate = models.ForeignKey(Employee, on_delete=models.CASCADE)
     
     @property
     def pay_rate(self):
@@ -269,25 +267,10 @@ class LifeInsurance(models.TextChoices):
 class Benefits(models.Model):
     employee = models.ForeignKey(Employee, on_delete=models.CASCADE)
     hrs_per_pay = models.DecimalField(max_digits=6, decimal_places=2, verbose_name="Hours Per Pay")
-    #pers = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Public Employee Retirement System")
-    #medicare = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Medicare")
-    #wc = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Workman's Compensation")
     vac_elig = models.BooleanField(default=True, verbose_name="Vacation Eligible") #not sure on default
-    #vacation = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Vacation")
-    #plar = models.DecimalField(max_digits=8, decimal_places=2, verbose_name="Paid Leave Accumulation Rate")  
-    #sick = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Sick Leave")
-    #holiday = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Holiday Hours")
-    #total_hrly = models.DecimalField(max_digits=15, decimal_places=2,verbose_name="Total Hourly")
-    #percent_leave = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Percent Leave")
-    #monthly_hours = models.DecimalField(max_digits=6, decimal_places=2, verbose_name="Monthly Hours")
     ins_type = models.CharField(max_length=10, choices=HealthInsurance.choices, verbose_name="Insurance Type")
     board_ins_share = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Board Insurance Share")
-    #board_share_hrly = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Board Share Hourly")
     life_rate = models.CharField(max_length=10, choices=LifeInsurance.choices, verbose_name="Life Insurance Rate")
-    #life_hrly = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Life Hourly")
-    #salary = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Salary")
-    #fringe = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Fringe")
-    #total_comp = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Total Compensation")
  
     @property
     def pers(self):
@@ -326,7 +309,6 @@ class Benefits(models.Model):
             value = 0
         return f"{value:.2f}"
     
-    #CHECK THIS IS WHAT IS MEANT
     @property
     def sick(self):
         value = round(float(self.employee.pay_rate) * 0.0575,2)
