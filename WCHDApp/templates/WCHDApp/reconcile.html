@@ -1,0 +1,16 @@
+{% extends "WCHDApp/masterTemplate.html" %}
+{% load static %}
+
+
+{% block title %}Reconcile{% endblock %}
+
+{% block content %}
+    <link rel="stylesheet" type="text/css" href="{% static 'WCHDApp/css/cleanPages.css' %}"> 
+    <h1>Reconcile</h1>
+
+    <form method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+        {{form}}
+        <button type="submit">Reconcile</button>
+    </form>
+{% endblock %}

@@ -1,7 +1,7 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import HttpResponse
 from .models import Fund, Testing, Item
-from .forms import FundForm, TableSelect, LineForm, InputSelect, ExportSelect
+from .forms import FundForm, TableSelect, LineForm, InputSelect, ExportSelect,reconcileForm
 from django.forms import modelform_factory
 from django.apps import apps
 from django.db.models import DecimalField
@@ -14,6 +14,8 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image, Table, TableStyle
 from io import BytesIO
 import pandas as pd
+from openpyxl import load_workbook
+from openpyxl.styles import PatternFill
 import numpy as np
 import json
 
@@ -128,6 +130,64 @@ def generate_pdf(request, tableName):
     response['Content-Disposition'] = f'inline; filename="testing.pdf"'
 
     return response
+
+@permission_required('WCHDApp.has_full_access', raise_exception=True)
+def reconcile(request):
+    if request.method == "POST":
+        form = reconcileForm(request.POST, request.FILES)
+        if form.is_valid():
+            firstFile = form.cleaned_data['firstFile'] 
+            secondFile = form.cleaned_data['secondFile'] 
+            
+            df1 = pd.read_csv(firstFile)
+            df2 = pd.read_csv(secondFile)
+
+            columnList = list(df1.columns)
+            for i in range(len(columnList)):
+                columnList[i] = columnList[i].strip()
+            # Merge the two lists and remove duplicates
+            merged_df = pd.concat([df1, df2]).drop_duplicates()
+
+            # Identify common entries (entries in both list1 and list2)
+            common_entries = df1.merge(df2, on=columnList, how="inner")
+
+            # Save merged data to an Excel file
+            output_file = "output.xlsx"
+            merged_df.to_excel(output_file, index=False)
+
+            # Load the saved Excel file for formatting
+            wb = load_workbook(output_file)
+            ws = wb.active
+
+            # Define highlight style
+            highlight_fill = PatternFill(start_color="FFFF00", end_color="FFFF00", fill_type="solid")
+
+            # Convert common entries into a set for fast lookup
+            rows = common_entries[columnList].apply(tuple, axis=1)
+            common_set = set(rows)
+            print(common_set)
+
+            # Apply highlighting to rows that are NOT common (i.e., unique to either list1 or list2)
+            for row in ws.iter_rows(min_row=2, max_row=ws.max_row, min_col=1):
+                rowData = []
+                for column in row:
+                    rowData.append(column.value)
+                rowTuple = tuple(rowData)
+                print(rowTuple)
+                if rowTuple not in common_set:  # Highlight unique entries only
+                    for cell in row:
+                        cell.fill = highlight_fill
+            
+            outputStream = BytesIO()
+            wb.save(outputStream)
+            outputStream.seek(0)
+            response = HttpResponse(outputStream.getvalue(),content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+            response['Content-Disposition'] = f'attachment; filename="reconciliation.xlsx"'
+
+            return response
+    else:
+        form = reconcileForm()
+    return render(request, "WCHDApp/reconcile.html", {"form":form})
 
 #This view is used to select what table we want to create a report from
 @permission_required('WCHDApp.has_full_access', raise_exception=True)

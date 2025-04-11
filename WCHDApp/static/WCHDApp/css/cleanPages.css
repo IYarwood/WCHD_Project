@@ -80,6 +80,15 @@ button {
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
+button{
+    border-color: #3498db;
+    color: #3498db;
+}
+button:hover {
+    background-color: #3498db;
+    color: #fff;
+}
+
 button#seeTable {
     border-color: #3498db;
     color: #3498db;
