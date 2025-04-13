@@ -19,4 +19,5 @@ urlpatterns = [
     path('transactionsView/<str:itemID>', views.transactionsView, name='transactionsView'),
     path('noPrivileges/', views.noPrivileges, name='noPrivileges'),
     path('reconcile/', views.reconcile, name='reconcile'),
+    path('dailyReport/', views.dailyReport, name='dailyReport'),
 ]
