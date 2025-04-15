@@ -7,6 +7,17 @@ class FundSource(models.TextChoices):
     STATE = 'STATE'
     LOCAL = 'LOCAL'
 
+class Variable(models.Model):
+    name = models.CharField(max_length=50)
+    value = models.DecimalField(max_digits=10, decimal_places=2)
+
+    def __str__(self):
+        return self.name
+    
+    class Meta:
+        db_table = "Variables"
+
+
 #REMINDER TO TAKE OUT null=True and blank=True from all instances of dept once we have a department populated
 class Dept(models.Model):
     dept_id = models.SmallIntegerField(primary_key=True, verbose_name="Department ID")
@@ -271,7 +282,7 @@ class Benefits(models.Model):
     ins_type = models.CharField(max_length=10, choices=HealthInsurance.choices, verbose_name="Insurance Type")
     board_ins_share = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Board Insurance Share")
     life_rate = models.CharField(max_length=10, choices=LifeInsurance.choices, verbose_name="Life Insurance Rate")
- 
+
     @property
     def pers(self):
         value = round((float(self.employee.pay_rate) * 0.14), 2)
@@ -348,9 +359,9 @@ class Benefits(models.Model):
         if rate == LifeInsurance.ineligible:
             factor = 0
         elif rate == LifeInsurance.rate1:
-            factor = 3.42
+            factor = Variable.objects.get(name="insuranceRate1").value
         elif rate == LifeInsurance.rate2:
-            factor = 1.71
+            factor = Variable.objects.get(name="insuranceRate2").value
         
         value = float(factor)/float(self.monthly_hours)
         return f"{value:.2f}"
@@ -385,7 +396,7 @@ class Transaction(models.Model):
     fund = models.ForeignKey(Fund, on_delete=models.CASCADE)
     line = models.ForeignKey(Line, on_delete=models.CASCADE)
     item = models.ForeignKey(Item, on_delete=models.CASCADE)
-    date = models.DateTimeField(verbose_name="Date")
+    date = models.DateField(auto_now_add=True, verbose_name="Date")
     type = models.CharField(max_length=10, choices=transactionType.choices, verbose_name="Type")
     people = models.ForeignKey(People, on_delete=models.CASCADE)
     amount = models.IntegerField(verbose_name="Amount")
@@ -393,7 +404,7 @@ class Transaction(models.Model):
     comment = models.CharField(max_length = 500, verbose_name="Comment")
 
     class Meta:
-            db_table = "Transactions"
+        db_table = "Transactions"
 
 class AccessControl(models.Model):
     title = models.CharField(max_length=100)

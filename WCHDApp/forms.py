@@ -61,4 +61,16 @@ class ExportSelect(forms.Form):
     table = forms.ChoiceField(choices=modelsDict, label="Select Table", required=True)
     """
     
+class reconcileForm(forms.Form):
+    firstFile = forms.FileField(
+        label="Upload First CSV File",
+        required=False,
+        widget=forms.ClearableFileInput(attrs={'accept': '.csv'})
+    )
+    secondFile = forms.FileField(
+        label="Upload Second CSV File",
+        required=False,
+        widget=forms.ClearableFileInput(attrs={'accept': '.csv'})
+    )
+   
 

@@ -1,7 +1,7 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import HttpResponse
 from .models import Fund, Testing, Item
-from .forms import FundForm, TableSelect, LineForm, InputSelect, ExportSelect
+from .forms import FundForm, TableSelect, LineForm, InputSelect, ExportSelect,reconcileForm
 from django.forms import modelform_factory
 from django.apps import apps
 from django.db.models import DecimalField
@@ -14,7 +14,10 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image, Table, TableStyle
 from io import BytesIO
 import pandas as pd
+from openpyxl import load_workbook
+from openpyxl.styles import PatternFill
 import numpy as np
+from datetime import datetime
 import json
 
 def generate_pdf(request, tableName):
@@ -129,6 +132,64 @@ def generate_pdf(request, tableName):
 
     return response
 
+@permission_required('WCHDApp.has_full_access', raise_exception=True)
+def reconcile(request):
+    if request.method == "POST":
+        form = reconcileForm(request.POST, request.FILES)
+        if form.is_valid():
+            firstFile = form.cleaned_data['firstFile'] 
+            secondFile = form.cleaned_data['secondFile'] 
+            
+            df1 = pd.read_csv(firstFile)
+            df2 = pd.read_csv(secondFile)
+
+            columnList = list(df1.columns)
+            for i in range(len(columnList)):
+                columnList[i] = columnList[i].strip()
+            # Merge the two lists and remove duplicates
+            merged_df = pd.concat([df1, df2]).drop_duplicates()
+
+            # Identify common entries (entries in both list1 and list2)
+            common_entries = df1.merge(df2, on=columnList, how="inner")
+
+            # Save merged data to an Excel file
+            output_file = "output.xlsx"
+            merged_df.to_excel(output_file, index=False)
+
+            # Load the saved Excel file for formatting
+            wb = load_workbook(output_file)
+            ws = wb.active
+
+            # Define highlight style
+            highlight_fill = PatternFill(start_color="FFFF00", end_color="FFFF00", fill_type="solid")
+
+            # Convert common entries into a set for fast lookup
+            rows = common_entries[columnList].apply(tuple, axis=1)
+            common_set = set(rows)
+            print(common_set)
+
+            # Apply highlighting to rows that are NOT common (i.e., unique to either list1 or list2)
+            for row in ws.iter_rows(min_row=2, max_row=ws.max_row, min_col=1):
+                rowData = []
+                for column in row:
+                    rowData.append(column.value)
+                rowTuple = tuple(rowData)
+                print(rowTuple)
+                if rowTuple not in common_set:  # Highlight unique entries only
+                    for cell in row:
+                        cell.fill = highlight_fill
+            
+            outputStream = BytesIO()
+            wb.save(outputStream)
+            outputStream.seek(0)
+            response = HttpResponse(outputStream.getvalue(),content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+            response['Content-Disposition'] = f'attachment; filename="reconciliation.xlsx"'
+
+            return response
+    else:
+        form = reconcileForm()
+    return render(request, "WCHDApp/reconcile.html", {"form":form})
+
 #This view is used to select what table we want to create a report from
 @permission_required('WCHDApp.has_full_access', raise_exception=True)
 def reports(request):
@@ -137,9 +198,13 @@ def reports(request):
         form = TableSelect(request.POST)
 
         #Take the data from the form and pass it to our pdf generator function
+        button = request.POST.get('button')
         if form.is_valid():
             tableName = form.cleaned_data['table'] 
-            return redirect('generate_pdf', tableName)
+            if button == "daily":
+                return redirect('dailyReport')
+            else:
+                return redirect('generate_pdf', tableName)
     else:
         form = TableSelect()
     return render(request, "WCHDApp/reports.html", {'form': form})
@@ -468,6 +533,8 @@ def transactionsView(request,itemID):
     item = Item.objects.get(pk=itemID)
     fund = item.fund
     line = item.line
+    
+    
 
     if request.method == 'POST':
         form = TransactionForm(request.POST)
@@ -487,6 +554,119 @@ def transactionsView(request,itemID):
         form = TransactionForm()
 
     return render(request, "WCHDApp/transactionsView.html", {"item": itemID, "transactions": transactionValues,"fields": fieldNames, "aliasNames": aliasNames, "data": transactionValues, "decimalFields": decimalFields, "form":form})
+
+def dailyReport(request):
+    buffer = BytesIO()
+
+    # Create a PDF
+    doc = SimpleDocTemplate(buffer, pagesize=letter)
+    elements = []
+    styles = getSampleStyleSheet()
+
+
+    title_style = ParagraphStyle(
+        "TitleStyle",
+        parent=styles["Title"],
+        fontSize=16,
+        spaceAfter=11,
+        fontName="Helvetica-Bold"
+    )
+
+    subtitle_style = ParagraphStyle(
+        "SubtitleStyle",
+        parent=styles["Normal"],
+        fontSize=11,
+        textColor=colors.black,
+        spaceAfter=6,
+        fontName="Helvetica-Oblique"
+    )
+
+
+    #logo = Image("logo.png", width=80, height=80)
+    #logo.hAlign = 'LEFT'
+    #elements.append(logo)
+
+    elements.append(Spacer(1, 12))
+
+    # Report Title
+    elements.append(Paragraph("Washington County Health Department", title_style))
+    elements.append(Paragraph(
+        "List of Active Grants. Active means they have been awarded and the final expenditure report has not yet been approved.",
+        subtitle_style
+    ))
+
+    elements.append(Spacer(1, 12))
+
+    #Same logic as tableView, needs updated to current 
+    model = apps.get_model('WCHDApp', 'transaction')
+    today = datetime.today().strftime('%Y-%m-%d')
+    values = model.objects.filter(date=today).values()
+    fields = model._meta.get_fields()
+    fieldNames = []
+    decimalFields = []
+    aliasNames = []
+    for field in fields:
+        if field.is_relation:
+            if field.auto_created:
+                continue
+            else:
+                parentModel = apps.get_model('WCHDApp', field.name)
+                fkName = parentModel._meta.pk.name
+                fkAlias = parentModel._meta.pk.verbose_name
+                aliasNames.append(fkAlias)
+                fieldNames.append(fkName)
+
+        else:
+            if isinstance(field, DecimalField):
+                decimalFields.append(field.name)
+            aliasNames.append(field.verbose_name)  
+            fieldNames.append(field.name)
+
+    data = [
+        aliasNames,
+    ]
+    
+    for row in values:
+        print(row)
+        line = []
+        for field in fieldNames:
+            line.append(row[field])
+        data.append(line)
+
+
+    # Table Styling
+    table = Table(data, colWidths=[80, 70, 70, 70, 70, 50, 100, 50, 90, 40])
+    table.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, 0), colors.darkgray),
+        ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+        ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+        ("BOTTOMPADDING", (0, 0), (-1, 0), 5),
+        ("BACKGROUND", (0, 1), (-1, -1), colors.whitesmoke),
+        ("GRID", (0, 0), (-1, -1), 1, colors.black),
+        ("FONTSIZE", (0, 0), (-1, -1), 10),
+        ("TOPPADDING", (0, 0), (-1, 0), 10),
+    ]))
+
+    elements.append(table)
+
+    # Totals (below table)
+    elements.append(Spacer(1, 12))
+    elements.append(Paragraph("<b>Total Active Grants:</b> $571,880.00", styles["Normal"]))
+    elements.append(Paragraph("<b>Total Amount for Project:</b> $19,144.00", styles["Normal"]))
+
+    #Build PDF
+    doc.build(elements)
+
+    # Get the PDF value from buffer
+    buffer.seek(0)
+    pdf_data = buffer.getvalue()
+    buffer.close()
+
+    response = HttpResponse(pdf_data, content_type='application/pdf')
+    response['Content-Disposition'] = f'inline; filename="testing.pdf"'
+
+    return response
 
 def testing(request):
     if (request.user.is_superuser):

@@ -4,11 +4,12 @@
 {% block title %}Reports{% endblock %}
 
 {% block content %}  
-    <link rel="stylesheet" type="text/css" href="{% static 'WCHDAPP/css/formStyling.css' %}">   
+    <link rel="stylesheet" type="text/css" href="{% static 'WCHDApp/css/cleanPages.css' %}">   
     <h1>Reports</h1>
     <form method="post" target = "_blank">
         {% csrf_token %}
         {{form}}
-        <button type="submit">Make Report</button>
+        <button type="submit" name="button">Make Report</button>
+        <button type="submit" name="button" id="daily" value="daily">Daily Report</button>
     </form>
 {% endblock %}
