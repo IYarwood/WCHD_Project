@@ -407,6 +407,8 @@ def imports(request):
                 if not field.auto_created:
                     neededFields.append(field.name)
             
+            print(neededFields)
+            print(list(columns))
             if neededFields != list(columns):
                 message = "Bad File. Please check your CSV format and try again."
                 return render(request, "WCHDApp/imports.html", {"form": form, "message": message})
