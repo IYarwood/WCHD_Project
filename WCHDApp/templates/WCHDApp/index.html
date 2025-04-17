@@ -1,29 +1,119 @@
-{% extends "WCHDApp/masterTemplate.html" %}
 {% load static %}
 
-{% block title %} Index {% endblock %}
+{% block title %}{% endblock %}
 
 {% block content %}
-    <link rel="stylesheet" type="text/css" href="{% static 'WCHDApp/css/hubStyles.css' %}"> 
-    <div class="logoBox" style="display: flex; justify-content: center; max-height: 250px; margin-top: -35px;" >
-        
-        <img src="{% static 'WCHDApp/images/logo2.png' %}" alt="logo" style="max-width: 200%; max-height: 250px;" >
-    </div>
 
-    <div class="container">
-        <div class="box">
-            <a href={% url 'reports' %} style="text-decoration: none;  color: inherit; display: block; width: 100%; height: 100%; text-align: center; line-height: inherit;">Reports</a></div>
-        <div class="box">
-            <a href={% url 'viewTableSelect' %} style="text-decoration: none; color: inherit; display: block; width: 100%; height: 100%; text-align: center; line-height: inherit;">Table View Select</a></div>
-        <div class="box">
-            <a href={% url 'imports'%} style="text-decoration: none; color: inherit; display: block; width: 100%; height: 100%; text-align: center; line-height: inherit;">Imports </a></div>
-        <div class="box">
-            <a href={% url 'exports' %} style="text-decoration: none; color: inherit; display: block; width: 100%; height: 100%; text-align: center; line-height: inherit;">Exports</a></div>
-        <div class="box">
-            <a href={% url 'transactionsItem'%} style="text-decoration: none; color: inherit; display: block; width: 100%; height: 100%; text-align: center; line-height: inherit;">Transactions</a></div>
-            <div class="box">
-                <a href={% url 'reconcile'%} style="text-decoration: none; color: inherit; display: block; width: 100%; height: 100%; text-align: center; line-height: inherit;">Reconcile</a></div>
-   </div>
+<link href="https://fonts.googleapis.com/css2?family=Roboto+Mono&display=swap" rel="stylesheet">
+<link rel="stylesheet" type="text/css" href="{% static 'WCHDApp/css/hubStyles.css' %}"> 
 
+<style>
+  #liveTime, #liveDate, #sessionTime {
+    font-family: 'Roboto Mono', monospace;
+  }
+</style>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    function updateTime() {
+      const now = new Date();
+      let hours = now.getHours();
+      const minutes = now.getMinutes().toString().padStart(2, '0');
+      const seconds = now.getSeconds().toString().padStart(2, '0');
+      const ampm = hours >= 12 ? 'PM' : 'AM';
+      hours = hours % 12 || 12;
+      const timeString = `${hours}:${minutes}:${seconds} ${ampm}`;
+      document.getElementById('liveTime').innerText = timeString;
+    }
+
+    function updateDate() {
+      const now = new Date();
+      const month = (now.getMonth() + 1).toString().padStart(2, '0');
+      const day = now.getDate().toString().padStart(2, '0');
+      const year = now.getFullYear();
+      const dateString = `${month}/${day}/${year}`;
+      document.getElementById('liveDate').innerText = dateString;
+    }
+
+    const now = new Date();
+    const todayKey = now.toDateString();
+
+    if (localStorage.getItem('loginDate') !== todayKey) {
+      localStorage.setItem('loginDate', todayKey);
+      localStorage.setItem('loginTime', Date.now());
+    }
+
+    const startTime = parseInt(localStorage.getItem('loginTime'), 10);
+
+    function updateSessionTime() {
+      const now = Date.now();
+      const diff = now - startTime;
+
+      const hours = Math.floor(diff / (1000 * 60 * 60));
+      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+      const sessionText = `Session time: ${hours}h ${minutes}m ${seconds}s`;
+      const sessionEl = document.getElementById('sessionTime');
+      if (sessionEl) {
+        sessionEl.innerText = sessionText;
+      }
+    }
+
+    updateTime();
+    updateDate();
+    updateSessionTime();
+    setInterval(updateTime, 1000);
+    setInterval(updateSessionTime, 1000);
+  });
+</script>
+
+<nav class="hubNavbar-top">
+  <div class="hubNavbar-left">
+    <div id="liveTime">00:00:00 AM</div>
+    <div id="liveDate" style="font-size: 15px; color: rgb(0, 0, 0); margin-top: 2px;"></div>
+  </div>
+  <div class="hubNavbar-center">Night mode</div>
+  <div class="hubNavbar-right">
+    Welcome, UserName<br>
+    <p id="sessionTime"
+       title="This is how long you have been connected today"
+       style="font-size: 10px; text-align: left; width: 100%; margin: 0; color: grey; margin-top: 4px;">
+      Session time
+    </p>
+  </div>
+</nav>
+
+<nav class="hubNavbar-main">
+  <ul class="hubNavbar-links"></ul>
+  <div class="hubNavbar-action">
+    <a href="">LOG &nbsp; OUT</a>
+  </div>
+</nav>
+
+<div class="logoBox" style="display: flex; justify-content: center; max-height: 250px;">
+  <img src="{% static 'WCHDApp/images/logo2.png' %}" alt="logo" style="max-width: 200%; max-height: 250px;">
+</div>
+
+<div class="container">
+  <div class="box">
+    <a href="{% url 'reports' %}">Reports</a>
+  </div>
+  <div class="box">
+    <a href="{% url 'viewTableSelect' %}">Table View Select</a>
+  </div>
+  <div class="box">
+    <a href="{% url 'imports' %}">Imports</a>
+  </div>
+  <div class="box">
+    <a href="{% url 'exports' %}">Exports</a>
+  </div>
+  <div class="box">
+    <a href="{% url 'transactionsItem' %}">Transactions</a>
+  </div>
+  <div class="box">
+    <a href="{% url 'reconcile' %}">Reconcile</a>
+  </div>
+</div>
 
 {% endblock %}
