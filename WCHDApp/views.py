@@ -304,7 +304,9 @@ def tableView(request, tableName):
 
     #This is used to decide which fields we want to show in the accumulator based on each model
     summedFields = {
-        "Fund": "fund_cash_balance"  
+        "Fund": "fund_cash_balance", 
+        "Line": "line_total_income",
+        "Transaction": "amount",
     }
     
 
@@ -504,6 +506,12 @@ def transactionsView(request,itemID):
     decimalFields = []
     aliasNames = []
 
+    summedFields = {
+        "Fund": "fund_cash_balance", 
+        "Line": "line_total_income",
+        "Transaction": "amount",
+    }
+
     for field in fields:
 
         #Logic for foreign keys
@@ -528,6 +536,8 @@ def transactionsView(request,itemID):
                 decimalFields.append(field.name)
             aliasNames.append(field.verbose_name)  
             fieldNames.append(field.name)
+
+            
 
     TransactionForm = modelform_factory(transactionModel, exclude=(["fund", "line", "item"]))
     item = Item.objects.get(pk=itemID)
