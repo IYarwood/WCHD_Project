@@ -1,4 +1,5 @@
 from django.urls import path
+from django.contrib.auth.views import LogoutView
 from . import views
 
 urlpatterns = [
@@ -21,4 +22,9 @@ urlpatterns = [
     path('reconcile/', views.reconcile, name='reconcile'),
     path('dailyReport/', views.dailyReport, name='dailyReport'),
     path('clockifyImport/', views.clockifyImport, name='clockifyImport'),
+    path('logout/', LogoutView.as_view(next_page='logIn.Html'), name='logout'),
 ]
+
+    
+    
+
