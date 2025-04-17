@@ -703,3 +703,105 @@ def checkPrivileges(request):
     
 def noPrivileges(request, exception):
     return render(request, "WCHDApp/noPrivileges.html")
+
+def clockifyImport(request, *args, **kwargs):
+    message = ""
+    fieldMap = {
+        "Project": "ActivityList",
+        "Department": "dept",
+        "User": "employee",
+        "Start Date": "startDate",
+        "End Date": "endDate",
+        "Billable Rate (USD)": "billableRate",
+        "Billable Amount (USD)": "billableAmount"
+    }
+
+
+    if request.method == 'POST':
+        form = InputSelect(request.POST, request.FILES)
+        if form.is_valid():
+            tableName = form.cleaned_data['table']
+            selectedFile = form.cleaned_data['file']
+            file = pd.read_csv(selectedFile)
+            columns = file.columns
+            row = file.iloc[0]
+            data = []
+            model = apps.get_model('WCHDApp', tableName)
+            fields = model._meta.get_fields()
+            neededFields = []
+            for field in fields:
+                if not field.auto_created:
+                    neededFields.append(field.name)
+
+            columns = list(columns)
+            
+            neededIndexes = []
+            for i in range(len(columns)):
+                if columns[i] in fieldMap:
+                    columns[i] = fieldMap[columns[i]]
+                    neededIndexes.append(i)
+            for i in range(len(file)):
+                dict = {}
+                row = file.iloc[i]
+                for i in range(len(row)):
+                    if i in neededIndexes:
+                        print(row[i])
+                        dict[row[i]] = row[i]
+                data.append(dict)
+            print(data)
+            """
+            if neededFields != list(columns):
+                message = "Bad File. Please check your CSV format and try again."
+                return render(request, "WCHDApp/imports.html", {"form": form, "message": message})
+            
+            lookUpFields = []
+            fks = []
+            for field in fields:
+                #Logic for foreign keys
+                if field.is_relation:
+                    fks.append(field.name)
+                    if field.auto_created:
+                        continue
+                    else:
+                        #Grab related model. This is why foreign keys have to be named after the model 
+                        parentModel = apps.get_model('WCHDApp', field.name)
+
+                        #Get the related models primary key
+                        fkName = parentModel._meta.pk.name
+                        #fks.append(fkName)
+                        #Primary keys verbose name
+                        fkAlias = parentModel._meta.pk.verbose_name
+                else:
+                    lookUpFields.append(field)
+            
+
+            print(fks)
+            for i in range(len(file)):
+                dict = {}
+                row = file.iloc[i]
+                for column in columns:
+                    if column in neededFields:
+                        dict[column] = row[column]
+                data.append(dict)
+                print(data)
+                
+            
+            for line in data:
+                for key in line:
+                    if type(line[key]) == np.int64:
+                        line[key] = int(line[key])
+                    if key in fks:
+                        parentModel = apps.get_model('WCHDApp', key)
+                        print("Grab the object linked")
+                        line[key] = parentModel.objects.get(pk=line[key])
+                print(line)
+                obj, _ = model.objects.update_or_create(
+                    **line,
+                    defaults = line
+                )    
+            """
+    else:
+        form = InputSelect()
+    
+        
+    return render(request, "WCHDApp/clockifyImport.html", {"form": form, "message": message})

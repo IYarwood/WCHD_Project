@@ -412,6 +412,18 @@ class AccessControl(models.Model):
     class Meta:
         permissions = [("has_full_access", "Has full access to all views")]
 
+class Clockify(models.Model):
+    ActivityList = models.ForeignKey(ActivityList, on_delete=models.PROTECT)
+    dept = models.ForeignKey(Dept, on_delete=models.PROTECT)
+    employee = models.ForeignKey(Employee, on_delete=models.PROTECT)
+    startDate = models.DateField()
+    endDate = models.DateField()
+    billableRate = models.DecimalField(max_digits=10, decimal_places=2)
+    billableAmount = models.DecimalField(max_digits=10, decimal_places=2)
+
+    class Meta:
+        db_table = "Clockify"
+
 class Testing(models.Model):
     testing_name = models.CharField(max_length=200, blank=True)
     fund_year = models.IntegerField(blank=True, null = True)
