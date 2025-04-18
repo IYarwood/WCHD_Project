@@ -24,7 +24,7 @@ urlpatterns = [
     path('clockifyImport/', views.clockifyImport, name='clockifyImport'),
     path('logout/', LogoutView.as_view(next_page='logIn.Html'), name='logout'),
     path('calculateActivitySelect/', views.calculateActivitySelect, name='calculateActivitySelect'),
-    path('calculateActivityBalances/', views.calculateActivityBalances, name='calculateActivityBalances'),
+    path('calculateActivityBalances/<str:activityID>', views.calculateActivityBalances, name='calculateActivityBalances'),
 ]
 
     

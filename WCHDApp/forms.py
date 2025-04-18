@@ -80,7 +80,7 @@ class activitySelect(forms.Form):
     activities = activityModel.objects.all()
     activitiesDict= {}
     for activity in activities:
-        activitiesDict[activity.program] = activity.program
+        activitiesDict[activity.ActivityList_id] = activity.program
     
     activityName = forms.ChoiceField(choices=activitiesDict, label="Select Activity", required=True)
     

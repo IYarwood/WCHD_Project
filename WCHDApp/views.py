@@ -831,16 +831,18 @@ def calculateActivitySelect(request, *args, **kwargs):
     if (request.method == "POST"):
         form = activitySelect(request.POST)
         if form.is_valid():
-            activityName = form.cleaned_data['activityName']
-            redirect(calculateActivityBalances, activityName)
+            activityID = form.cleaned_data['activityName']
+            print("REDIRECTING")
+            return redirect(calculateActivityBalances, activityID=activityID)
     else:
         form = activitySelect()
     return render(request, "WCHDApp/calculateActivitySelect.html", {"form": form})
 
 def calculateActivityBalances(request, *args, **kwargs):
     clockifyModel = apps.get_model('WCHDApp', 'Clockify')
-    ActivityName = kwargs.get("activityName")
-    data = clockifyModel.objects.filter(ActivityList = ActivityName)
+    ActivityID = kwargs.get("activityID")
+    data = clockifyModel.objects.filter(ActivityList = ActivityID)
 
     print(data)
+    return HttpResponse("<h1>Hello World</h1>")
 
