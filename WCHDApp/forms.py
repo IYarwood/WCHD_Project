@@ -74,3 +74,16 @@ class reconcileForm(forms.Form):
     )
    
 
+class activitySelect(forms.Form):
+    #Pulling models
+    activityModel = apps.get_model('WCHDApp', 'ActivityList')
+    activities = activityModel.objects.all()
+    activitiesDict= {}
+    for activity in activities:
+        activitiesDict[activity.ActivityList_id] = activity.program
+    
+    activityName = forms.ChoiceField(choices=activitiesDict, label="Select Activity", required=True)
+    
+    
+
+    

@@ -180,7 +180,8 @@ class Voucher(models.Model):
         db_table = "Vouchers"
 
 class ActivityList(models.Model):
-    program_id = models.AutoField(primary_key=True, verbose_name="Program ID")
+    #Had to change this from program_id
+    ActivityList_id = models.AutoField(primary_key=True, verbose_name="Program ID")
     program = models.CharField(max_length=100, verbose_name="Program")
     odhafr = models.CharField(max_length=10, verbose_name="ODHAFR")
     dept = models.ForeignKey(Dept, on_delete=models.CASCADE)
@@ -416,8 +417,8 @@ class Clockify(models.Model):
     ActivityList = models.ForeignKey(ActivityList, on_delete=models.PROTECT)
     dept = models.ForeignKey(Dept, on_delete=models.PROTECT)
     employee = models.ForeignKey(Employee, on_delete=models.PROTECT)
-    startDate = models.DateField()
-    endDate = models.DateField()
+    startDate = models.CharField(max_length=255)
+    endDate = models.CharField(max_length=255)
     billableRate = models.DecimalField(max_digits=10, decimal_places=2)
     billableAmount = models.DecimalField(max_digits=10, decimal_places=2)
 

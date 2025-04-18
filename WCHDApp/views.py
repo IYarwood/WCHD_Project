@@ -1,7 +1,7 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import HttpResponse
 from .models import Fund, Testing, Item
-from .forms import FundForm, TableSelect, LineForm, InputSelect, ExportSelect,reconcileForm
+from .forms import FundForm, TableSelect, LineForm, InputSelect, ExportSelect,reconcileForm, activitySelect
 from django.forms import modelform_factory
 from django.apps import apps
 from django.db.models import DecimalField
@@ -425,10 +425,27 @@ def imports(request):
             fields = model._meta.get_fields()
 
             neededFields = []
+            """
             for field in fields:
                 if not field.auto_created:
                     neededFields.append(field.name)
-            
+            """
+            for field in fields:
+                if field.is_relation:
+                        #fks.append(field.name)
+                        if field.auto_created:
+                            continue
+                        else:
+                            #Grab related model. This is why foreign keys have to be named after the model 
+                            parentModel = apps.get_model('WCHDApp', field.name)
+
+                            #Get the related models primary key
+                            fkName = parentModel._meta.pk.name
+                            neededFields.append(fkName)
+                else:
+                    neededFields.append(field.name)
+            print(neededFields)
+            print(list(columns))
             if neededFields != list(columns):
                 message = "Bad File. Please check your CSV format and try again."
                 return render(request, "WCHDApp/imports.html", {"form": form, "message": message})
@@ -738,6 +755,11 @@ def clockifyImport(request, *args, **kwargs):
         "Billable Amount (USD)": "billableAmount"
     }
 
+    modelFields = {
+        "ActivityList": "program",
+        "dept": "dept_name"
+    }
+
 
     if request.method == 'POST':
         form = InputSelect(request.POST, request.FILES)
@@ -745,6 +767,7 @@ def clockifyImport(request, *args, **kwargs):
             tableName = form.cleaned_data['table']
             selectedFile = form.cleaned_data['file']
             file = pd.read_csv(selectedFile)
+            file.dropna(how='all', inplace=True)
             columns = file.columns
             row = file.iloc[0]
             data = []
@@ -762,20 +785,22 @@ def clockifyImport(request, *args, **kwargs):
                 if columns[i] in fieldMap:
                     columns[i] = fieldMap[columns[i]]
                     neededIndexes.append(i)
+
+
             for i in range(len(file)):
                 dict = {}
                 row = file.iloc[i]
-                for i in range(len(row)):
-                    if i in neededIndexes:
-                        print(row[i])
-                        dict[row[i]] = row[i]
+               
+                for j in neededIndexes:
+                    column = columns[j]
+                    dict[column] = row[j]
                 data.append(dict)
             print(data)
             """
             if neededFields != list(columns):
                 message = "Bad File. Please check your CSV format and try again."
                 return render(request, "WCHDApp/imports.html", {"form": form, "message": message})
-            
+            """
             lookUpFields = []
             fks = []
             for field in fields:
@@ -798,16 +823,6 @@ def clockifyImport(request, *args, **kwargs):
             
 
             print(fks)
-            for i in range(len(file)):
-                dict = {}
-                row = file.iloc[i]
-                for column in columns:
-                    if column in neededFields:
-                        dict[column] = row[column]
-                data.append(dict)
-                print(data)
-                
-            
             for line in data:
                 for key in line:
                     if type(line[key]) == np.int64:
@@ -815,15 +830,41 @@ def clockifyImport(request, *args, **kwargs):
                     if key in fks:
                         parentModel = apps.get_model('WCHDApp', key)
                         print("Grab the object linked")
-                        line[key] = parentModel.objects.get(pk=line[key])
+                        if key == "employee":
+                            names = line[key].split(" ")
+                            print(names)
+                            line[key] = parentModel.objects.get(first_name=names[0], surname=names[1])
+                        elif key == "ActivityList":
+                            line[key] = parentModel.objects.get(program=line[key])
+                        elif key == "dept":
+                            line[key] = parentModel.objects.get(dept_name=line[key])
                 print(line)
                 obj, _ = model.objects.update_or_create(
                     **line,
                     defaults = line
                 )    
-            """
     else:
         form = InputSelect()
     
         
     return render(request, "WCHDApp/clockifyImport.html", {"form": form, "message": message})
+
+def calculateActivitySelect(request, *args, **kwargs):
+    if (request.method == "POST"):
+        form = activitySelect(request.POST)
+        if form.is_valid():
+            activityID = form.cleaned_data['activityName']
+            print("REDIRECTING")
+            return redirect(calculateActivityBalances, activityID=activityID)
+    else:
+        form = activitySelect()
+    return render(request, "WCHDApp/calculateActivitySelect.html", {"form": form})
+
+def calculateActivityBalances(request, *args, **kwargs):
+    clockifyModel = apps.get_model('WCHDApp', 'Clockify')
+    ActivityID = kwargs.get("activityID")
+    data = clockifyModel.objects.filter(ActivityList = ActivityID)
+
+    print(data)
+    return HttpResponse("<h1>Hello World</h1>")
+
