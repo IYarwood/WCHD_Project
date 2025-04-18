@@ -76,11 +76,10 @@
   <div class="hubNavbar-center">Night mode</div>
   <div class="hubNavbar-right">
     Welcome, {{request.user}}<br>
-    <p id="sessionTime"
-       title="This is how long you have been connected today"
-       style="font-size: 10px; text-align: left; width: 100%; margin: 0; color: grey; margin-top: 4px;">
-      Session time
-    </p>
+    <p title="This is how long you have been connected today"
+   style="font-size: 10px; text-align: left; width: 100%; margin: 0; color: grey; margin-top: 4px;">
+  Session time: {{ duration }}
+</p>
   </div>
 </nav>
 

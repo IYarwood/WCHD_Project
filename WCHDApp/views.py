@@ -19,6 +19,9 @@ from openpyxl.styles import PatternFill
 import numpy as np
 from datetime import datetime
 import json
+from django.shortcuts import render
+from django.utils.timezone import now
+from django.utils.dateparse import parse_datetime
 
 def generate_pdf(request, tableName):
     buffer = BytesIO()
@@ -211,7 +214,26 @@ def reports(request):
 
 #Hub, does nothing yet
 def index(request):
-    return render(request, "WCHDApp/index.html")
+    # Set session start time if it's not already set
+    if not request.session.get('session_start_time'):
+        request.session['session_start_time'] = str(now())
+
+    # Calculate session duration
+    session_start_str = request.session.get('session_start_time')
+    duration_display = "0h 0m 0s"  # Default
+
+    if session_start_str:
+        session_start = parse_datetime(session_start_str)
+        if session_start:
+            duration = now() - session_start
+            total_seconds = int(duration.total_seconds())
+            hours = total_seconds // 3600
+            minutes = (total_seconds % 3600) // 60
+            seconds = total_seconds % 60
+            duration_display = f"{hours}h {minutes}m {seconds}s"
+
+    # Pass formatted string to template
+    return render(request, "WCHDApp/index.html", {'duration': duration_display})
 
 #newFund and newLine are depricated, used in our old way of doing things
 #Will eventually clean this system out
