@@ -78,11 +78,11 @@ class activitySelect(forms.Form):
     #Pulling models
     activityModel = apps.get_model('WCHDApp', 'ActivityList')
     activities = activityModel.objects.all()
-    activitiesDict= {}
+    activityChoices = []
     for activity in activities:
-        activitiesDict[activity.ActivityList_id] = activity.program
+        activityChoices.append((activity.ActivityList_id, activity.program))
     
-    activityName = forms.ChoiceField(choices=activitiesDict, label="Select Activity", required=True)
+    activityName = forms.ChoiceField(choices=activityChoices, label="Select Activity", required=True)
     
     
 

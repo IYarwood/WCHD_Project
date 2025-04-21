@@ -850,21 +850,46 @@ def clockifyImport(request, *args, **kwargs):
     return render(request, "WCHDApp/clockifyImport.html", {"form": form, "message": message})
 
 def calculateActivitySelect(request, *args, **kwargs):
-    if (request.method == "POST"):
-        form = activitySelect(request.POST)
-        if form.is_valid():
-            activityID = form.cleaned_data['activityName']
-            print("REDIRECTING")
-            return redirect(calculateActivityBalances, activityID=activityID)
-    else:
-        form = activitySelect()
-    return render(request, "WCHDApp/calculateActivitySelect.html", {"form": form})
+    clockifyModel = apps.get_model('WCHDApp', 'Clockify')
+    data = clockifyModel.objects.all()
+    fields = []
+    verboseNames = []
+    for field in clockifyModel._meta.get_fields():
+        if field.is_relation:
+            #Grab related model. This is why foreign keys have to be named after the model 
+            parentModel = apps.get_model('WCHDApp', field.name)
+
+            #Get the related models primary key
+            fkName = parentModel._meta.pk.name
+            verboseNames.append(parentModel._meta.pk.verbose_name)
+            fields.append(fkName)
+        else:
+            verboseNames.append(field.verbose_name)
+            fields.append(field.name)
+
+    activityModel = apps.get_model('WCHDApp', 'ActivityList')
+    activities = activityModel.objects.all()
+    activityChoices = []
+    for activity in activities:
+        activityChoices.append((activity.ActivityList_id, activity.program))
+    
+    employeeModel = apps.get_model("WCHDApp", "employee")
+    employees = employeeModel.objects.all()
+    employeeChoices = []
+    for employee in employees:
+        employeeChoices.append((employee.employee_id, employee.first_name))
+    
+    context = {
+        "activityChoices": activityChoices,
+        "employeeChoices": employeeChoices, 
+        "data": data, "fields": fields, 
+        "verboseFields": verboseNames}
+
+    return render(request, "WCHDApp/calculateActivitySelect.html", context)
 
 def calculateActivityBalances(request, *args, **kwargs):
     clockifyModel = apps.get_model('WCHDApp', 'Clockify')
     ActivityID = kwargs.get("activityID")
     data = clockifyModel.objects.filter(ActivityList = ActivityID)
-
-    print(data)
-    return HttpResponse("<h1>Hello World</h1>")
+    return render(request, "WCHDApp/calculateActivityBalance")
 

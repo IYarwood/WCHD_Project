@@ -1,15 +1,45 @@
 {% extends 'WCHDApp/masterTemplate.html' %}
 {% load static %}
+{% load custom_filters %}
 
 
 {% block title %}Calculate Activity{% endblock %}
 
 {% block content %}
     <link rel="stylesheet" type="text/css" href="{% static 'WCHDApp/css/cleanPages.css' %}"> 
+    <script src="{% static 'WCHDApp/js/clockifyCalculations.js' %}"></script>
     <h1>Calculate Activity</h1>
     <form method="post">
-        {% csrf_token %}
-        {{form}}
-        <button type="submit">Calculate</button>
+        <select id="activityDropdown">
+            <option>Select Activity</option>
+            {% for choice in activityChoices %}
+                <!--choice.1 = choice[1]-->
+                <option value={{choice.0}}>{{choice.1}}</option>
+            {% endfor %}
+        </select>
+        <select id="employeeDropdown">
+            <option>Select Employee</option>
+            {% for choice in employeeChoices %}
+                <!--choice.1 = choice[1]-->
+                <option value={{choice.0}}>{{choice.1}}</option>
+            {% endfor %}
+        </select>
     </form>
+
+    <table id="activityTable">
+        <tr>
+            {% for field in verboseFields %}
+                <th>{{field}}</th>
+            {% endfor %}
+        </tr>
+        {% for obj in data %}
+            <tr data-billamount={{obj|get_attr:'billableAmount'}} data-activityid={{obj|get_attr:'ActivityList_id'}} data-employeeid={{obj|get_attr:'employee_id'}}>
+                {% for field in fields %}
+                    <td>{{obj|get_attr:field}}</td>
+                {% endfor %}
+            </tr>
+        {% endfor %}
+    </table>
+    <p id="fundActivity"></p>
+    <p id="fundEmployee"></p>
 {% endblock %}
