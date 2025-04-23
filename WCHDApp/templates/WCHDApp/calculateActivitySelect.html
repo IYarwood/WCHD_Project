@@ -17,6 +17,7 @@
                 <option value={{choice.0}}>{{choice.1}}</option>
             {% endfor %}
         </select>
+        
         <select id="employeeDropdown">
             <option>Select Employee</option>
             {% for choice in employeeChoices %}
@@ -33,7 +34,7 @@
             {% endfor %}
         </tr>
         {% for obj in data %}
-            <tr data-billamount={{obj|get_attr:'billableAmount'}} data-activityid={{obj|get_attr:'ActivityList_id'}} data-employeeid={{obj|get_attr:'employee_id'}}>
+            <tr data-billamount={{obj|get_attr:'billableAmount'}} data-activityid={{obj|get_attr:'ActivityList_id'}} data-employeeid={{obj|get_attr:'employee_id'}} data-hours={{obj|get_attr:'hours'}} data-fundid={{obj|get_attr:'fund_id'}}>
                 {% for field in fields %}
                     <td>{{obj|get_attr:field}}</td>
                 {% endfor %}
