@@ -421,6 +421,7 @@ class Clockify(models.Model):
     endDate = models.CharField(max_length=255)
     billableRate = models.DecimalField(max_digits=10, decimal_places=2)
     billableAmount = models.DecimalField(max_digits=10, decimal_places=2)
+    hours = models.DecimalField(max_digits=10, decimal_places=2)
 
     class Meta:
         db_table = "Clockify"

@@ -25,7 +25,6 @@ urlpatterns = [
     path('logout/', LogoutView.as_view(next_page='/'), name='logout'),
     path('calculateActivitySelect/', views.calculateActivitySelect, name='calculateActivitySelect'),
     path('calculateActivityBalances/<str:activityID>', views.calculateActivityBalances, name='calculateActivityBalances'),
-    
 ]
 
     

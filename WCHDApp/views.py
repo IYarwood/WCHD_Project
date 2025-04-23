@@ -1,5 +1,5 @@
 from django.shortcuts import render, get_object_or_404, redirect
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from .models import Fund, Testing, Item
 from .forms import FundForm, TableSelect, LineForm, InputSelect, ExportSelect,reconcileForm, activitySelect
 from django.forms import modelform_factory
@@ -748,11 +748,13 @@ def clockifyImport(request, *args, **kwargs):
     fieldMap = {
         "Project": "ActivityList",
         "Department": "dept",
+        "Group": "fund",
         "User": "employee",
         "Start Date": "startDate",
         "End Date": "endDate",
         "Billable Rate (USD)": "billableRate",
-        "Billable Amount (USD)": "billableAmount"
+        "Billable Amount (USD)": "billableAmount",
+        "Duration (decimal)": "hours"
     }
 
     modelFields = {
@@ -771,22 +773,26 @@ def clockifyImport(request, *args, **kwargs):
             columns = file.columns
             row = file.iloc[0]
             data = []
+            #Getting all the fields for Clockify
             model = apps.get_model('WCHDApp', tableName)
             fields = model._meta.get_fields()
             neededFields = []
+            #Exclude autocreated fields like id
             for field in fields:
                 if not field.auto_created:
                     neededFields.append(field.name)
 
             columns = list(columns)
             
+            #Creating a list of indices that we want from columns
             neededIndexes = []
             for i in range(len(columns)):
                 if columns[i] in fieldMap:
+                    #updated columns[i] to the name we need for the model
                     columns[i] = fieldMap[columns[i]]
                     neededIndexes.append(i)
 
-
+            #Creating a list of dictionaries for each row with the values we need
             for i in range(len(file)):
                 dict = {}
                 row = file.iloc[i]
@@ -795,7 +801,7 @@ def clockifyImport(request, *args, **kwargs):
                     column = columns[j]
                     dict[column] = row[j]
                 data.append(dict)
-            print(data)
+            #print(data)
             """
             if neededFields != list(columns):
                 message = "Bad File. Please check your CSV format and try again."
@@ -807,38 +813,27 @@ def clockifyImport(request, *args, **kwargs):
                 #Logic for foreign keys
                 if field.is_relation:
                     fks.append(field.name)
-                    if field.auto_created:
-                        continue
-                    else:
-                        #Grab related model. This is why foreign keys have to be named after the model 
-                        parentModel = apps.get_model('WCHDApp', field.name)
-
-                        #Get the related models primary key
-                        fkName = parentModel._meta.pk.name
-                        #fks.append(fkName)
-                        #Primary keys verbose name
-                        fkAlias = parentModel._meta.pk.verbose_name
                 else:
                     lookUpFields.append(field)
             
-
             print(fks)
             for line in data:
                 for key in line:
                     if type(line[key]) == np.int64:
                         line[key] = int(line[key])
                     if key in fks:
+                        #Linking objects with the fields we have
                         parentModel = apps.get_model('WCHDApp', key)
-                        print("Grab the object linked")
                         if key == "employee":
                             names = line[key].split(" ")
-                            print(names)
                             line[key] = parentModel.objects.get(first_name=names[0], surname=names[1])
                         elif key == "ActivityList":
                             line[key] = parentModel.objects.get(program=line[key])
                         elif key == "dept":
                             line[key] = parentModel.objects.get(dept_name=line[key])
-                print(line)
+                        elif key == "fund":
+                            line[key] = parentModel.objects.get(fund_name=line[key])
+                #print(line)
                 obj, _ = model.objects.update_or_create(
                     **line,
                     defaults = line
@@ -881,15 +876,20 @@ def calculateActivitySelect(request, *args, **kwargs):
     
     context = {
         "activityChoices": activityChoices,
-        "employeeChoices": employeeChoices, 
+        "employeeChoices": employeeChoices,
         "data": data, "fields": fields, 
         "verboseFields": verboseNames}
 
     return render(request, "WCHDApp/calculateActivitySelect.html", context)
 
-def calculateActivityBalances(request, *args, **kwargs):
-    clockifyModel = apps.get_model('WCHDApp', 'Clockify')
-    ActivityID = kwargs.get("activityID")
-    data = clockifyModel.objects.filter(ActivityList = ActivityID)
-    return render(request, "WCHDApp/calculateActivityBalance")
-
+def getActivities(request):
+    activityModel = apps.get_model('WCHDApp', 'ActivityList')
+    activities = activityModel.objects.all()
+    activityChoices = []
+    for activity in activities:
+        activityChoices.append((activity.ActivityList_id, activity.program))
+    
+    data = {
+        "activities": activityChoices
+    }
+    return JsonResponse(data)
