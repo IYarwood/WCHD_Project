@@ -86,7 +86,12 @@
 <nav class="hubNavbar-main">
   <ul class="hubNavbar-links"></ul>
   <div class="hubNavbar-action">
-    <a href="">LOG &nbsp; OUT</a>
+    <form id="logout-form" method="POST" action="{% url 'logout' %}" style="display: inline;">
+      {% csrf_token %}
+      <a href="#" onclick="document.getElementById('logout-form').submit();" class="hubNavbar-link">
+        LOG&nbsp;OUT
+      </a>
+    </form>
   </div>
 </nav>
 
