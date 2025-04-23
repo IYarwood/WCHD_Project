@@ -22,7 +22,7 @@ urlpatterns = [
     path('reconcile/', views.reconcile, name='reconcile'),
     path('dailyReport/', views.dailyReport, name='dailyReport'),
     path('clockifyImport/', views.clockifyImport, name='clockifyImport'),
-    path('logout/', LogoutView.as_view(next_page='logIn.Html'), name='logout'),
+    path('logout/', LogoutView.as_view(next_page='/'), name='logout'),
     path('calculateActivitySelect/', views.calculateActivitySelect, name='calculateActivitySelect'),
     path('getActivities/', views.getActivities, name='getActivities'),
 ]
