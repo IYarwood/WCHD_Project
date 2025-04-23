@@ -748,7 +748,6 @@ def clockifyImport(request, *args, **kwargs):
     fieldMap = {
         "Project": "ActivityList",
         "Department": "dept",
-        "Group": "fund",
         "User": "employee",
         "Start Date": "startDate",
         "End Date": "endDate",
@@ -831,8 +830,6 @@ def clockifyImport(request, *args, **kwargs):
                             line[key] = parentModel.objects.get(program=line[key])
                         elif key == "dept":
                             line[key] = parentModel.objects.get(dept_name=line[key])
-                        elif key == "fund":
-                            line[key] = parentModel.objects.get(fund_name=line[key])
                 #print(line)
                 obj, _ = model.objects.update_or_create(
                     **line,
@@ -847,6 +844,8 @@ def clockifyImport(request, *args, **kwargs):
 def calculateActivitySelect(request, *args, **kwargs):
     clockifyModel = apps.get_model('WCHDApp', 'Clockify')
     data = clockifyModel.objects.all()
+    for obj in data:
+        print(obj.ActivityList.fund)
     fields = []
     verboseNames = []
     for field in clockifyModel._meta.get_fields():
@@ -873,16 +872,24 @@ def calculateActivitySelect(request, *args, **kwargs):
     employeeChoices = []
     for employee in employees:
         employeeChoices.append((employee.employee_id, employee.first_name))
+
+    fundModel = apps.get_model("WCHDApp", "fund")
+    funds = fundModel.objects.all()
+    fundChoices = []
+    for fund in funds:
+        fundChoices.append((fund.fund_id, fund.fund_name))
     
     context = {
         "activityChoices": activityChoices,
         "employeeChoices": employeeChoices,
+        "fundChoices": fundChoices,
         "data": data, "fields": fields, 
         "verboseFields": verboseNames}
 
     return render(request, "WCHDApp/calculateActivitySelect.html", context)
 
 def getActivities(request):
+    #This is used to have an array of the activities in javascript
     activityModel = apps.get_model('WCHDApp', 'ActivityList')
     activities = activityModel.objects.all()
     activityChoices = []
