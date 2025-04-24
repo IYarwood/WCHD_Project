@@ -5,81 +5,38 @@
 {% block content %}
 
 <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono&display=swap" rel="stylesheet">
-<link rel="stylesheet" type="text/css" href="{% static 'WCHDApp/css/hubStyles.css' %}"> 
+<link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
+<link rel="stylesheet" type="text/css" href="{% static 'WCHDApp/css/hubStyles.css' %}">
 
 <style>
-  #liveTime, #liveDate, #sessionTime {
-    font-family: 'Roboto Mono', monospace;
+  .cursive-welcome {
+    font-family: 'Pacifico', cursive;
+    font-size: 18px;
+    padding: 2px 6px;
+    display: inline-block;
   }
 </style>
-
-<script>
-  document.addEventListener('DOMContentLoaded', function () {
-    function updateTime() {
-      const now = new Date();
-      let hours = now.getHours();
-      const minutes = now.getMinutes().toString().padStart(2, '0');
-      const seconds = now.getSeconds().toString().padStart(2, '0');
-      const ampm = hours >= 12 ? 'PM' : 'AM';
-      hours = hours % 12 || 12;
-      const timeString = `${hours}:${minutes}:${seconds} ${ampm}`;
-      document.getElementById('liveTime').innerText = timeString;
-    }
-
-    function updateDate() {
-      const now = new Date();
-      const month = (now.getMonth() + 1).toString().padStart(2, '0');
-      const day = now.getDate().toString().padStart(2, '0');
-      const year = now.getFullYear();
-      const dateString = `${month}/${day}/${year}`;
-      document.getElementById('liveDate').innerText = dateString;
-    }
-
-    const now = new Date();
-    const todayKey = now.toDateString();
-
-    if (localStorage.getItem('loginDate') !== todayKey) {
-      localStorage.setItem('loginDate', todayKey);
-      localStorage.setItem('loginTime', Date.now());
-    }
-
-    const startTime = parseInt(localStorage.getItem('loginTime'), 10);
-
-    function updateSessionTime() {
-      const now = Date.now();
-      const diff = now - startTime;
-
-      const hours = Math.floor(diff / (1000 * 60 * 60));
-      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-      const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-
-      const sessionText = `Session time: ${hours}h ${minutes}m ${seconds}s`;
-      const sessionEl = document.getElementById('sessionTime');
-      if (sessionEl) {
-        sessionEl.innerText = sessionText;
-      }
-    }
-
-    updateTime();
-    updateDate();
-    updateSessionTime();
-    setInterval(updateTime, 1000);
-    setInterval(updateSessionTime, 1000);
-  });
-</script>
 
 <nav class="hubNavbar-top">
   <div class="hubNavbar-left">
     <div id="liveTime">00:00:00 AM</div>
-    <div id="liveDate" style="font-size: 15px; color: rgb(0, 0, 0); margin-top: 2px;"></div>
+    <div id="liveDate" style="font-size: 15px; margin-top: 2px;"></div>
   </div>
-  <div class="hubNavbar-center">Night mode</div>
+  <div class="hubNavbar-center">
+    <button id="toggleTheme" class="theme-toggle">🌙 Night Mode</button>
+  </div>
   <div class="hubNavbar-right">
-    Welcome, {{request.user}}<br>
-    <p title="This is how long you have been connected today"
-   style="font-size: 10px; text-align: left; width: 100%; margin: 0; color: grey; margin-top: 4px;">
-  Session time: {{ duration }}
-</p>
+    <span class="cursive-welcome">Welcome, {{ request.user }}</span><br>
+    <div style="display: flex; align-items: center; gap: 8px; margin-top: 2px;">
+      <p style="font-size: 10px; text-align: left; margin: 0; color: grey;">
+        Session time: <span id="sessionTimeValue">{{ duration }}</span>
+      </p>
+      <button id="toggleSessionTime"
+              style="padding: 2px 6px; font-size: 12px; background-color: transparent; border: none; cursor: pointer;"
+              title="Click to hide your session time">
+        🚫
+      </button>
+    </div>
   </div>
 </nav>
 
@@ -119,5 +76,89 @@
     <a href="{% url 'reconcile' %}">Reconcile</a>
   </div>
 </div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    function updateTime() {
+      const now = new Date();
+      let hours = now.getHours();
+      const minutes = now.getMinutes().toString().padStart(2, '0');
+      const seconds = now.getSeconds().toString().padStart(2, '0');
+      const ampm = hours >= 12 ? 'PM' : 'AM';
+      hours = hours % 12 || 12;
+      const timeString = `${hours}:${minutes}:${seconds} ${ampm}`;
+      document.getElementById('liveTime').innerText = timeString;
+    }
+
+    function updateDate() {
+      const now = new Date();
+      const month = (now.getMonth() + 1).toString().padStart(2, '0');
+      const day = now.getDate().toString().padStart(2, '0');
+      const year = now.getFullYear();
+      const dateString = `${month}/${day}/${year}`;
+      document.getElementById('liveDate').innerText = dateString;
+    }
+
+    const now = new Date();
+    const todayKey = now.toDateString();
+
+    if (localStorage.getItem('loginDate') !== todayKey) {
+      localStorage.setItem('loginDate', todayKey);
+      localStorage.setItem('loginTime', Date.now());
+    }
+
+    const startTime = parseInt(localStorage.getItem('loginTime'), 10);
+
+    function updateSessionTime() {
+      const now = Date.now();
+      const diff = now - startTime;
+      const hours = Math.floor(diff / (1000 * 60 * 60));
+      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+      const sessionText = `${hours}h ${minutes}m ${seconds}s`;
+      const sessionEl = document.getElementById('sessionTimeValue');
+      if (sessionEl) {
+        sessionEl.innerText = sessionText;
+      }
+    }
+
+    updateTime();
+    updateDate();
+    updateSessionTime();
+    setInterval(updateTime, 1000);
+    setInterval(updateSessionTime, 1000);
+
+    const toggleThemeBtn = document.getElementById('toggleTheme');
+    const body = document.body;
+
+    if (localStorage.getItem('theme') === 'dark') {
+      body.classList.add('dark-mode');
+      toggleThemeBtn.textContent = '☀️ Day Mode';
+    }
+
+    toggleThemeBtn.addEventListener('click', () => {
+      body.classList.toggle('dark-mode');
+      const isDark = body.classList.contains('dark-mode');
+      toggleThemeBtn.textContent = isDark ? '☀️ Day Mode' : '🌙 Night Mode';
+      localStorage.setItem('theme', isDark ? 'dark' : 'light');
+    });
+
+    const toggleSessionBtn = document.getElementById('toggleSessionTime');
+    const sessionValue = document.getElementById('sessionTimeValue');
+
+    toggleSessionBtn.addEventListener('click', () => {
+      const isHidden = sessionValue.style.display === 'none';
+      if (isHidden) {
+        sessionValue.style.display = 'inline';
+        toggleSessionBtn.title = 'Click to hide your session time';
+        toggleSessionBtn.textContent = '🚫';
+      } else {
+        sessionValue.style.display = 'none';
+        toggleSessionBtn.title = 'Click to show your session time';
+        toggleSessionBtn.textContent = '👁️';
+      }
+    });
+  });
+</script>
 
 {% endblock %}
