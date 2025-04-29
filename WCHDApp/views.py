@@ -182,6 +182,7 @@ def reconcile(request):
                     for cell in row:
                         cell.fill = highlight_fill
             
+            #Saveing to stream in file attachment format
             outputStream = BytesIO()
             wb.save(outputStream)
             outputStream.seek(0)
@@ -197,7 +198,7 @@ def reconcile(request):
 @permission_required('WCHDApp.has_full_access', raise_exception=True)
 def reports(request):
     if request.method == "POST":
-        #TableSelect is a form I defined in forms.py
+        #TableSelect is a form defined in forms.py
         form = TableSelect(request.POST)
 
         #Take the data from the form and pass it to our pdf generator function
@@ -212,7 +213,6 @@ def reports(request):
         form = TableSelect()
     return render(request, "WCHDApp/reports.html", {'form': form})
 
-#Hub, does nothing yet
 def index(request):
     # Set session start time if it's not already set
     if not request.session.get('session_start_time'):
@@ -389,7 +389,6 @@ def createSelect(request):
     return render(request, "WCHDApp/createSelect.html", {'form': form})
 
 #New system to dynamically create forms based of model
-
 @permission_required('WCHDApp.has_full_access', raise_exception=True)
 def createEntry(request, tableName):
     #Grabbing selected model in viewTableSelect
@@ -415,21 +414,20 @@ def imports(request):
     if request.method == 'POST':
         form = InputSelect(request.POST, request.FILES)
         if form.is_valid():
+            #Pulls data from submitted files
             tableName = form.cleaned_data['table']
             selectedFile = form.cleaned_data['file']
             file = pd.read_csv(selectedFile)
             columns = file.columns
             row = file.iloc[0]
             data = []
+
+            #Grab slected model
             model = apps.get_model('WCHDApp', tableName)
             fields = model._meta.get_fields()
 
+            #Define what fields we want to look at from the file and model
             neededFields = []
-            """
-            for field in fields:
-                if not field.auto_created:
-                    neededFields.append(field.name)
-            """
             for field in fields:
                 if field.is_relation:
                         #fks.append(field.name)
@@ -444,13 +442,12 @@ def imports(request):
                             neededFields.append(fkName)
                 else:
                     neededFields.append(field.name)
-            print(neededFields)
-            print(list(columns))
             if neededFields != list(columns):
                 message = "Bad File. Please check your CSV format and try again."
                 return render(request, "WCHDApp/imports.html", {"form": form, "message": message})
             lookUpFields = []
             fks = []
+            #Same logic as above just for lookups and fk
             for field in fields:
                 #Logic for foreign keys
                 if field.is_relation:
@@ -469,8 +466,7 @@ def imports(request):
                 else:
                     lookUpFields.append(field)
             
-
-            print(fks)
+            #Creating a dictionary for each row in the file
             for i in range(len(file)):
                 dict = {}
                 row = file.iloc[i]
@@ -478,7 +474,7 @@ def imports(request):
                     dict[column] = row[column]
                 data.append(dict)
                 
-            
+            #For each entry in the dictionary convert types and then create an object based on the dict
             for line in data:
                 for key in line:
                     if type(line[key]) == np.int64:
@@ -545,6 +541,7 @@ def transactionsView(request,itemID):
     decimalFields = []
     aliasNames = []
 
+    #Fields that should be accumulated
     summedFields = {
         "Fund": "fund_cash_balance", 
         "Line": "line_total_income",
@@ -577,8 +574,9 @@ def transactionsView(request,itemID):
             fieldNames.append(field.name)
 
             
-
+    #Making the view for the cashiers to be able to see and add transaction on the same page
     TransactionForm = modelform_factory(transactionModel, exclude=(["fund", "line", "item"]))
+    #Getting values from our db so they dont have to
     item = Item.objects.get(pk=itemID)
     fund = item.fund
     line = item.line
@@ -588,15 +586,14 @@ def transactionsView(request,itemID):
     if request.method == 'POST':
         form = TransactionForm(request.POST)
         if form.is_valid():
-            # Create the instance but don't save it yet
+            #Create the instance but don't save it yet
             transaction = form.save(commit=False)
 
-            # Attach the fund and line from the item
+            #Adding thee values from before
             transaction.fund = fund
             transaction.line = line
             transaction.item = item
 
-            # Now save it
             transaction.save()
 
     else:
@@ -745,6 +742,7 @@ def noPrivileges(request, exception):
 
 def clockifyImport(request, *args, **kwargs):
     message = ""
+    #Mapping fields from clockify to fields our models use
     fieldMap = {
         "Project": "ActivityList",
         "Department": "dept",
@@ -773,7 +771,7 @@ def clockifyImport(request, *args, **kwargs):
             row = file.iloc[0]
             data = []
             #Getting all the fields for Clockify
-            model = apps.get_model('WCHDApp', tableName)
+            model = apps.get_model('WCHDApp', 'Clockify')
             fields = model._meta.get_fields()
             neededFields = []
             #Exclude autocreated fields like id
@@ -861,6 +859,7 @@ def calculateActivitySelect(request, *args, **kwargs):
             verboseNames.append(field.verbose_name)
             fields.append(field.name)
 
+    #Making the dropdowns for selecting the fund, activity, and employee
     activityModel = apps.get_model('WCHDApp', 'ActivityList')
     activities = activityModel.objects.all()
     activityChoices = []
