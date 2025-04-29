@@ -1,164 +1,274 @@
 {% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
+  <link rel="stylesheet" type="text/css" href="{% static 'WCHDApp/css/hubStyles.css' %}">
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 
-{% block title %}{% endblock %}
+  <style>
+    #resetColorsBtn {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      padding: 10px 16px;
+      background-color: #e74c3c;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+      font-size: 14px;
+      z-index: 9999;
+    }
+    #resetColorsBtn:hover {
+      background-color: #c0392b;
+    }
 
-{% block content %}
+    .color-palette {
+      position: fixed;
+      display: flex;
+      flex-wrap: nowrap;
+      align-items: center;
+      background: #fff;
+      border: 1px solid #ccc;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+      padding: 10px;
+      border-radius: 8px;
+      gap: 10px;
+      z-index: 10000;
+    }
 
-<link href="https://fonts.googleapis.com/css2?family=Roboto+Mono&display=swap" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
-<link rel="stylesheet" type="text/css" href="{% static 'WCHDApp/css/hubStyles.css' %}">
+    .color-section {
+      display: flex;
+      flex-direction: row;
+      gap: 10px;
+    }
 
-<style>
-  .cursive-welcome {
-    font-family: 'Pacifico', cursive;
-    font-size: 18px;
-    padding: 2px 6px;
-    display: inline-block;
-  }
-</style>
+    .color-option {
+      width: 30px;
+      height: 30px;
+      border-radius: 4px;
+      cursor: pointer;
+      border: 2px solid #eee;
+      transition: transform 0.2s ease;
+    }
 
-<nav class="hubNavbar-top">
-  <div class="hubNavbar-left">
-    <div id="liveTime">00:00:00 AM</div>
-    <div id="liveDate" style="font-size: 15px; margin-top: 2px;"></div>
-  </div>
-  <div class="hubNavbar-center">
-    <button id="toggleTheme" class="theme-toggle">🌙 Night Mode</button>
-  </div>
-  <div class="hubNavbar-right">
-    <span class="cursive-welcome">Welcome, {{ request.user }}</span><br>
-    <div style="display: flex; align-items: center; gap: 8px; margin-top: 2px;">
-      <p style="font-size: 10px; text-align: left; margin: 0; color: grey;">
-        Session time: <span id="sessionTimeValue">{{ duration }}</span>
-      </p>
-      <button id="toggleSessionTime"
-              style="padding: 2px 6px; font-size: 12px; background-color: transparent; border: none; cursor: pointer;"
-              title="Click to hide your session time">
-        🚫
-      </button>
+    .color-option:hover {
+      transform: scale(1.1);
+      border-color: #666;
+    }
+
+    #customColorInput {
+      width: 40px;
+      height: 40px;
+      border: none;
+      cursor: pointer;
+      padding: 0;
+    }
+  </style>
+</head>
+<body>
+  <nav class="hubNavbar-top">
+    <div class="hubNavbar-left">
+      <div id="liveTime">00:00:00 AM</div>
+      <div id="liveDate" style="font-size: 15px; margin-top: 2px;"></div>
     </div>
+    <div class="hubNavbar-center">
+      <button id="toggleTheme" class="theme-toggle">🌙 Night Mode</button>
+    </div>
+    <div class="hubNavbar-right">
+      <span class="cursive-welcome">Welcome, {{ request.user }}</span><br>
+      <div style="display: flex; align-items: center; gap: 8px; margin-top: 2px;">
+        <p style="font-size: 10px; text-align: left; margin: 0; color: grey;">
+          Session time: <span id="sessionTimeValue">{{ duration }}</span>
+        </p>
+        <button id="toggleSessionTime" style="padding: 2px 6px; font-size: 12px; background-color: transparent; border: none; cursor: pointer;" title="Click to hide your session time">🚫</button>
+      </div>
+    </div>
+  </nav>
+
+  <nav class="hubNavbar-main">
+    <ul class="hubNavbar-links"></ul>
+    <div class="hubNavbar-action">
+      <form id="logout-form" method="POST" action="{% url 'logout' %}" style="display: inline;">
+        {% csrf_token %}
+        <a href="#" onclick="document.getElementById('logout-form').submit();" class="hubNavbar-link">LOG&nbsp;OUT</a>
+      </form>
+    </div>
+  </nav>
+
+  <div class="logoBox" style="display: flex; justify-content: center; max-height: 250px;">
+    <img src="{% static 'WCHDApp/images/logo2.png' %}" alt="logo" style="max-width: 200%; max-height: 250px;">
   </div>
-</nav>
 
-<nav class="hubNavbar-main">
-  <ul class="hubNavbar-links"></ul>
-  <div class="hubNavbar-action">
-    <form id="logout-form" method="POST" action="{% url 'logout' %}" style="display: inline;">
-      {% csrf_token %}
-      <a href="#" onclick="document.getElementById('logout-form').submit();" class="hubNavbar-link">
-        LOG&nbsp;OUT
-      </a>
-    </form>
+  <div class="container" id="dragBoxContainer">
+    <div class="box" data-id="reports" draggable="true"><a href="{% url 'reports' %}">Reports</a></div>
+    <div class="box" data-id="table" draggable="true"><a href="{% url 'viewTableSelect' %}">Table View Select</a></div>
+    <div class="box" data-id="imports" draggable="true"><a href="{% url 'imports' %}">Imports</a></div>
+    <div class="box" data-id="exports" draggable="true"><a href="{% url 'exports' %}">Exports</a></div>
+    <div class="box" data-id="transactions" draggable="true"><a href="{% url 'transactionsItem' %}">Transactions</a></div>
+    <div class="box" data-id="reconcile" draggable="true"><a href="{% url 'reconcile' %}">Reconcile</a></div>
   </div>
-</nav>
 
-<div class="logoBox" style="display: flex; justify-content: center; max-height: 250px;">
-  <img src="{% static 'WCHDApp/images/logo2.png' %}" alt="logo" style="max-width: 200%; max-height: 250px;">
-</div>
+  <div id="colorPalette" class="color-palette" style="display: none;"></div>
+  <button id="resetColorsBtn">Reset Colors</button>
 
-<div class="container">
-  <div class="box">
-    <a href="{% url 'reports' %}">Reports</a>
-  </div>
-  <div class="box">
-    <a href="{% url 'viewTableSelect' %}">Table View Select</a>
-  </div>
-  <div class="box">
-    <a href="{% url 'imports' %}">Imports</a>
-  </div>
-  <div class="box">
-    <a href="{% url 'exports' %}">Exports</a>
-  </div>
-  <div class="box">
-    <a href="{% url 'transactionsItem' %}">Transactions</a>
-  </div>
-  <div class="box">
-    <a href="{% url 'reconcile' %}">Reconcile</a>
-  </div>
-</div>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const container = document.getElementById('dragBoxContainer');
+      const palette = document.getElementById('colorPalette');
+      let targetBox = null;
 
-<script>
-  document.addEventListener('DOMContentLoaded', function () {
-    function updateTime() {
-      const now = new Date();
-      let hours = now.getHours();
-      const minutes = now.getMinutes().toString().padStart(2, '0');
-      const seconds = now.getSeconds().toString().padStart(2, '0');
-      const ampm = hours >= 12 ? 'PM' : 'AM';
-      hours = hours % 12 || 12;
-      const timeString = `${hours}:${minutes}:${seconds} ${ampm}`;
-      document.getElementById('liveTime').innerText = timeString;
-    }
+      const savedColors = JSON.parse(localStorage.getItem('boxColors') || '{}');
+      [...container.children].forEach(box => {
+        const id = box.dataset.id;
+        if (savedColors[id]) {
+          box.style.backgroundColor = savedColors[id];
+        }
+      });
 
-    function updateDate() {
-      const now = new Date();
-      const month = (now.getMonth() + 1).toString().padStart(2, '0');
-      const day = now.getDate().toString().padStart(2, '0');
-      const year = now.getFullYear();
-      const dateString = `${month}/${day}/${year}`;
-      document.getElementById('liveDate').innerText = dateString;
-    }
+      Sortable.create(container, {
+        animation: 150,
+        onEnd: () => {
+          const order = Array.from(container.children).map(el => el.dataset.id);
+          localStorage.setItem('dashboardOrder', JSON.stringify(order));
+        }
+      });
 
-    const now = new Date();
-    const todayKey = now.toDateString();
+      const presetColors = ['#ff69b4', '#3498db', '#e74c3c', '#2ecc71', '#f1c40f', '#9b59b6', '#1abc9c', '#34495e'];
 
-    if (localStorage.getItem('loginDate') !== todayKey) {
-      localStorage.setItem('loginDate', todayKey);
-      localStorage.setItem('loginTime', Date.now());
-    }
+      function buildPalette(x, y) {
+        palette.innerHTML = '';
+        const section = document.createElement('div');
+        section.className = 'color-section';
 
-    const startTime = parseInt(localStorage.getItem('loginTime'), 10);
+        presetColors.forEach(color => {
+          const div = document.createElement('div');
+          div.className = 'color-option';
+          div.style.backgroundColor = color;
+          div.dataset.color = color;
+          section.appendChild(div);
+        });
 
-    function updateSessionTime() {
-      const now = Date.now();
-      const diff = now - startTime;
-      const hours = Math.floor(diff / (1000 * 60 * 60));
-      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-      const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-      const sessionText = `${hours}h ${minutes}m ${seconds}s`;
-      const sessionEl = document.getElementById('sessionTimeValue');
-      if (sessionEl) {
-        sessionEl.innerText = sessionText;
+        const customColor = document.createElement('input');
+        customColor.type = 'color';
+        customColor.id = 'customColorInput';
+
+        customColor.addEventListener('input', () => {
+          applyColor(customColor.value);
+        });
+
+        section.appendChild(customColor);
+
+        palette.appendChild(section);
+        palette.style.left = `${x}px`;
+        palette.style.top = `${y}px`;
+        palette.style.display = 'flex';
       }
-    }
 
-    updateTime();
-    updateDate();
-    updateSessionTime();
-    setInterval(updateTime, 1000);
-    setInterval(updateSessionTime, 1000);
-
-    const toggleThemeBtn = document.getElementById('toggleTheme');
-    const body = document.body;
-
-    if (localStorage.getItem('theme') === 'dark') {
-      body.classList.add('dark-mode');
-      toggleThemeBtn.textContent = '☀️ Day Mode';
-    }
-
-    toggleThemeBtn.addEventListener('click', () => {
-      body.classList.toggle('dark-mode');
-      const isDark = body.classList.contains('dark-mode');
-      toggleThemeBtn.textContent = isDark ? '☀️ Day Mode' : '🌙 Night Mode';
-      localStorage.setItem('theme', isDark ? 'dark' : 'light');
-    });
-
-    const toggleSessionBtn = document.getElementById('toggleSessionTime');
-    const sessionValue = document.getElementById('sessionTimeValue');
-
-    toggleSessionBtn.addEventListener('click', () => {
-      const isHidden = sessionValue.style.display === 'none';
-      if (isHidden) {
-        sessionValue.style.display = 'inline';
-        toggleSessionBtn.title = 'Click to hide your session time';
-        toggleSessionBtn.textContent = '🚫';
-      } else {
-        sessionValue.style.display = 'none';
-        toggleSessionBtn.title = 'Click to show your session time';
-        toggleSessionBtn.textContent = '👁️';
+      function applyColor(color) {
+        if (!targetBox) return;
+        targetBox.style.backgroundColor = color;
+        const id = targetBox.dataset.id;
+        const saved = JSON.parse(localStorage.getItem('boxColors') || '{}');
+        saved[id] = color;
+        localStorage.setItem('boxColors', JSON.stringify(saved));
+        palette.style.display = 'none';
+        targetBox = null;
       }
-    });
-  });
-</script>
 
-{% endblock %}
+      container.addEventListener('contextmenu', function (e) {
+        const box = e.target.closest('.box');
+        if (!box) return;
+        e.preventDefault();
+        targetBox = box;
+        buildPalette(e.pageX, e.pageY);
+      });
+
+      palette.addEventListener('click', function (e) {
+        if (e.target.classList.contains('color-option')) {
+          applyColor(e.target.dataset.color);
+        }
+      });
+
+      document.addEventListener('click', function (e) {
+        if (!palette.contains(e.target)) {
+          palette.style.display = 'none';
+          targetBox = null;
+        }
+      });
+
+      document.getElementById('resetColorsBtn').addEventListener('click', () => {
+        localStorage.removeItem('boxColors');
+        [...container.children].forEach(box => {
+          box.style.backgroundColor = '#3498db';
+        });
+      });
+
+      function updateTime() {
+        const now = new Date();
+        let hours = now.getHours();
+        const minutes = now.getMinutes().toString().padStart(2, '0');
+        const seconds = now.getSeconds().toString().padStart(2, '0');
+        const ampm = hours >= 12 ? 'PM' : 'AM';
+        hours = hours % 12 || 12;
+        document.getElementById('liveTime').innerText = `${hours}:${minutes}:${seconds} ${ampm}`;
+      }
+
+      function updateDate() {
+        const now = new Date();
+        const month = (now.getMonth() + 1).toString().padStart(2, '0');
+        const day = now.getDate().toString().padStart(2, '0');
+        const year = now.getFullYear();
+        document.getElementById('liveDate').innerText = `${month}/${day}/${year}`;
+      }
+
+      if (localStorage.getItem('loginDate') !== new Date().toDateString()) {
+        localStorage.setItem('loginDate', new Date().toDateString());
+        localStorage.setItem('loginTime', Date.now());
+      }
+
+      const startTime = parseInt(localStorage.getItem('loginTime'), 10);
+      function updateSessionTime() {
+        const now = Date.now();
+        const diff = now - startTime;
+        const h = Math.floor(diff / 3600000);
+        const m = Math.floor((diff % 3600000) / 60000);
+        const s = Math.floor((diff % 60000) / 1000);
+        document.getElementById('sessionTimeValue').innerText = `${h}h ${m}m ${s}s`;
+      }
+
+      setInterval(updateTime, 1000);
+      setInterval(updateSessionTime, 1000);
+      updateTime();
+      updateDate();
+      updateSessionTime();
+
+      const toggleThemeBtn = document.getElementById('toggleTheme');
+      if (localStorage.getItem('theme') === 'dark') {
+        document.body.classList.add('dark-mode');
+        toggleThemeBtn.textContent = '☀️ Day Mode';
+      }
+      toggleThemeBtn.addEventListener('click', () => {
+        document.body.classList.toggle('dark-mode');
+        const dark = document.body.classList.contains('dark-mode');
+        localStorage.setItem('theme', dark ? 'dark' : 'light');
+        toggleThemeBtn.textContent = dark ? '☀️ Day Mode' : '🌙 Night Mode';
+      });
+
+      const toggleSessionBtn = document.getElementById('toggleSessionTime');
+      const sessionValue = document.getElementById('sessionTimeValue');
+      toggleSessionBtn.addEventListener('click', () => {
+        const hidden = sessionValue.style.display === 'none';
+        sessionValue.style.display = hidden ? 'inline' : 'none';
+        toggleSessionBtn.textContent = hidden ? '🚫' : '👁️';
+        toggleSessionBtn.title = hidden ? 'Click to hide your session time' : 'Click to show your session time';
+      });
+    });
+  </script>
+</body>
+</html>

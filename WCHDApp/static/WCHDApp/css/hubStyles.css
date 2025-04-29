@@ -5,13 +5,15 @@ body {
     transition: background-color 0.5s ease, color 0.5s ease;
 }
 
-.container {
+..container {
     display: grid;
     grid-template-columns: repeat(3, 180px);
     gap: 20px;
     justify-content: center;
     margin: 40px auto;
-}
+  }
+  
+
 
 .box {
     width: 180px;
