@@ -8,68 +8,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
   <link rel="stylesheet" type="text/css" href="{% static 'WCHDApp/css/hubStyles.css' %}">
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
-
-  <style>
-    #resetColorsBtn {
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      padding: 10px 16px;
-      background-color: #e74c3c;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-      font-size: 14px;
-      z-index: 9999;
-    }
-    #resetColorsBtn:hover {
-      background-color: #c0392b;
-    }
-
-    .color-palette {
-      position: fixed;
-      display: flex;
-      flex-wrap: nowrap;
-      align-items: center;
-      background: #fff;
-      border: 1px solid #ccc;
-      box-shadow: 0 8px 20px rgba(0,0,0,0.2);
-      padding: 10px;
-      border-radius: 8px;
-      gap: 10px;
-      z-index: 10000;
-    }
-
-    .color-section {
-      display: flex;
-      flex-direction: row;
-      gap: 10px;
-    }
-
-    .color-option {
-      width: 30px;
-      height: 30px;
-      border-radius: 4px;
-      cursor: pointer;
-      border: 2px solid #eee;
-      transition: transform 0.2s ease;
-    }
-
-    .color-option:hover {
-      transform: scale(1.1);
-      border-color: #666;
-    }
-
-    #customColorInput {
-      width: 40px;
-      height: 40px;
-      border: none;
-      cursor: pointer;
-      padding: 0;
-    }
-  </style>
+    
+  
 </head>
 <body>
   <nav class="hubNavbar-top">
@@ -78,7 +18,20 @@
       <div id="liveDate" style="font-size: 15px; margin-top: 2px;"></div>
     </div>
     <div class="hubNavbar-center">
-      <button id="toggleTheme" class="theme-toggle">🌙 Night Mode</button>
+      <label class="switch">
+        <input type="checkbox" id="toggleTheme">
+        <span class="slider"></span>
+      </label>
+
+      <select id="themeSelector" style="margin-left: 10px; padding: 4px 8px; border-radius: 6px;">
+        <option value="default">Original Theme</option>
+        <option value="blue">Ocean Blue</option>
+        <option value="green">Forest Green</option>
+        <option value="pink">Sweet Pink</option>
+        <option value="purple">Royal Purple</option>
+      </select>
+    </div>
+
     </div>
     <div class="hubNavbar-right">
       <span class="cursive-welcome">Welcome, {{ request.user }}</span><br>
@@ -121,16 +74,38 @@
     document.addEventListener('DOMContentLoaded', function () {
       const container = document.getElementById('dragBoxContainer');
       const palette = document.getElementById('colorPalette');
+      const themeSelector = document.getElementById('themeSelector');
       let targetBox = null;
+      let currentTheme = localStorage.getItem('selectedTheme') || 'default'; // Track the current theme
 
+      // Function to set the default box color based on the theme
+      function setDefaultBoxColor(theme) {
+        switch (theme) {
+          case 'blue':
+            return '#1976d2'; // Default blue theme box color
+          case 'green':
+            return '#388e3c'; // Default green theme box color
+          case 'pink':
+            return '#c2185b'; // Default pink theme box color
+          case 'purple':
+            return '#512da8'; // Default purple theme box color
+          default:
+            return '#3498db'; // Default color
+        }
+      }
+
+      // Load saved box colors
       const savedColors = JSON.parse(localStorage.getItem('boxColors') || '{}');
       [...container.children].forEach(box => {
         const id = box.dataset.id;
         if (savedColors[id]) {
           box.style.backgroundColor = savedColors[id];
+        } else if (currentTheme !== 'default') {
+          box.style.backgroundColor = setDefaultBoxColor(currentTheme);
         }
       });
 
+      // Initialize SortableJS for drag and drop
       Sortable.create(container, {
         animation: 150,
         onEnd: () => {
@@ -139,6 +114,7 @@
         }
       });
 
+      // Build color palette
       const presetColors = ['#ff69b4', '#3498db', '#e74c3c', '#2ecc71', '#f1c40f', '#9b59b6', '#1abc9c', '#34495e'];
 
       function buildPalette(x, y) {
@@ -181,6 +157,7 @@
         targetBox = null;
       }
 
+      // Context menu for color palette
       container.addEventListener('contextmenu', function (e) {
         const box = e.target.closest('.box');
         if (!box) return;
@@ -202,13 +179,15 @@
         }
       });
 
+      // Reset box colors to the default of the current theme
       document.getElementById('resetColorsBtn').addEventListener('click', () => {
         localStorage.removeItem('boxColors');
         [...container.children].forEach(box => {
-          box.style.backgroundColor = '#3498db';
+          box.style.backgroundColor = setDefaultBoxColor(currentTheme);
         });
       });
 
+      // Live time and date updates
       function updateTime() {
         const now = new Date();
         let hours = now.getHours();
@@ -227,6 +206,7 @@
         document.getElementById('liveDate').innerText = `${month}/${day}/${year}`;
       }
 
+      // Session time tracking
       if (localStorage.getItem('loginDate') !== new Date().toDateString()) {
         localStorage.setItem('loginDate', new Date().toDateString());
         localStorage.setItem('loginTime', Date.now());
@@ -248,18 +228,19 @@
       updateDate();
       updateSessionTime();
 
-      const toggleThemeBtn = document.getElementById('toggleTheme');
+      // Dark mode toggle
+      const toggleThemeCheckbox = document.getElementById('toggleTheme');
       if (localStorage.getItem('theme') === 'dark') {
         document.body.classList.add('dark-mode');
-        toggleThemeBtn.textContent = '☀️ Day Mode';
+        toggleThemeCheckbox.checked = true;
       }
-      toggleThemeBtn.addEventListener('click', () => {
+      toggleThemeCheckbox.addEventListener('change', () => {
         document.body.classList.toggle('dark-mode');
         const dark = document.body.classList.contains('dark-mode');
         localStorage.setItem('theme', dark ? 'dark' : 'light');
-        toggleThemeBtn.textContent = dark ? '☀️ Day Mode' : '🌙 Night Mode';
       });
 
+      // Toggle session time visibility
       const toggleSessionBtn = document.getElementById('toggleSessionTime');
       const sessionValue = document.getElementById('sessionTimeValue');
       toggleSessionBtn.addEventListener('click', () => {
@@ -268,6 +249,46 @@
         toggleSessionBtn.textContent = hidden ? '🚫' : '👁️';
         toggleSessionBtn.title = hidden ? 'Click to hide your session time' : 'Click to show your session time';
       });
+
+      // Theme selector functionality
+      themeSelector.addEventListener('change', function() {
+        const selectedTheme = this.value;
+        document.body.classList.remove('blue-theme', 'green-theme', 'pink-theme', 'purple-theme'); // Remove existing theme classes
+        if (selectedTheme !== 'default') {
+          document.body.classList.add(`${selectedTheme}-theme`);
+          localStorage.setItem('selectedTheme', selectedTheme); // Save selected theme
+          currentTheme = selectedTheme; // Update current theme
+          // Set default box colors for the new theme
+          [...container.children].forEach(box => {
+            if (!localStorage.getItem('boxColors')?.includes(box.dataset.id)) {
+              box.style.backgroundColor = setDefaultBoxColor(selectedTheme);
+            }
+          });
+        } else {
+          localStorage.removeItem('selectedTheme'); // Remove saved theme if default is selected
+          currentTheme = 'default';
+          // Reset box colors to the original default
+          [...container.children].forEach(box => {
+            if (!localStorage.getItem('boxColors')?.includes(box.dataset.id)) {
+              box.style.backgroundColor = '#3498db';
+            }
+          });
+        }
+      });
+
+      // Load saved theme on page load
+      const savedTheme = localStorage.getItem('selectedTheme');
+      if (savedTheme) {
+        document.body.classList.add(`${savedTheme}-theme`);
+        themeSelector.value = savedTheme;
+        currentTheme = savedTheme;
+        // Set default box colors on load if no custom color is saved
+        [...container.children].forEach(box => {
+          if (!localStorage.getItem('boxColors')?.includes(box.dataset.id)) {
+            box.style.backgroundColor = setDefaultBoxColor(savedTheme);
+          }
+        });
+      }
     });
   </script>
 </body>
