@@ -1,4 +1,5 @@
 document.addEventListener("DOMContentLoaded", function(){
+    //Calling getActivities view whihc returns json data of the activities pulled from model
     let activities = [];
     fetch('/getActivities/')
       .then(response => response.json())
@@ -8,8 +9,11 @@ document.addEventListener("DOMContentLoaded", function(){
         activities = data["activities"];
       })
       .catch(error => console.error("Error fetching data:", error));
+
+    //Selecting rows from activity Table
     const rows = document.querySelectorAll("#activityTable tr");
 
+    //When fund dropdown changes pull data from dataset for each row matching fund to make calculations
     const fundDropdown = document.querySelector("#fundDropdown");
     fundDropdown.addEventListener("change", function(){
         let sum = 0;
@@ -26,6 +30,7 @@ document.addEventListener("DOMContentLoaded", function(){
         sumOutput.innerHTML = fundName + ": $" + sum + " total hours = " + hours;
     });
 
+    //Same logic as fund
     const activityDropdown = document.querySelector("#activityDropdown");
     activityDropdown.addEventListener("change", function(){
         let sum = 0;
@@ -41,7 +46,7 @@ document.addEventListener("DOMContentLoaded", function(){
         sumOutput.innerHTML = "Fund by Activity: $" + sum + " total hours = " + hours;
     });
 
-   
+   //Same logic as fund
     const employeeDropdown = document.querySelector("#employeeDropdown");
     employeeDropdown.addEventListener("change", function(){
         const sumOutput = document.querySelector("#fundEmployee");
@@ -57,7 +62,6 @@ document.addEventListener("DOMContentLoaded", function(){
             let hours = 0;
             for (let j=0; j <rows.length; j ++){
                 if ((rows[j].dataset.employeeid == employee) && (rows[j].dataset.activityid == activities[i][0])){
-                    console.log("Matched");
                     sum += parseFloat(rows[j].dataset.billamount);
                     hours += parseFloat(rows[j].dataset.hours);
                     totalHours += parseFloat(rows[j].dataset.hours);
