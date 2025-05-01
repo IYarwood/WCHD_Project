@@ -1,4 +1,5 @@
 {% load static %}
+<<<<<<< Updated upstream
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -93,6 +94,160 @@
             return '#3498db'; // Default color
         }
       }
+=======
+
+{% block title %}{% endblock %}
+
+{% block content %}
+<link href="https://fonts.googleapis.com/css2?family=Inter&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+<link rel="stylesheet" type="text/css" href="{% static 'WCHDApp/css/hubStyles.css' %}">
+
+<style>
+    body {
+        font-family: 'Inter', sans-serif;
+    }
+    .cursive-welcome {
+        font-family: 'Pacifico', cursive;
+        font-size: 18px;
+        padding: 2px 6px;
+        display: inline-block;
+    }
+    .sortable-ghost {
+        opacity: 0.4;
+        background: #ccc;
+    }
+ 
+    .box {
+        transition: transform 0.2s ease-in-out, background-color 0.2s ease-in-out;
+    }
+</style>
+
+
+<nav class="hubNavbar-top">
+    <div class="hubNavbar-left">
+        <div id="liveTime" style="width: 120px; font-family: 'Roboto Mono', monospace; text-align: center;">00:00:00 AM</div>
+        <div id="liveDate" style="font-size: 15px; margin-top: 2px;"></div>
+    </div>
+    <div class="hubNavbar-center">
+        <button id="toggleTheme" class="theme-toggle">🌙 Night Mode</button>
+    </div>
+    <div class="hubNavbar-right">
+        <span class="cursive-welcome">Welcome, {{ request.user }}</span><br>
+        <div style="display: flex; align-items: center; gap: 8px; margin-top: 2px;">
+            <p style="font-size: 10px; text-align: left; margin: 0; color: grey;">
+                Session time: <span id="sessionTimeValue">{{ duration }}</span>
+            </p>
+            <button id="toggleSessionTime"
+                    style="padding: 2px 6px; font-size: 12px; background-color: transparent; border: none; cursor: pointer;"
+                    title="Click to hide your session time">
+                🚫
+            </button>
+        </div>
+    </div>
+</nav>
+
+<nav class="hubNavbar-main">
+    <ul class="hubNavbar-links"></ul>
+    <div class="hubNavbar-action">
+        <form id="logout-form" method="POST" action="{% url 'logout' %}" style="display: inline;">
+            {% csrf_token %}
+            <a href="#" onclick="document.getElementById('logout-form').submit();" class="hubNavbar-link">
+                LOG&nbsp;OUT
+            </a>
+        </form>
+    </div>
+</nav>
+
+<div class="leftBox">
+  <span>This is leftBox</span>
+  <div class="verticalLine"></div>
+  </div>
+  <script>
+    const leftBox = document.querySelector('.leftBox');
+
+    window.addEventListener('scroll', () => {
+      const scrollPosition = window.scrollY;
+      const newTop = Math.max(0, -scrollPosition);
+
+      leftBox.style.top = `${newTop}px`;
+    });
+  </script>
+  
+</div>
+
+<div class="logoBox" style="display: flex; justify-content: center; max-height: 250px;">
+    <img src="{% static 'WCHDApp/images/logo2.png' %}" alt="logo" style="max-width: 200%; max-height: 250px;">
+</div>
+
+<div id="dragBoxContainer" class="container">
+    <div class="box" data-id="reports"><a href="{% url 'reports' %}">Reports</a></div>
+    <div class="box" data-id="table"><a href="{% url 'viewTableSelect' %}">Table View Select</a></div>
+    <div class="box" data-id="imports"><a href="{% url 'imports' %}">Imports</a></div>
+    <div class="box" data-id="exports"><a href="{% url 'exports' %}">Exports</a></div>
+    <div class="box" data-id="transactions"><a href="{% url 'transactionsItem' %}">Transactions</a></div>
+    <div class="box" data-id="reconcile"><a href="{% url 'reconcile' %}">Reconcile</a></div>
+    <div class="box" data-id="demo1"><a href="#">Demo x</a></div>
+    <div class="box" data-id="demo2"><a href="#">Demo 2</a></div>
+    <div class="box" data-id="demo3"><a href="#">Demo 3</a></div>
+    <div class="box" data-id="demo4"><a href="#">Demo 4</a></div>
+</div>
+
+<button id="resetOrderBtn" style="
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background-color: #e74c3c;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 16px;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+">
+    🔄 Reset Layout
+</button>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    function updateTime() {
+        const now = new Date();
+        let hours = now.getHours();
+        const minutes = now.getMinutes().toString().padStart(2, '0');
+        const seconds = now.getSeconds().toString().padStart(2, '0');
+        const ampm = hours >= 12 ? 'PM' : 'AM';
+        hours = hours % 12 || 12;
+        document.getElementById('liveTime').innerText = `${hours}:${minutes}:${seconds} ${ampm}`;
+    }
+
+    function updateDate() {
+        const now = new Date();
+        const month = (now.getMonth() + 1).toString().padStart(2, '0');
+        const day = now.getDate().toString().padStart(2, '0');
+        const year = now.getFullYear();
+        document.getElementById('liveDate').innerText = `${month}/${day}/${year}`;
+    }
+
+    const now = new Date();
+    const todayKey = now.toDateString();
+    if (localStorage.getItem('loginDate') !== todayKey) {
+        localStorage.setItem('loginDate', todayKey);
+        localStorage.setItem('loginTime', Date.now());
+    }
+
+    const startTime = parseInt(localStorage.getItem('loginTime'), 10);
+
+    function updateSessionTime() {
+        const now = Date.now();
+        const diff = now - startTime;
+        const hours = Math.floor(diff / (1000 * 60 * 60));
+        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+        document.getElementById('sessionTimeValue').innerText = `${hours}h ${minutes}m ${seconds}s`;
+    }
+>>>>>>> Stashed changes
 
       // Load saved box colors
       const savedColors = JSON.parse(localStorage.getItem('boxColors') || '{}');
@@ -114,6 +269,7 @@
         }
       });
 
+<<<<<<< Updated upstream
       // Build color palette
       const presetColors = ['#ff69b4', '#3498db', '#e74c3c', '#2ecc71', '#f1c40f', '#9b59b6', '#1abc9c', '#34495e'];
 
@@ -121,6 +277,19 @@
         palette.innerHTML = '';
         const section = document.createElement('div');
         section.className = 'color-section';
+=======
+    if (localStorage.getItem('theme') === 'dark') {
+        body.classList.add('dark-mode');
+        toggleThemeBtn.textContent = '☀️ Day Mode';
+    }
+
+    toggleThemeBtn.addEventListener('click', () => {
+        body.classList.toggle('dark-mode');
+        const isDark = body.classList.contains('dark-mode');
+        toggleThemeBtn.textContent = isDark ? '☀️ Day Mode' : '🌙 Night Mode';
+        localStorage.setItem('theme', isDark ? 'dark' : 'light');
+    });
+>>>>>>> Stashed changes
 
         presetColors.forEach(color => {
           const div = document.createElement('div');
@@ -130,6 +299,7 @@
           section.appendChild(div);
         });
 
+<<<<<<< Updated upstream
         const customColor = document.createElement('input');
         customColor.type = 'color';
         customColor.id = 'customColorInput';
@@ -293,3 +463,67 @@
   </script>
 </body>
 </html>
+=======
+    toggleSessionBtn.addEventListener('click', () => {
+        const isHidden = sessionValue.style.display === 'none';
+        sessionValue.style.display = isHidden ? 'inline' : 'none';
+        toggleSessionBtn.title = isHidden ? 'Click to hide your session time' : 'Click to show your session time';
+        toggleSessionBtn.textContent = isHidden ? '🚫' : '👁️';
+    });
+
+    const dragContainer = document.getElementById('dragBoxContainer');
+    let sortableInstance;
+
+    function saveOrder() {
+        const order = Array.from(dragContainer.children).map(box => box.dataset.id);
+        localStorage.setItem('boxOrder', JSON.stringify(order));
+    }
+
+    function loadOrder() {
+        const savedOrder = JSON.parse(localStorage.getItem('boxOrder'));
+        if (savedOrder) {
+            const boxMap = {};
+            Array.from(dragContainer.children).forEach(box => {
+                boxMap[box.dataset.id] = box;
+            });
+            dragContainer.innerHTML = '';
+            savedOrder.forEach(id => {
+                if (boxMap[id]) {
+                    dragContainer.appendChild(boxMap[id]);
+                }
+            });
+        }
+        if (!sortableInstance) {
+            sortableInstance = new Sortable(dragContainer, {
+                animation: 150,
+                ghostClass: 'sortable-ghost',
+                onEnd: saveOrder
+            });
+        }
+    }
+
+    loadOrder();
+
+    const resetBtn = document.getElementById('resetOrderBtn');
+    resetBtn.addEventListener('click', () => {
+        const boxes = Array.from(dragContainer.children);
+        boxes.forEach((box, index) => {
+            setTimeout(() => {
+                box.style.transform = 'translateY(-10px)';
+                box.style.backgroundColor = '#ddd';
+            }, index * 50);
+            setTimeout(() => {
+                box.style.transform = 'translateY(0)';
+                box.style.backgroundColor = '';
+            }, 200 + index * 50);
+        });
+
+        setTimeout(() => {
+            localStorage.removeItem('boxOrder');
+            location.reload();
+        }, 500);
+    });
+});
+</script>
+{% endblock %}
+>>>>>>> Stashed changes
