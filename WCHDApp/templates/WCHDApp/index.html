@@ -9,43 +9,6 @@
 <link rel="stylesheet" type="text/css" href="{% static 'WCHDApp/css/hubStyles.css' %}">
 <link rel="stylesheet" type="text/css" href="{% static 'WCHDApp/css/themeSwitcher.css' %}">
 
-<style>
-    body {
-        font-family: 'Inter', sans-serif;
-    }
-    .cursive-welcome {
-        font-family: 'Pacifico', cursive;
-        font-size: 18px;
-        padding: 2px 6px;
-        display: inline-block;
-    }
-    .sortable-ghost {
-        opacity: 0.4;
-        background: #ccc;
-    }
-
-    .box {
-        transition: transform 0.2s ease-in-out, background-color 0.2s ease-in-out;
-    }
-
-    .leftBox {
-        position: fixed;
-        top: 60px;
-        left: 0;
-        background-color: #f4f1e8;
-        padding: 15px;
-        border-right: 1px solid #000;
-        z-index: 10;
-    }
-
-    .verticalLine {
-        height: 50px;
-        width: 1px;
-        background-color: #000;
-        margin-left: 10px;
-    }
-</style>
-
 <nav class="hubNavbar-top">
     <div class="hubNavbar-left">
         <div id="liveTime" style="width: 120px; font-family: 'Roboto Mono', monospace; text-align: center;">00:00:00 AM</div>
@@ -91,50 +54,52 @@
     </div>
 </nav>
 
+<div class="main-content">
+    <div class="leftBox">
+        <h3>Activity</h3>
+        <hr>
+        <ul>
+            <li>Online</li>
+          
+    </div>
 
-<script>
-    const leftBox = document.querySelector('.leftBox');
+    <div class="content-area">
+        <div class="logoBox" style="display: flex; justify-content: center; max-height: 250px; margin-top: 20px;">
+            <img src="{% static 'WCHDApp/images/logo2.png' %}" alt="logo" style="max-width: 200%; max-height: 250px;">
+        </div>
 
-    window.addEventListener('scroll', () => {
-        const scrollPosition = window.scrollY;
-        const newTop = Math.max(0, -scrollPosition);
-    });
-</script>
+        <div id="dragBoxContainer" class="container">
+            <div class="box" data-id="reports"><a href="{% url 'reports' %}">Reports</a></div>
+            <div class="box" data-id="table"><a href="{% url 'viewTableSelect' %}">Table View Select</a></div>
+            <div class="box" data-id="imports"><a href="{% url 'imports' %}">Imports</a></div>
+            <div class="box" data-id="exports"><a href="{% url 'exports' %}">Exports</a></div>
+            <div class="box" data-id="transactions"><a href="{% url 'transactionsItem' %}">Transactions</a></div>
+            <div class="box" data-id="reconcile"><a href="{% url 'reconcile' %}">Reconcile</a></div>
+            <div class="box" data-id="demo1"><a href="#">Demo x</a></div>
+            <div class="box" data-id="demo2"><a href="#">Demo 2</a></div>
+            <div class="box" data-id="demo3"><a href="#">Demo 3</a></div>
+            <div class="box" data-id="demo4"><a href="#">Demo 4</a></div>
+        </div>
 
-<div class="logoBox" style="display: flex; justify-content: center; max-height: 250px; margin-top: 20px;">
-    <img src="{% static 'WCHDApp/images/logo2.png' %}" alt="logo" style="max-width: 200%; max-height: 250px;">
+        <button id="resetOrderBtn" style="
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 10px 16px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        ">
+            🔄 Reset Layout
+        </button>
+
+        <div id="colorPalette" class="color-palette" style="display: none;"></div>
+    </div>
 </div>
-
-<div id="dragBoxContainer" class="container">
-    <div class="box" data-id="reports"><a href="{% url 'reports' %}">Reports</a></div>
-    <div class="box" data-id="table"><a href="{% url 'viewTableSelect' %}">Table View Select</a></div>
-    <div class="box" data-id="imports"><a href="{% url 'imports' %}">Imports</a></div>
-    <div class="box" data-id="exports"><a href="{% url 'exports' %}">Exports</a></div>
-    <div class="box" data-id="transactions"><a href="{% url 'transactionsItem' %}">Transactions</a></div>
-    <div class="box" data-id="reconcile"><a href="{% url 'reconcile' %}">Reconcile</a></div>
-    <div class="box" data-id="demo1"><a href="#">Demo x</a></div>
-    <div class="box" data-id="demo2"><a href="#">Demo 2</a></div>
-    <div class="box" data-id="demo3"><a href="#">Demo 3</a></div>
-    <div class="box" data-id="demo4"><a href="#">Demo 4</a></div>
-</div>
-
-<button id="resetOrderBtn" style="
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    background-color: #e74c3c;
-    color: white;
-    border: none;
-    border-radius: 8px;
-    padding: 10px 16px;
-    font-weight: bold;
-    cursor: pointer;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-">
-    🔄 Reset Layout
-</button>
-
-<div id="colorPalette" class="color-palette" style="display: none;"></div>
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
