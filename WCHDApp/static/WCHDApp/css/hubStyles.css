@@ -263,7 +263,6 @@ input:checked + .slider:before {
     transition: color 0.3s ease;
 }
 
-/* Default Dark Mode */
 body.dark-mode .container {
     color: #fff;
 }
@@ -303,7 +302,6 @@ body.dark-mode .hubNavbar-links li {
     color: #eee;
 }
 
-/* Blue Theme */
 body.blue-theme {
     background-color: #e0f2f7;
     color: #1a237e;
@@ -342,7 +340,6 @@ body.blue-theme .hubNavbar-action a {
     color: #1a237e;
 }
 
-/* Blue Theme Dark Mode */
 body.blue-theme.dark-mode .container {
     color: #fff;
 }
@@ -383,7 +380,6 @@ body.blue-theme.dark-mode .hubNavbar-action a {
     color: #89cff0;
 }
 
-/* Green Theme */
 body.green-theme {
     background-color: #f1f8e9;
     color: #1b5e20;
@@ -422,7 +418,6 @@ body.green-theme .hubNavbar-action a {
     color: #1b5e20;
 }
 
-/* Green Theme Dark Mode */
 body.green-theme.dark-mode .container {
     color: #fff;
 }
@@ -463,7 +458,6 @@ body.green-theme.dark-mode .hubNavbar-action a {
     color: #90ee90;
 }
 
-/* Pink Theme */
 body.pink-theme {
     background-color: #fce4ec;
     color: #880e4f;
@@ -502,7 +496,6 @@ body.pink-theme .hubNavbar-action a {
     color: #880e4f;
 }
 
-/* Pink Theme Dark Mode */
 body.pink-theme.dark-mode .container {
     color: #fff;
 }
@@ -543,7 +536,6 @@ body.pink-theme.dark-mode .hubNavbar-action a {
     color: #ff69b4;
 }
 
-/* Purple Theme */
 body.purple-theme {
     background-color: #ede7f6;
     color: #311b92;
@@ -553,72 +545,4 @@ body.purple-theme .hubNavbar-top,
 body.purple-theme .hubNavbar-main {
     background-color: #9575cd;
     border-bottom-color: #673ab7;
-}
-
-body.purple-theme .hubNavbar-left,
-body.purple-theme .hubNavbar-right {
-    background-color: #b39ddb;
-    border-color: #673ab7;
-}
-
-body.purple-theme .box {
-    background-color: #512da8;
-    color: #fff;
-}
-
-body.purple-theme .box a {
-    color: white;
-}
-
-body.purple-theme .box:hover {
-    background-color: #4527a0;
-}
-
-body.purple-theme .hubNavbar-links li {
-    color: #311b92;
-}
-
-body.purple-theme .hubNavbar-action a {
-    color: #311b92;
-}
-
-/* Purple Theme Dark Mode */
-body.purple-theme.dark-mode .container {
-    color: #fff;
-}
-
-body.purple-theme.dark-mode {
-    background-color: #000;
-    color: #d4a3ff;
-}
-
-body.purple-theme.dark-mode .hubNavbar-top,
-body.purple-theme.dark-mode .hubNavbar-main {
-    background-color: #311b92;
-    border-bottom-color: #4527a0;
-}
-
-body.purple-theme.dark-mode .hubNavbar-left,
-body.purple-theme.dark-mode .hubNavbar-right {
-    background-color: #311b92;
-    border-color: #4527a0;
-}
-
-body.purple-theme.dark-mode .box {
-    background-color: #1a0066;
-    color: #e0b0ff;
-    border: 1px solid #673ab7;
-    box-shadow: 0 0 10px #d4a3ff;
-}
-
-body.purple-theme.dark-mode .box a {
-    color: #e0b0ff;
-}
-
-body.purple-theme.dark-mode .hubNavbar-links li {
-    color: #d4a3ff;
-}
-
-body.purple-theme.dark-mode .hubNavbar-action a {
-    color: #d4a3ff;
 }

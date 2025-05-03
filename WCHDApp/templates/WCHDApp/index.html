@@ -7,7 +7,6 @@
 <link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 <link rel="stylesheet" type="text/css" href="{% static 'WCHDApp/css/hubStyles.css' %}">
-<link rel="stylesheet" type="text/css" href="{% static 'WCHDApp/css/themeSwitcher.css' %}">
 
 <nav class="hubNavbar-top">
     <div class="hubNavbar-left">
@@ -20,7 +19,7 @@
             <span class="slider"></span>
         </label>
         <select id="themeSelector">
-            <option value="default">Pio Theme</option>
+            <option value="default">MC25 Theme</option>
             <option value="blue">Ocean Blue</option>
             <option value="green">Forest Green</option>
             <option value="pink">Sweet Pink</option>
@@ -33,9 +32,7 @@
             <p style="font-size: 10px; text-align: left; margin: 0; color: grey;">
                 Session time: <span id="sessionTimeValue">{{ duration }}</span>
             </p>
-            <button id="toggleSessionTime"
-                    style="padding: 2px 6px; font-size: 12px; background-color: transparent; border: none; cursor: pointer;"
-                    title="Click to hide your session time">
+            <button id="toggleSessionTime" style="padding: 2px 6px; font-size: 12px; background-color: transparent; border: none; cursor: pointer;" title="Click to hide your session time">
                 🚫
             </button>
         </div>
@@ -54,14 +51,47 @@
     </div>
 </nav>
 
+<div style="display: flex; ">
 
-          
+    <div class="left-panel">
+        <div class="panel-section">
+            <h3>Today's Summary</h3>
+            <p>Total Revenue: <span id="totalRevenue">$16.00</span></p>
+            <p>Total Expenses: <span id="totalExpenses">$0.00</span></p>
+        </div>
+        <div class="panel-section">
+            <h3>Online</h3>
+            <ul id="onlineUsers">
+                <li>{{ request.user.username }} </li>
+            </ul>
+            <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                function fetchOnlineUsers() {
+                    fetch('/api/online_users/')
+                        .then(response => response.json())
+                        .then(data => {
+                            const onlineUsersList = document.getElementById('onlineUsers');
+                            onlineUsersList.innerHTML = `<li>{{ request.user.username }} (You)</li>`;
+                            data.online_users.forEach(username => {
+                                if (username !== '{{ request.user.username }}') {
+                                    const li = document.createElement('li');
+                                    li.textContent = username;
+                                    onlineUsersList.appendChild(li);
+                                }
+                            });
+                        })
+                        .catch(error => console.error('Error fetching online users:', error));
+                }
+                fetchOnlineUsers();
+                setInterval(fetchOnlineUsers, 15000);
+            });
+            </script>
+        </div>
     </div>
-    <div id="colorPalette" class="color-palette" style="display: none;"></div>
 
     <div class="content-area">
         <div class="logoBox" style="display: flex; justify-content: center; max-height: 250px; margin-top: 20px;">
-            <img src="{% static 'WCHDApp/images/logo2.png' %}" alt="logo" style="max-width: 200%; max-height: 250px;">
+            <img src="{% static 'WCHDApp/images/logo2.png' %}" alt="logo" style="max-width: 100%; max-height: 250px;">
         </div>
 
         <div id="dragBoxContainer" class="container">
@@ -71,7 +101,6 @@
             <div class="box" data-id="exports"><a href="{% url 'exports' %}">Exports</a></div>
             <div class="box" data-id="transactions"><a href="{% url 'transactionsItem' %}">Transactions</a></div>
             <div class="box" data-id="reconcile"><a href="{% url 'reconcile' %}">Reconcile</a></div>
-         
         </div>
 
         <button id="resetOrderBtn" style="
@@ -86,6 +115,7 @@
             font-weight: bold;
             cursor: pointer;
             box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            z-index: 100;
         ">
             🔄 Reset Layout
         </button>
@@ -101,7 +131,10 @@ document.addEventListener('DOMContentLoaded', function () {
     const resetBtn = document.getElementById('resetOrderBtn');
     const toggleSessionBtn = document.getElementById('toggleSessionTime');
     const sessionValue = document.getElementById('sessionTimeValue');
+    const liveTimeEl = document.getElementById('liveTime');
+    const liveDateEl = document.getElementById('liveDate');
 
+    // --- Time/Date Update Functions ---
     function updateTime() {
         const now = new Date();
         let hours = now.getHours();
@@ -109,7 +142,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const seconds = now.getSeconds().toString().padStart(2, '0');
         const ampm = hours >= 12 ? 'PM' : 'AM';
         hours = hours % 12 || 12;
-        document.getElementById('liveTime').innerText = `${hours}:${minutes}:${seconds} ${ampm}`;
+        liveTimeEl.innerText = `${hours}:${minutes}:${seconds} ${ampm}`;
     }
 
     function updateDate() {
@@ -117,42 +150,54 @@ document.addEventListener('DOMContentLoaded', function () {
         const month = (now.getMonth() + 1).toString().padStart(2, '0');
         const day = now.getDate().toString().padStart(2, '0');
         const year = now.getFullYear();
-        document.getElementById('liveDate').innerText = `${month}/${day}/${year}`;
+        liveDateEl.innerText = `${month}/${day}/${year}`;
     }
 
+    // --- Session Time Logic ---
     if (localStorage.getItem('loginDate') !== new Date().toDateString()) {
         localStorage.setItem('loginDate', new Date().toDateString());
         localStorage.setItem('loginTime', Date.now());
     }
+    const startTime = parseInt(localStorage.getItem('loginTime'), 10) || Date.now();
 
-    const startTime = parseInt(localStorage.getItem('loginTime'), 10);
     function updateSessionTime() {
         const now = Date.now();
         const diff = now - startTime;
         const h = Math.floor(diff / 3600000);
         const m = Math.floor((diff % 3600000) / 60000);
         const s = Math.floor((diff % 60000) / 1000);
-        document.getElementById('sessionTimeValue').innerText = `${h}h ${m}m ${s}s`;
+        sessionValue.innerText = `${h}h ${m}m ${s}s`;
+        if (h >= 8) {
+            sessionValue.style.color = 'red';
+        } else {
+            sessionValue.style.color = '';
+        }
     }
 
-    setInterval(updateTime, 1000);
-    setInterval(updateSessionTime, 1000);
     updateTime();
     updateDate();
     updateSessionTime();
+    setInterval(updateTime, 1000);
+    setInterval(updateSessionTime, 1000);
 
     toggleSessionBtn.addEventListener('click', () => {
         const isHidden = sessionValue.style.display === 'none';
         sessionValue.style.display = isHidden ? 'inline' : 'none';
         toggleSessionBtn.title = isHidden ? 'Click to hide your session time' : 'Click to show your session time';
         toggleSessionBtn.textContent = isHidden ? '🚫' : '👁️';
+        localStorage.setItem('sessionTimeHidden', !isHidden);
     });
 
-    const dragContainer = document.getElementById('dragBoxContainer');
-    let sortableInstance;
+    if (localStorage.getItem('sessionTimeHidden') === 'true') {
+        sessionValue.style.display = 'none';
+        toggleSessionBtn.title = 'Click to show your session time';
+        toggleSessionBtn.textContent = '👁️';
+    }
 
+    // --- SortableJS Logic ---
+    let sortableInstance;
     function saveOrder() {
-        const order = Array.from(dragContainer.children).map(box => box.dataset.id);
+        const order = Array.from(container.children).map(box => box.dataset.id);
         localStorage.setItem('boxOrder', JSON.stringify(order));
     }
 
@@ -160,20 +205,19 @@ document.addEventListener('DOMContentLoaded', function () {
         const savedOrder = JSON.parse(localStorage.getItem('boxOrder'));
         if (savedOrder) {
             const boxMap = {};
-            Array.from(dragContainer.children).forEach(box => {
-                boxMap[box.dataset.id] = box;
+            Array.from(container.children).forEach(box => {
+                if (box.dataset.id) boxMap[box.dataset.id] = box;
             });
-            dragContainer.innerHTML = '';
             savedOrder.forEach(id => {
-                if (boxMap[id]) {
-                    dragContainer.appendChild(boxMap[id]);
-                }
+                if (boxMap[id]) container.appendChild(boxMap[id]);
             });
         }
         if (!sortableInstance) {
-            sortableInstance = new Sortable(dragContainer, {
+            sortableInstance = new Sortable(container, {
                 animation: 150,
                 ghostClass: 'sortable-ghost',
+                chosenClass: 'sortable-chosen',
+                dragClass: 'sortable-drag',
                 onEnd: saveOrder
             });
         }
@@ -182,29 +226,215 @@ document.addEventListener('DOMContentLoaded', function () {
     loadOrder();
 
     resetBtn.addEventListener('click', () => {
-        const boxes = Array.from(dragContainer.children);
-        boxes.forEach((box, index) => {
+        const boxes = Array.from(container.children);
+        boxes.forEach((box, i) => {
             setTimeout(() => {
+                box.style.transition = 'transform 0.1s ease-out, background-color 0.1s ease-out';
                 box.style.transform = 'translateY(-10px)';
                 box.style.backgroundColor = '#ddd';
-            }, index * 50);
-            setTimeout(() => {
-                const savedColors = JSON.parse(localStorage.getItem('boxColors') || '{}');
-                box.style.backgroundColor = savedColors[box.dataset.id] || '#3498db';
-                box.style.transform = 'translateY(0)';
-            }, 200 + index * 50);
+            }, i * 30);
         });
-
         setTimeout(() => {
             localStorage.removeItem('boxOrder');
             location.reload();
-        }, 500);
+        }, boxes.length * 30 + 200);
     });
 
-    initTheme();
-    initColorPalette();
+    if (typeof initTheme === 'function') initTheme();
+    if (typeof initColorPalette === 'function') initColorPalette();
 });
 </script>
 
 <script src="{% static 'WCHDApp/js/themeHandler.js' %}"></script>
+
+<style>
+/* Basic body styling (ensure no weird margins/padding) */
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Inter', sans-serif; /* Consistent font */
+    display: flex; /* Use flexbox for overall page structure */
+    flex-direction: column; /* Stack navbars and content vertically */
+    min-height: 100vh; /* Ensure body takes full viewport height */
+}
+
+/* Ensure navbars take only their required height */
+.hubNavbar-top,
+.hubNavbar-main {
+    flex-shrink: 0; /* Prevent navbars from shrinking */
+}
+
+/* Left Panel Styling */
+.left-panel {
+    width: 250px;             /* Fixed width */
+    flex-shrink: 0;           /* Prevent shrinking */
+    background-color: #f8f9fa; /* Light background */
+    border-right: 1px solid #dee2e6; /* Separator */
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    min-height: calc(100vh - 90px);
+    box-sizing: border-box; /* Include padding and border in the element's total width and height */
+}
+
+.left-panel h3 {
+    font-size: 1.1em;
+    margin-top: 0;
+    color: #343a40;
+    border-bottom: 1px solid #ced4da;
+    padding-bottom: 8px;
+    margin-bottom: 10px;
+}
+
+.left-panel p {
+    margin-bottom: 8px;
+    color: #495057;
+    font-size: 0.9em;
+}
+
+.left-panel #totalRevenue,
+.left-panel #totalExpenses {
+    font-weight: bold;
+    color: #28a745;
+}
+
+.left-panel #totalExpenses {
+    color: #dc3545;
+}
+
+.left-panel #onlineUsers {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.left-panel #onlineUsers li {
+    padding: 5px 0;
+    border-bottom: 1px dotted #ced4da;
+    font-size: 0.9em;
+    word-break: break-all;
+}
+
+.left-panel #onlineUsers li:last-child {
+    border-bottom: none;
+}
+
+/* Content Area Styling */
+.content-area {
+    flex-grow: 1;
+    padding: 20px;
+    position: relative;
+    overflow-y: auto;
+    box-sizing: border-box;
+}
+
+/* Logo Box Styling */
+.logoBox img {
+    max-width: 100%;
+    height: auto;
+    max-height: 200px;
+}
+
+/* Sortable Box Styling */
+.container {
+  display: grid;
+  grid-template-columns: repeat(3, auto);
+  column-gap: 5px;
+  row-gap: 5px;
+  margin: 5px auto 0;
+  justify-content: space-evenly;
+}
+
+.box {
+    background-color: #3498db;
+    color: white;
+    padding: 20px;
+    border-radius: 8px;
+    text-align: center;
+    min-width: 150px;
+    cursor: grab;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+.box:hover {
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    transform: translateY(-2px);
+}
+.box a {
+    color: inherit;
+    text-decoration: none;
+    font-weight: bold;
+    display: block;
+}
+
+.sortable-ghost {
+    opacity: 0.4;
+    background-color: #c8ebfb;
+}
+.sortable-chosen {
+    cursor: grabbing;
+    background-color: #2980b9;
+}
+.sortable-drag {
+    opacity: 0.9;
+}
+
+/* Ensure the main flex container grows */
+div[style*="display: flex"] {
+     flex-grow: 1;
+}
+
+body.blue-theme .left-panel {
+    background-color: #80deea;
+    color: #1a237e;
+    border-right: 1px solid #00bcd4;
+}
+body.blue-theme.dark-mode .left-panel {
+    background-color: #1a237e;
+    color: #89cff0;
+    border-right: 1px solid #2c387e;
+}
+body.green-theme .left-panel {
+    background-color: #a5d6a7;
+    color: #1b5e20;
+    border-right: 1px solid #4caf50;
+}
+body.green-theme.dark-mode .left-panel {
+    background-color: #1b5e20;
+    color: #90ee90;
+    border-right: 1px solid #2e7d32;
+}
+body.pink-theme .left-panel {
+    background-color: #f8bbd0;
+    color: #880e4f;
+    border-right: 1px solid #f06292;
+}
+body.pink-theme.dark-mode .left-panel {
+    background-color: #880e4f;
+    color: #ff69b4;
+    border-right: 1px solid #ad1457;
+}
+body.purple-theme .left-panel {
+    background-color: #b39ddb;
+    color: #311b92;
+    border-right: 1px solid #673ab7;
+}
+body.purple-theme.dark-mode .left-panel {
+    background-color: #311b92;
+    color: #d4a3ff;
+    border-right: 1px solid #4527a0;
+}
+
+body.blue-theme.dark-mode .left-panel *,
+body.green-theme.dark-mode .left-panel *,
+body.pink-theme.dark-mode .left-panel *,
+body.purple-theme.dark-mode .left-panel *
+{
+  color: #ffffff ;
+
+}
+
+</style>
+
 {% endblock %}
