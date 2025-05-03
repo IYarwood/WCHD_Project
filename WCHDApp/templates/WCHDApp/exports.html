@@ -1,16 +1,25 @@
 {% extends "WCHDApp/masterTemplate.html" %}
 {% load static %}
 
-
 {% block title %}Exports{% endblock %}
 
 {% block content %}
-    <link rel="stylesheet" type="text/css" href="{% static 'WCHDApp/css/cleanPages.css' %}"> 
+    <link rel="stylesheet" type="text/css" href="{% static 'WCHDApp/css/cleanPages.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'WCHDApp/css/themes.css' %}">
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            if (typeof initTheme === 'function') {
+                initTheme();
+            }
+        });
+    </script>
+    <script src="{% static 'WCHDApp/js/themeHandler.js' %}"></script>
+
     <h1>Exports</h1>
     <form method="post" enctype="multipart/form-data" target="_blank">
         {% csrf_token %}
         {{form}}
-        <button type="submit" name = "button" id="export" value = "export">Export</button>
+        <button type="submit" name="button" id="export" value="export">Export</button>
     </form>
     {{message}}
 {% endblock %}

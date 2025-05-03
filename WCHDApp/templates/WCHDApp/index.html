@@ -20,7 +20,7 @@
             <span class="slider"></span>
         </label>
         <select id="themeSelector">
-            <option value="default">Original Theme</option>
+            <option value="default">Pio Theme</option>
             <option value="blue">Ocean Blue</option>
             <option value="green">Forest Green</option>
             <option value="pink">Sweet Pink</option>
@@ -54,14 +54,10 @@
     </div>
 </nav>
 
-<div class="main-content">
-    <div class="leftBox">
-        <h3>Activity</h3>
-        <hr>
-        <ul>
-            <li>Online</li>
+
           
     </div>
+    <div id="colorPalette" class="color-palette" style="display: none;"></div>
 
     <div class="content-area">
         <div class="logoBox" style="display: flex; justify-content: center; max-height: 250px; margin-top: 20px;">
@@ -75,10 +71,7 @@
             <div class="box" data-id="exports"><a href="{% url 'exports' %}">Exports</a></div>
             <div class="box" data-id="transactions"><a href="{% url 'transactionsItem' %}">Transactions</a></div>
             <div class="box" data-id="reconcile"><a href="{% url 'reconcile' %}">Reconcile</a></div>
-            <div class="box" data-id="demo1"><a href="#">Demo x</a></div>
-            <div class="box" data-id="demo2"><a href="#">Demo 2</a></div>
-            <div class="box" data-id="demo3"><a href="#">Demo 3</a></div>
-            <div class="box" data-id="demo4"><a href="#">Demo 4</a></div>
+         
         </div>
 
         <button id="resetOrderBtn" style="
@@ -104,22 +97,10 @@
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     const body = document.body;
-    const toggleThemeCheckbox = document.getElementById('toggleTheme');
-    const themeSelector = document.getElementById('themeSelector');
     const container = document.getElementById('dragBoxContainer');
-    const palette = document.getElementById('colorPalette');
-    let targetBox = null;
-    let currentTheme = localStorage.getItem('selectedTheme') || 'default';
-
-    function setDefaultBoxColor(theme) {
-        switch (theme) {
-            case 'blue': return '#1976d2';
-            case 'green': return '#388e3c';
-            case 'pink': return '#c2185b';
-            case 'purple': return '#512da8';
-            default: return '#3498db';
-        }
-    }
+    const resetBtn = document.getElementById('resetOrderBtn');
+    const toggleSessionBtn = document.getElementById('toggleSessionTime');
+    const sessionValue = document.getElementById('sessionTimeValue');
 
     function updateTime() {
         const now = new Date();
@@ -160,63 +141,12 @@ document.addEventListener('DOMContentLoaded', function () {
     updateDate();
     updateSessionTime();
 
-    if (localStorage.getItem('theme') === 'dark') {
-        body.classList.add('dark-mode');
-        toggleThemeCheckbox.checked = true;
-    }
-
-    toggleThemeCheckbox.addEventListener('change', () => {
-        body.classList.toggle('dark-mode');
-        const dark = body.classList.contains('dark-mode');
-        localStorage.setItem('theme', dark ? 'dark' : 'light');
-    });
-
-    const toggleSessionBtn = document.getElementById('toggleSessionTime');
-    const sessionValue = document.getElementById('sessionTimeValue');
     toggleSessionBtn.addEventListener('click', () => {
         const isHidden = sessionValue.style.display === 'none';
         sessionValue.style.display = isHidden ? 'inline' : 'none';
         toggleSessionBtn.title = isHidden ? 'Click to hide your session time' : 'Click to show your session time';
         toggleSessionBtn.textContent = isHidden ? '🚫' : '👁️';
     });
-
-    themeSelector.addEventListener('change', function() {
-        const selectedTheme = this.value;
-        body.classList.remove('blue-theme', 'green-theme', 'pink-theme', 'purple-theme');
-        if (selectedTheme !== 'default') {
-            body.classList.add(`${selectedTheme}-theme`);
-            localStorage.setItem('selectedTheme', selectedTheme);
-            currentTheme = selectedTheme;
-            [...container.children].forEach(box => {
-                const savedColors = JSON.parse(localStorage.getItem('boxColors') || '{}');
-                if (!savedColors[box.dataset.id]) {
-                    box.style.backgroundColor = setDefaultBoxColor(selectedTheme);
-                }
-            });
-        } else {
-            localStorage.removeItem('selectedTheme');
-            currentTheme = 'default';
-            [...container.children].forEach(box => {
-                const savedColors = JSON.parse(localStorage.getItem('boxColors') || '{}');
-                if (!savedColors[box.dataset.id]) {
-                    box.style.backgroundColor = '#3498db';
-                }
-            });
-        }
-    });
-
-    const savedTheme = localStorage.getItem('selectedTheme');
-    if (savedTheme) {
-        body.classList.add(`${savedTheme}-theme`);
-        themeSelector.value = savedTheme;
-        currentTheme = savedTheme;
-        [...container.children].forEach(box => {
-            const savedColors = JSON.parse(localStorage.getItem('boxColors') || '{}');
-            if (!savedColors[box.dataset.id]) {
-                box.style.backgroundColor = setDefaultBoxColor(savedTheme);
-            }
-        });
-    }
 
     const dragContainer = document.getElementById('dragBoxContainer');
     let sortableInstance;
@@ -251,7 +181,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
     loadOrder();
 
-    const resetBtn = document.getElementById('resetOrderBtn');
     resetBtn.addEventListener('click', () => {
         const boxes = Array.from(dragContainer.children);
         boxes.forEach((box, index) => {
@@ -260,9 +189,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 box.style.backgroundColor = '#ddd';
             }, index * 50);
             setTimeout(() => {
-                box.style.transform = 'translateY(0)';
                 const savedColors = JSON.parse(localStorage.getItem('boxColors') || '{}');
-                box.style.backgroundColor = savedColors[box.dataset.id] || setDefaultBoxColor(currentTheme) || '#3498db';
+                box.style.backgroundColor = savedColors[box.dataset.id] || '#3498db';
+                box.style.transform = 'translateY(0)';
             }, 200 + index * 50);
         });
 
@@ -272,67 +201,10 @@ document.addEventListener('DOMContentLoaded', function () {
         }, 500);
     });
 
-    const presetColors = ['#ff69b4', '#3498db', '#e74c3c', '#2ecc71', '#f1c40f', '#9b59b6', '#1abc9c', '#34495e'];
-
-    function buildPalette(x, y) {
-        palette.innerHTML = '';
-        const section = document.createElement('div');
-        section.className = 'color-section';
-
-        presetColors.forEach(color => {
-            const div = document.createElement('div');
-            div.className = 'color-option';
-            div.style.backgroundColor = color;
-            div.dataset.color = color;
-            section.appendChild(div);
-        });
-
-        const customColor = document.createElement('input');
-        customColor.type = 'color';
-        customColor.id = 'customColorInput';
-
-        customColor.addEventListener('input', () => {
-            applyColor(customColor.value);
-        });
-
-        section.appendChild(customColor);
-        palette.appendChild(section);
-        palette.style.left = `${x}px`;
-        palette.style.top = `${y}px`;
-        palette.style.display = 'flex';
-    }
-
-    function applyColor(color) {
-        if (!targetBox) return;
-        targetBox.style.backgroundColor = color;
-        const id = targetBox.dataset.id;
-        const saved = JSON.parse(localStorage.getItem('boxColors') || '{}');
-        saved[id] = color;
-        localStorage.setItem('boxColors', JSON.stringify(saved));
-        palette.style.display = 'none';
-        targetBox = null;
-    }
-
-    container.addEventListener('contextmenu', function (e) {
-        const box = e.target.closest('.box');
-        if (!box) return;
-        e.preventDefault();
-        targetBox = box;
-        buildPalette(e.pageX, e.pageY);
-    });
-
-    palette.addEventListener('click', function (e) {
-        if (e.target.classList.contains('color-option')) {
-            applyColor(e.target.dataset.color);
-        }
-    });
-
-    document.addEventListener('click', function (e) {
-        if (!palette.contains(e.target)) {
-            palette.style.display = 'none';
-            targetBox = null;
-        }
-    });
+    initTheme();
+    initColorPalette();
 });
 </script>
+
+<script src="{% static 'WCHDApp/js/themeHandler.js' %}"></script>
 {% endblock %}

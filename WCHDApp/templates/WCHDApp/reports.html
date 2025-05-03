@@ -1,12 +1,22 @@
 {% extends "WCHDApp/masterTemplate.html" %}
 {% load static %}
 
-{% block title %}{% endblock %}
+{% block title %}Reports{% endblock %}
 
-{% block content %}  
-    <link rel="stylesheet" type="text/css" href="{% static 'WCHDApp/css/cleanPages.css' %}">   
+{% block content %}
+    <link rel="stylesheet" type="text/css" href="{% static 'WCHDApp/css/cleanPages.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'WCHDApp/css/themes.css' %}">
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            if (typeof initTheme === 'function') {
+                initTheme();
+            }
+        });
+    </script>
+    <script src="{% static 'WCHDApp/js/themeHandler.js' %}"></script>
+
     <h1>Reports</h1>
-    <form method="post" target = "_blank">
+    <form method="post" target="_blank">
         {% csrf_token %}
         {{form}}
         <button type="submit" name="button">Make Report</button>

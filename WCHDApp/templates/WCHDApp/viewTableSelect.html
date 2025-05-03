@@ -3,15 +3,24 @@
 
 {% block title %}View Table Select{% endblock %}
 
-{% block content %}   
+{% block content %}
     <link rel="stylesheet" type="text/css" href="{% static 'WCHDApp/css/cleanPages.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'WCHDApp/css/themes.css' %}">
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            if (typeof initTheme === 'function') {
+                initTheme();
+            }
+        });
+    </script>
+    <script src="{% static 'WCHDApp/js/themeHandler.js' %}"></script>
 
     <h1>Table Select</h1>
-    
+
     <form method="post">
-    {% csrf_token %}
-    {{form}}
-    <button type="submit" name = "button" id="seeTable" value = "seeTable">See Table</button>
-    <button type="submit" name = "button" id="create" value = "create">Create</button>
+        {% csrf_token %}
+        {{form}}
+        <button type="submit" name="button" id="seeTable" value="seeTable">See Table</button>
+        <button type="submit" name="button" id="create" value="create">Create</button>
     </form>
 {% endblock %}
