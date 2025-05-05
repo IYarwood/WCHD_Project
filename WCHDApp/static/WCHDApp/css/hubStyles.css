@@ -19,6 +19,7 @@ body {
     font-size: 14px;
     z-index: 9999;
 }
+
 #resetColorsBtn:hover {
     background-color: #c0392b;
 }
@@ -458,91 +459,11 @@ body.green-theme.dark-mode .hubNavbar-action a {
     color: #90ee90;
 }
 
-body.pink-theme {
-    background-color: #fce4ec;
-    color: #880e4f;
-}
 
-body.pink-theme .hubNavbar-top,
-body.pink-theme .hubNavbar-main {
-    background-color: #f48fb1;
-    border-bottom-color: #f06292;
-}
-
-body.pink-theme .hubNavbar-left,
-body.pink-theme .hubNavbar-right {
-    background-color: #f8bbd0;
-    border-color: #f06292;
-}
-
-body.pink-theme .box {
-    background-color: #c2185b;
-    color: #fff;
-}
-
-body.pink-theme .box a {
-    color: white;
-}
-
-body.pink-theme .box:hover {
-    background-color: #ad1457;
-}
-
-body.pink-theme .hubNavbar-links li {
-    color: #880e4f;
-}
-
-body.pink-theme .hubNavbar-action a {
-    color: #880e4f;
-}
-
-body.pink-theme.dark-mode .container {
-    color: #fff;
-}
-
-body.pink-theme.dark-mode {
-    background-color: #000;
-    color: #ff69b4;
-}
-
-body.pink-theme.dark-mode .hubNavbar-top,
-body.pink-theme.dark-mode .hubNavbar-main {
-    background-color: #880e4f;
-    border-bottom-color: #ad1457;
-}
-
-body.pink-theme.dark-mode .hubNavbar-left,
-body.pink-theme.dark-mode .hubNavbar-right {
-    background-color: #880e4f;
-    border-color: #ad1457;
-}
-
-body.pink-theme.dark-mode .box {
-    background-color: #560027;
-    color: #f48fb1;
-    border: 1px solid #c2185b;
-    box-shadow: 0 0 10px #ff69b4;
-}
-
-body.pink-theme.dark-mode .box a {
-    color: #f48fb1;
-}
-
-body.pink-theme.dark-mode .hubNavbar-links li {
-    color: #ff69b4;
-}
-
-body.pink-theme.dark-mode .hubNavbar-action a {
-    color: #ff69b4;
-}
-
-body.purple-theme {
-    background-color: #ede7f6;
-    color: #311b92;
-}
-
-body.purple-theme .hubNavbar-top,
-body.purple-theme .hubNavbar-main {
-    background-color: #9575cd;
-    border-bottom-color: #673ab7;
+body.dark-mode .left-panel,
+body.blue-theme.dark-mode .left-panel,
+body.green-theme.dark-mode .left-panel,
+body.pink-theme.dark-mode .left-panel,
+body.purple-theme.dark-mode .left-panel {
+    color: #ffffff !important;
 }
