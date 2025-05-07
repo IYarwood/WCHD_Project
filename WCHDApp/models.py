@@ -38,12 +38,6 @@ class Fund(models.Model):
     sof = models.CharField(max_length=10, blank = False, choices=FundSource.choices, verbose_name="SoF")
     mac_elig = models.BooleanField(blank=False, verbose_name="MACE")
  
-    """
-    @property
-    def fundBalanceMinus3(self):
-        return self.fund_cash_balance - 3
-    """
-    
     def __str__(self):
         return self.fund_name
     
