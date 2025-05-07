@@ -27,7 +27,7 @@ document.addEventListener("DOMContentLoaded", function(){
             }
         }
         const sumOutput = document.querySelector("#fundInfo");
-        sumOutput.innerHTML = fundName + ": $" + sum + " total hours = " + hours;
+        sumOutput.innerHTML = fundName + ": $" + sum.toFixed(2) + " total hours = " + hours;
     });
 
     //Same logic as fund
@@ -43,7 +43,7 @@ document.addEventListener("DOMContentLoaded", function(){
             }
         }
         const sumOutput = document.querySelector("#fundActivity");
-        sumOutput.innerHTML = "Fund by Activity: $" + sum + " total hours = " + hours;
+        sumOutput.innerHTML = "Fund by Activity: $" + sum.toFixed(2) + " total hours = " + hours;
     });
 
    //Same logic as fund
@@ -69,7 +69,7 @@ document.addEventListener("DOMContentLoaded", function(){
             }
 
             const sumOutput = document.querySelector("#fundEmployee");
-            sumOutput.innerHTML += employeeName + " in " + activities[i][1]+ ": $" + sum + " in "+hours+" hours<br>";
+            sumOutput.innerHTML += employeeName + " in " + activities[i][1]+ ": $" + sum.toFixed(2) + " in "+hours+" hours<br>";
         }
         totalHourOutput.innerHTML = employeeName + " total hours: " + totalHours;
     });
