@@ -7,6 +7,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 <link rel="stylesheet" type="text/css" href="{% static 'WCHDApp/css/hubStyles.css' %}">
+<link href="https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap" rel="stylesheet">
+
 
 <nav class="hubNavbar-top">
     <div class="hubNavbar-left">
@@ -26,15 +28,25 @@
         </select>
     </div>
     <div class="hubNavbar-right">
-        <span class="cursive-welcome">Welcome, {{ request.user }}</span><br>
-        <div style="display: flex; align-items: center; gap: 8px; margin-top: 2px;">
-            <p style="font-size: 10px; text-align: left; margin: 0; color: grey;">
-                Session time: <span id="sessionTimeValue">{{ duration }}</span>
-            </p>
-            <button id="toggleSessionTime" style="padding: 2px 6px; font-size: 12px; background-color: transparent; border: none; cursor: pointer;" title="Click to hide your session time">
-                🚫
-            </button>
+        <span
+          class="cursive-welcome"
+          style="font-family: 'Great Vibes', cursive; font-size: 1.6rem;"
+        >
+          Welcome, {{ request.user }}
+        </span><br>
+        <div style="display: flex; align-items: center; gap: 8px; margin-top: 1px;">
+          <p style="font-size: 10px; text-align: left; margin: 0; color: grey;">
+            Session time: <span id="sessionTimeValue">{{ duration }}</span>
+          </p>
+          <button
+            id="toggleSessionTime"
+            style="padding: 2px 6px; font-size: 12px; background-color: transparent; border: none; cursor: pointer;"
+            title="Click to hide your session time"
+          >
+            🚫
+          </button>
         </div>
+      </div>
     </div>
 </nav>
 
@@ -55,7 +67,7 @@
     <div class="left-panel">
         <div class="panel-section">
             <h3>Today's Summary</h3>
-            <p>Total Revenue: <span id="totalRevenue">$16.00</span></p>
+            <p>Total Revenue: <span id="totalRevenue">$14.23</span></p>
             <p>Total Expenses: <span id="totalExpenses">$0.00</span></p>
         </div>
         <div class="panel-section">
@@ -246,182 +258,5 @@ document.addEventListener('DOMContentLoaded', function () {
 
 <script src="{% static 'WCHDApp/js/themeHandler.js' %}"></script>
 
-<style>
-body {
-    margin: 0;
-    padding: 0;
-    font-family: 'Inter', sans-serif;
-    display: flex;
-    flex-direction: column;
-    min-height: 100vh;
-}
-
-.hubNavbar-top,
-.hubNavbar-main {
-    flex-shrink: 0;
-}
-
-.left-panel {
-    width: 250px;
-    flex-shrink: 0;
-    background-color: #f8f9fa;
-    border-right: 1px solid #dee2e6;
-    padding: 20px;
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-    min-height: calc(100vh - 90px);
-    box-sizing: border-box;
-    
-}
-
-.left-panel h3 {
-    font-size: 1.1em;
-    margin-top: 0;
-    color: #343a40;
-    border-bottom: 1px solid #ced4da;
-    padding-bottom: 8px;
-    margin-bottom: 10px;
-}
-
-.left-panel p {
-    margin-bottom: 8px;
-    color: #495057;
-    font-size: 0.9em;
-}
-
-.left-panel #totalRevenue,
-.left-panel #totalExpenses {
-    font-weight: bold;
-    color: #28a745;
-}
-
-.left-panel #totalExpenses {
-    color: #dc3545;
-}
-
-.left-panel #onlineUsers {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-}
-
-.left-panel #onlineUsers li {
-    padding: 5px 0;
-    border-bottom: 1px dotted #ced4da;
-    font-size: 0.9em;
-    word-break: break-all;
-}
-
-.left-panel #onlineUsers li:last-child {
-    border-bottom: none;
-}
-
-.content-area {
-    flex-grow: 1;
-    padding: 20px;
-    position: relative;
-    overflow-y: auto;
-    box-sizing: border-box;
-}
-
-.logoBox img {
-    max-width: 100%;
-    height: auto;
-    max-height: 200px;
-}
-
-.container {
-  display: grid;
-  grid-template-columns: repeat(3, auto);
-  column-gap: 5px;
-  row-gap: 5px;
-  margin: 5px auto 0;
-  justify-content: space-evenly;
-}
-
-.box {
-    background-color: #3498db;
-    color: white;
-    padding: 20px;
-    border-radius: 8px;
-    text-align: center;
-    min-width: 150px;
-    cursor: grab;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-.box:hover {
-    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-    transform: translateY(-2px);
-}
-.box a {
-    color: inherit;
-    text-decoration: none;
-    font-weight: bold;
-    display: block;
-}
-
-.sortable-ghost {
-    opacity: 0.4;
-    background-color: #c8ebfb;
-}
-.sortable-chosen {
-    cursor: grabbing;
-    background-color: #2980b9;
-}
-.sortable-drag {
-    opacity: 0.9;
-}
-
-div[style*="display: flex"] {
-     flex-grow: 1;
-}
-
-body.blue-theme .left-panel {
-    background-color: #80deea;
-    color: #1a237e;
-    border-right: 1px solid #00bcd4;
-}
-body.blue-theme.dark-mode .left-panel {
-    background-color: #1a237e;
-    color: #ffffff !important;
-    border-right: 1px solid #2c387e;
-}
-body.green-theme .left-panel {
-    background-color: #a5d6a7;
-    color: #1b5e20;
-    border-right: 1px solid #4caf50;
-}
-body.green-theme.dark-mode .left-panel {
-    background-color: #1b5e20;
-    color: #ffffff !important;
-    border-right: 1px solid #2e7d32;
-}
-body.pink-theme .left-panel {
-    background-color: #f8bbd0;
-    color: #880e4f;
-    border-right: 1px solid #f06292;
-}
-body.pink-theme.dark-mode .left-panel {
-    background-color: #880e4f;
-    color: #ffffff !important;
-    border-right: 1px solid #ad1457;
-}
-body.purple-theme .left-panel {
-    background-color: #b39ddb;
-    color: #311b92;
-    border-right: 1px solid #673ab7;
-}
-body.purple-theme.dark-mode .left-panel {
-    background-color: #311b92;
-    color: #ffffff !important;
-    border-right: 1px solid #4527a0;
-}
-body.dark-mode .left-panel {
-    background-color: #000 !important;
-    color: #ffffff !important;
-}
-</style>
 
 {% endblock %}
