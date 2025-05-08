@@ -226,7 +226,7 @@ input:checked + .slider:before {
 .hubNavbar-right {
     text-align: right;
     border-left: 1px solid #000;
-    padding: 15px 25px;
+    padding: 20px 30px;
     background-color: #f4f1e8;
     transition: background-color 0.5s ease;
 }
@@ -266,7 +266,7 @@ input:checked + .slider:before {
 }
 
 body.dark-mode .container {
-    color: #fff;
+    color: #A3C6E0;
 }
 
 body.dark-mode {
@@ -276,13 +276,13 @@ body.dark-mode {
 
 body.dark-mode .hubNavbar-top,
 body.dark-mode .hubNavbar-main {
-    background-color: #1e1e1e;
+    background-color: #0F2752;
     border-bottom-color: #333;
 }
 
 body.dark-mode .hubNavbar-left,
 body.dark-mode .hubNavbar-right {
-    background-color: #1e1e1e;
+    background-color: #0F2752;
     border-color: #333;
 }
 
@@ -303,6 +303,7 @@ body.dark-mode .hubNavbar-action a {
 body.dark-mode .hubNavbar-links li {
     color: #eee;
 }
+
 
 body.blue-theme {
     background-color: #e0f2f7;
@@ -559,10 +560,10 @@ body {
 }
 
 .left-panel {
-    width: 250px;
+    width: 210px;
     flex-shrink: 0;
-    background-color: #f8f9fa;
-    border-right: 1px solid #dee2e6;
+    background-color: #f4f1e8;
+    border-right: 1px solid #000000;
     padding: 20px;
     display: flex;
     flex-direction: column;
@@ -571,6 +572,8 @@ body {
     box-sizing: border-box;
     
 }
+
+
 
 .left-panel h3 {
     font-size: 1.1em;
@@ -634,20 +637,35 @@ body {
   column-gap: 5px;
   row-gap: 5px;
   margin: 5px auto 0;
-  justify-content: space-evenly;
+  justify-content: space-evenly; 
 }
 
 .box {
     background-color: #3498db;
-    color: white;
-    padding: 20px;
+    color: #eee;
+    border: 1px solid #444;
+    padding: 1rem;
+    margin: 0.5rem 0;
     border-radius: 8px;
-    text-align: center;
-    min-width: 150px;
     cursor: grab;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
+    transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
+  }
+  
+  .box.dragging {
+    opacity: 0.8;
+    transform: scale(1.05) rotate(2deg);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+    cursor: grabbing;
+  }
+  
+  .box.sad-grey {
+    background-color: #2c2c2c;
+    color: #999;
+    filter: grayscale(100%) brightness(80%);
+    transform: rotate(-1deg);
+  }
+  
+
 .box:hover {
     box-shadow: 0 4px 8px rgba(0,0,0,0.2);
     transform: translateY(-2px);
