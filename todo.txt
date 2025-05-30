@@ -1,0 +1,5 @@
+Clockify viewing table looks weird
+
+Payroll table seems to be what I have as clockify table. Will need to make a few tweaks to get to work
+    going to skip clockify table and go directly into payroll. Then can set up the clockify view to 
+    pull from payroll instead

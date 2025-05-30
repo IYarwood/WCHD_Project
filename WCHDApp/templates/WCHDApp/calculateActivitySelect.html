@@ -1,59 +1,64 @@
-{% extends 'WCHDApp/masterTemplate.html' %}
-{% load static %}
-{% load custom_filters %}
-
-
-{% block title %}Calculate Activity{% endblock %}
-
+{% extends 'WCHDApp/masterTemplate.html' %} 
+{% load static %} 
+{% load custom_filters %} 
+{% block title %}Calculate Activity{% endblock %} 
 {% block content %}
-    <link rel="stylesheet" type="text/css" href="{% static 'WCHDApp/css/cleanPages.css' %}"> 
-    <script src="{% static 'WCHDApp/js/clockifyCalculations.js' %}"></script>
-    <h1>Calculate Activity</h1>
-    <form method="post">
-        <select id="fundDropdown">
-            <option>Select Fund</option>
-            {% for choice in fundChoices %}
-                <!--choice.1 = choice[1]-->
-                <option value={{choice.0}}>{{choice.1}}</option>
-            {% endfor %}
-        </select>
+<link
+  rel="stylesheet"
+  type="text/css"
+  href="{% static 'WCHDApp/css/cleanPages.css' %}"
+/>
+<link rel="stylesheet" type="text/css" href="{% static 'WCHDAPP/css/tableStyling.css' %}"> 
+<script src="{% static 'WCHDApp/js/clockifyCalculations.js' %}"></script>
+<h1>Calculate Activity</h1>
+<form method="post">
+  <select id="fundDropdown">
+    <option>Select Fund</option>
+    {% for choice in fundChoices %}
+    <!--choice.1 = choice[1]-->
+    <option value="{{choice.0}}">{{choice.1}}</option>
+    {% endfor %}
+  </select>
 
-        <select id="activityDropdown">
-            <option>Select Activity</option>
-            {% for choice in activityChoices %}
-                <!--choice.1 = choice[1]-->
-                <option value={{choice.0}}>{{choice.1}}</option>
-            {% endfor %}
-        </select>
-        
-        <select id="employeeDropdown">
-            <option>Select Employee</option>
-            {% for choice in employeeChoices %}
-                <!--choice.1 = choice[1]-->
-                <option value={{choice.0}}>{{choice.1}}</option>
-            {% endfor %}
-        </select>
-    </form>
-    <p id="fundInfo"></p>
-    <p id="fundActivity"></p>
-    <p id="fundEmployee"></p>
-    <p id="totalHourOutput"></p>
-    <table id="activityTable">
-        <tr>
-            {% for field in verboseFields %}
-                <th>{{field}}</th>
-            {% endfor %}
-        </tr>
-        {% for obj in data %}
-            <tr data-billamount={{obj.billableAmount}} 
-            data-activityid={{obj.ActivityList_id}} 
-            data-employeeid={{obj.employee_id}} 
-            data-hours={{obj.hours}}
-            data-fundid={{obj.ActivityList.fund.fund_id}}>
-                {% for field in fields %}
-                    <td>{{obj|get_attr:field}}</td>
-                {% endfor %}
-            </tr>
-        {% endfor %}
-    </table>
+  <select id="activityDropdown">
+    <option>Select Activity</option>
+    {% for choice in activityChoices %}
+    <!--choice.1 = choice[1]-->
+    <option value="{{choice.0}}">{{choice.1}}</option>
+    {% endfor %}
+  </select>
+
+  <select id="employeeDropdown">
+    <option>Select Employee</option>
+    {% for choice in employeeChoices %}
+    <!--choice.1 = choice[1]-->
+    <option value="{{choice.0}}">{{choice.1}}</option>
+    {% endfor %}
+  </select>
+</form>
+<p id="fundInfo"></p>
+<p id="fundActivity"></p>
+<p id="fundEmployee"></p>
+<p id="totalHourOutput"></p>
+
+<table id="activityTable">
+  <tr>
+    {% for field in verboseFields %}
+    <th>{{field}}</th>
+    {% endfor %}
+  </tr>
+  {% for obj in data %}
+  <tr
+    data-billamount="{{obj.billableAmount}}"
+    data-activityid="{{obj.ActivityList_id}}"
+    data-employeeid="{{obj.employee_id}}"
+    data-hours="{{obj.hours}}"
+    data-fundid="{{obj.ActivityList.fund.fund_id}}"
+  >
+    {% for field in fields %}
+    <td>{{obj|get_attr:field}}</td>
+    {% endfor %}
+  </tr>
+  {% endfor %}
+</table>
 {% endblock %}
