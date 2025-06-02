@@ -190,18 +190,21 @@ class ActivityList(models.Model):
  
 class Payroll(models.Model):
     payroll_id = models.CharField(primary_key=True, max_length=12, verbose_name="Payroll ID")
-    beg_date = models.DateField(verbose_name="Beginning Date")
-    end_date = models.DateField(verbose_name="End Date")
+    beg_date = models.CharField(max_length=20,verbose_name="Beginning Date")
+    end_date = models.CharField(max_length=20, verbose_name="End Date")
     employee = models.ForeignKey(Employee, on_delete=models.CASCADE)
-    activityList = models.ForeignKey(ActivityList, on_delete=models.CASCADE)
-    fund = models.ForeignKey(Fund, on_delete=models.CASCADE)
+    ActivityList = models.ForeignKey(ActivityList, on_delete=models.CASCADE)
+    #going to get fund from activity list
+    #fund = models.ForeignKey(Fund, on_delete=models.CASCADE)
     hours = models.DecimalField(max_digits=6, decimal_places=2, verbose_name="Hours")
     pay_amount = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Pay Amount")
-    vacation_used = models.DecimalField(max_digits=6, decimal_places=2, verbose_name="Vacation Used")
-    sick_used = models.DecimalField(max_digits=6, decimal_places=2, verbose_name="Sick Used")
-    comp_time_used = models.DecimalField(max_digits=6, decimal_places=2, verbose_name="Comp Time Used")
-    other_hours = models.DecimalField(max_digits=6, decimal_places=2, verbose_name="Other Hours")
-    other_rate = models.DecimalField(max_digits=6, decimal_places=2, verbose_name="Other Rate")
+
+    #I think all of these will be properties instead
+    #vacation_used = models.DecimalField(max_digits=6, decimal_places=2, verbose_name="Vacation Used")
+    #sick_used = models.DecimalField(max_digits=6, decimal_places=2, verbose_name="Sick Used")
+    #comp_time_used = models.DecimalField(max_digits=6, decimal_places=2, verbose_name="Comp Time Used")
+    #other_hours = models.DecimalField(max_digits=6, decimal_places=2, verbose_name="Other Hours")
+    #other_rate = models.DecimalField(max_digits=6, decimal_places=2, verbose_name="Other Rate")
     
     @property
     def pay_rate(self):

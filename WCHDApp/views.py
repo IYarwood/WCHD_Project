@@ -839,6 +839,113 @@ def clockifyImport(request, *args, **kwargs):
         
     return render(request, "WCHDApp/clockifyImport.html", {"form": form, "message": message})
 
+def clockifyImportPayroll(request, *args, **kwargs):
+    message = ""
+
+    #Making an id to make payroll is like 2025-01
+    idTracker = 0
+    year = datetime.now().year
+    #Mapping fields from clockify to fields our models use
+    fieldMap = {
+        "Project": "ActivityList",
+        #"Department": "dept",
+        "User": "employee",
+        "Start Date": "beg_date",
+        "End Date": "end_date",
+        #"Billable Rate (USD)": "billableRate",
+        "Billable Amount (USD)": "pay_amount",
+        "Duration (decimal)": "hours"
+    }
+
+    #Ended up not using these and hard coding it instead
+    modelFields = {
+        "ActivityList": "program",
+        "dept": "dept_name"
+    }
+
+
+    if request.method == 'POST':
+        form = InputSelect(request.POST, request.FILES)
+        if form.is_valid():
+            #Not using right now but I will want to use this later when I redirect to here from normal import
+            tableName = form.cleaned_data['table']
+            selectedFile = form.cleaned_data['file']
+            file = pd.read_csv(selectedFile)
+            file.dropna(how='all', inplace=True)
+            columns = file.columns
+            row = file.iloc[0]
+            data = []
+            #Getting all the fields for Clockify
+            model = apps.get_model('WCHDApp', 'Payroll')
+            fields = model._meta.get_fields()
+            neededFields = []
+            #Exclude autocreated fields like id
+            for field in fields:
+                if not field.auto_created:
+                    neededFields.append(field.name)
+
+            columns = list(columns)
+            
+            #Creating a list of indices that we want from columns
+            neededIndexes = []
+            for i in range(len(columns)):
+                if columns[i] in fieldMap:
+                    #updated columns[i] to the name we need for the model
+                    columns[i] = fieldMap[columns[i]]
+                    neededIndexes.append(i)
+
+            #Creating a list of dictionaries for each row with the values we need
+            for i in range(len(file)):
+                dict = {}
+                row = file.iloc[i]
+
+                for j in neededIndexes:
+                    column = columns[j]
+                    dict[column] = row[j]
+                dict['payroll_id'] = str(year)+"-"+str(idTracker)
+                idTracker += 1
+                data.append(dict)
+            print(data)
+            """
+            if neededFields != list(columns):
+                message = "Bad File. Please check your CSV format and try again."
+                return render(request, "WCHDApp/imports.html", {"form": form, "message": message})
+            """
+            lookUpFields = []
+            fks = []
+            for field in fields:
+                #Logic for foreign keys
+                if field.is_relation:
+                    fks.append(field.name)
+                else:
+                    lookUpFields.append(field)
+            
+            print(fks)
+            for line in data:
+                for key in line:
+                    if type(line[key]) == np.int64:
+                        line[key] = int(line[key])
+                    if key in fks:
+                        #Linking objects with the fields we have
+                        parentModel = apps.get_model('WCHDApp', key)
+                        if key == "employee":
+                            names = line[key].split(" ")
+                            line[key] = parentModel.objects.get(first_name=names[0], surname=names[1])
+                        elif key == "ActivityList":
+                            line[key] = parentModel.objects.get(program=line[key])
+                        elif key == "dept":
+                            line[key] = parentModel.objects.get(dept_name=line[key])
+                #print(line)
+                obj, _ = model.objects.update_or_create(
+                    **line,
+                    defaults = line
+                )    
+    else:
+        form = InputSelect()
+    
+        
+    return render(request, "WCHDApp/clockifyImportPayroll.html", {"form": form, "message": message})
+
 def calculateActivitySelect(request, *args, **kwargs):
     clockifyModel = apps.get_model('WCHDApp', 'Clockify')
     data = clockifyModel.objects.all()
