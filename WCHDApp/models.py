@@ -103,6 +103,9 @@ class Employee(models.Model):
     gen_pay_fund = models.ForeignKey(Fund, on_delete=models.PROTECT,related_name="gen_pay_fund")
     vac_pay_fund = models.ForeignKey(Fund, on_delete=models.PROTECT,related_name="vac_pay_fund")
     sick_pay_fund = models.ForeignKey(Fund, on_delete=models.PROTECT,related_name="sick_pay_fund")
+    comp_pay_fund = models.ForeignKey(Fund, on_delete=models.PROTECT,related_name="comp_pay_fund")
+    holiday_pay_fund = models.ForeignKey(Fund, on_delete=models.PROTECT,related_name="holiday_pay_fund")
+    mac_pay_fund = models.ForeignKey(Fund, on_delete=models.PROTECT,related_name="mac_pay_fund")
 
     def __str__(self):
         return f"{self.first_name} {self.surname}"
@@ -187,7 +190,9 @@ class ActivityList(models.Model):
     active = models.BooleanField(default=True, verbose_name="Active")
     fphs = models.CharField(max_length=20,verbose_name= "FPHS")
  
- 
+    def __str__(self):
+        return self.program
+
     class Meta:
             db_table = "Activity List"
  
@@ -197,7 +202,7 @@ class PayPeriod(models.Model):
     periodEnd = models.DateField()
 
     def __str__(self):
-        return ("Pay Period " + str(self.periodID) + " (" + str(self.periodStart) + " - " + str(self.periodEnd)+")")
+        return ("Pay Period " + str(self.payperiod_id) + " (" + str(self.periodStart) + " - " + str(self.periodEnd)+")")
     class Meta:
         db_table = "PayPeriod"
  

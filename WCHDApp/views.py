@@ -863,6 +863,22 @@ def clockifyImportPayroll(request, *args, **kwargs):
         "Duration (decimal)": "hours"
     }
 
+    #Creating a list of activities that are tracked by employee so we can grab fund from employee not from activity
+    #employeeTrackedActivities = ["AD-ADMIN", "AD-ADMIN out", "AD-COMP", "AD-COMP out", "AD-HOLIDAY", "AD-HOLIDAY out", "AD-MAC", "AD-SICK", "AD-SICK out", "AD-VAC", "AD-VAC out"]
+    activityFundMap = {
+        "AD-ADMIN": "gen_pay_fund",
+        "AD-ADMIN out": "gen_pay_fund",
+        "AD-COMP": "comp_pay_fund",
+        "AD-COMP out": "comp_pay_fund",
+        "AD-HOLIDAY": "holiday_pay_fund",
+        "AD-HOLIDAY out": "holiday_pay_fund",
+        "AD-SICK": "sick_pay_fund",
+        "AD-SICK out": "sick_pay_fund",
+        "AD-VAC": "vac_pay_fund",
+        "AD-VAC out": "vac_pay_fund",
+        "AD-MAC": "mac_pay_fund"
+    }
+    
     #Ended up not using these and hard coding it instead
     modelFields = {
         "ActivityList": "program",
@@ -954,6 +970,28 @@ def clockifyImportPayroll(request, *args, **kwargs):
                         elif key == "dept":
                             line[key] = parentModel.objects.get(dept_name=line[key])
                 #print(line)
+                activity = line['ActivityList']
+                activityName = activity.program
+                if activityName in activityFundMap:
+                    employee = line['employee']
+                    fieldName = activityFundMap[activityName]
+                    fund = getattr(employee, fieldName)
+                else:
+                    fund = activity.fund
+                #This is getting the total from clockify which ALyssa said isnt right all the time
+                """
+                rate = line['pay_amount']
+                hours = line['hours']
+                amount = rate * hours
+                """
+                amount = line['pay_amount']
+                balance = float(fund.fund_cash_balance)
+                if balance > amount:
+                    balance -= amount
+                    fund.fund_cash_balance = balance
+                    fund.save()
+                else:
+                    message += f"Fund doesn't have enough money: {fund} transaction skipped"
                 obj, _ = model.objects.update_or_create(
                     **line,
                     defaults = line
