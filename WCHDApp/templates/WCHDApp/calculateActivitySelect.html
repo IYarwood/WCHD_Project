@@ -1,7 +1,7 @@
 {% extends 'WCHDApp/masterTemplate.html' %} 
 {% load static %} 
 {% load custom_filters %} 
-{% block title %}Calculate Activity{% endblock %} 
+{% block title %}Payroll View{% endblock %} 
 {% block content %}
 <link
   rel="stylesheet"
@@ -10,7 +10,7 @@
 />
 <link rel="stylesheet" type="text/css" href="{% static 'WCHDAPP/css/tableStyling.css' %}"> 
 <script src="{% static 'WCHDApp/js/clockifyCalculations.js' %}"></script>
-<h1>Calculate Activity</h1>
+<h1>Payroll View</h1>
 <form method="post">
   <select id="fundDropdown">
     <option>Select Fund</option>
@@ -49,7 +49,7 @@
   </tr>
   {% for obj in data %}
   <tr
-    data-billamount="{{obj.billableAmount}}"
+    data-billamount="{{obj.pay_amount}}"
     data-activityid="{{obj.ActivityList_id}}"
     data-employeeid="{{obj.employee_id}}"
     data-hours="{{obj.hours}}"

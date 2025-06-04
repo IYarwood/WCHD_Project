@@ -100,6 +100,9 @@ class Employee(models.Model):
     yos = models.FloatField(verbose_name="YoS")
     job_title = models.CharField(max_length=255, verbose_name="Job Title")
     pay_rate = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Pay Rate")
+    gen_pay_fund = models.ForeignKey(Fund, on_delete=models.PROTECT,related_name="gen_pay_fund")
+    vac_pay_fund = models.ForeignKey(Fund, on_delete=models.PROTECT,related_name="vac_pay_fund")
+    sick_pay_fund = models.ForeignKey(Fund, on_delete=models.PROTECT,related_name="sick_pay_fund")
 
     def __str__(self):
         return f"{self.first_name} {self.surname}"
@@ -188,17 +191,28 @@ class ActivityList(models.Model):
     class Meta:
             db_table = "Activity List"
  
+class PayPeriod(models.Model):
+    payperiod_id = models.CharField(max_length=7, primary_key=True, verbose_name="Pay Period")
+    periodStart = models.DateField()
+    periodEnd = models.DateField()
+
+    def __str__(self):
+        return ("Pay Period " + str(self.periodID) + " (" + str(self.periodStart) + " - " + str(self.periodEnd)+")")
+    class Meta:
+        db_table = "PayPeriod"
+ 
 class Payroll(models.Model):
-    payroll_id = models.CharField(primary_key=True, max_length=12, verbose_name="Payroll ID")
-    beg_date = models.CharField(max_length=20,verbose_name="Beginning Date")
-    end_date = models.CharField(max_length=20, verbose_name="End Date")
+    id = models.BigAutoField(primary_key=True)
+    #payroll_id = models.CharField(primary_key=True, max_length=12, verbose_name="Payroll ID")
+    beg_date = models.DateField(max_length=20, verbose_name="Beginning Date")
+    end_date = models.DateField(max_length=20, verbose_name="End Date")
     employee = models.ForeignKey(Employee, on_delete=models.CASCADE)
     ActivityList = models.ForeignKey(ActivityList, on_delete=models.CASCADE)
     #going to get fund from activity list
     #fund = models.ForeignKey(Fund, on_delete=models.CASCADE)
     hours = models.DecimalField(max_digits=6, decimal_places=2, verbose_name="Hours")
     pay_amount = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Pay Amount")
-
+    payperiod = models.ForeignKey(PayPeriod, on_delete=models.PROTECT)
     #I think all of these will be properties instead
     #vacation_used = models.DecimalField(max_digits=6, decimal_places=2, verbose_name="Vacation Used")
     #sick_used = models.DecimalField(max_digits=6, decimal_places=2, verbose_name="Sick Used")
@@ -211,8 +225,8 @@ class Payroll(models.Model):
         return self.employee.pay_rate
     
     class Meta:
-            db_table = "Payroll"
- 
+        db_table = "Payroll"
+
 class Grants(models.Model):
     grant_id = models.AutoField(primary_key=True, verbose_name="Grant ID")
     grant_name = models.CharField(max_length=30, verbose_name="Grant Name")

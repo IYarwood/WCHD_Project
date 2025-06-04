@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Fund, Line, Dept, Item, Employee, People, Invoice,PurchaseOrder,Voucher,ActivityList, Payroll, Grants, BudgetActions, Carryover, Benefits, Variable, Clockify, Testing
+from .models import Fund, Line, Dept, Item, Employee, People, Invoice,PurchaseOrder,Voucher,ActivityList, Payroll, PayPeriod, Grants, BudgetActions, Carryover, Benefits, Variable, Clockify, Testing
 
 # Register your models here.
 
@@ -14,6 +14,7 @@ admin.site.register(PurchaseOrder)
 admin.site.register(Voucher)
 admin.site.register(ActivityList)
 admin.site.register(Payroll)
+admin.site.register(PayPeriod)
 admin.site.register(Grants)
 admin.site.register(BudgetActions)
 admin.site.register(Carryover)

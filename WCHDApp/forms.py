@@ -39,6 +39,13 @@ class InputSelect(forms.Form):
         widget=forms.ClearableFileInput(attrs={'accept': '.csv'})
     )
 
+class FileInput(forms.Form):
+    file = forms.FileField(
+        label="Upload CSV File",
+        required=True,
+        widget=forms.ClearableFileInput(attrs={'accept': '.csv'})
+    )
+
 class ExportSelect(forms.Form):
     #Pulling models
     models = apps.get_app_config('WCHDApp').get_models()

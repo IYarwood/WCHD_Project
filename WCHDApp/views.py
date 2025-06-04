@@ -1,7 +1,7 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import HttpResponse, JsonResponse
 from .models import Fund, Testing, Item
-from .forms import FundForm, TableSelect, LineForm, InputSelect, ExportSelect,reconcileForm, activitySelect
+from .forms import FundForm, TableSelect, LineForm, InputSelect, ExportSelect,reconcileForm, activitySelect, FileInput
 from django.forms import modelform_factory
 from django.apps import apps
 from django.db.models import DecimalField
@@ -22,6 +22,7 @@ import json
 from django.shortcuts import render
 from django.utils.timezone import now
 from django.utils.dateparse import parse_datetime
+import re
 
 def generate_pdf(request, tableName):
     buffer = BytesIO()
@@ -290,6 +291,8 @@ def viewTableSelect(request):
         button = request.POST.get('button')
         if form.is_valid():
             tableName = form.cleaned_data['table'] 
+            if tableName == 'Payroll':
+                return redirect('calculateActivitySelect')
             if button == "seeTable":
                 return redirect('tableView', tableName)
             elif button == "create":
@@ -416,6 +419,8 @@ def imports(request):
         if form.is_valid():
             #Pulls data from submitted files
             tableName = form.cleaned_data['table']
+            if tableName == 'Payroll':
+                return redirect('clockifyImportPayroll')
             selectedFile = form.cleaned_data['file']
             file = pd.read_csv(selectedFile)
             columns = file.columns
@@ -740,6 +745,7 @@ def checkPrivileges(request):
 def noPrivileges(request, exception):
     return render(request, "WCHDApp/noPrivileges.html")
 
+#Deprecated
 def clockifyImport(request, *args, **kwargs):
     message = ""
     #Mapping fields from clockify to fields our models use
@@ -865,10 +871,8 @@ def clockifyImportPayroll(request, *args, **kwargs):
 
 
     if request.method == 'POST':
-        form = InputSelect(request.POST, request.FILES)
+        form = FileInput(request.POST, request.FILES)
         if form.is_valid():
-            #Not using right now but I will want to use this later when I redirect to here from normal import
-            tableName = form.cleaned_data['table']
             selectedFile = form.cleaned_data['file']
             file = pd.read_csv(selectedFile)
             file.dropna(how='all', inplace=True)
@@ -901,11 +905,25 @@ def clockifyImportPayroll(request, *args, **kwargs):
 
                 for j in neededIndexes:
                     column = columns[j]
-                    dict[column] = row[j]
-                dict['payroll_id'] = str(year)+"-"+str(idTracker)
+                    if column == "beg_date" or column == "end_date":
+                        payPeriodModel = apps.get_model('WCHDApp', 'PayPeriod')
+                        periods = payPeriodModel.objects.all()
+                        date = row[j]
+                        newDate = datetime.strptime(date, "%m/%d/%Y").date()
+                        dict[column] = newDate
+                        for period in periods:
+                            if period.periodStart <= newDate <= period.periodEnd:
+                                dict['payperiod'] = period
+                    else:
+                        dict[column] = row[j]
+
+                
+                print(dict)
+                #dict['payroll_id'] = str(year)+"-"+str(idTracker)
                 idTracker += 1
                 data.append(dict)
-            print(data)
+
+            #print(data)
             """
             if neededFields != list(columns):
                 message = "Bad File. Please check your CSV format and try again."
@@ -941,19 +959,23 @@ def clockifyImportPayroll(request, *args, **kwargs):
                     defaults = line
                 )    
     else:
-        form = InputSelect()
+        form = FileInput()
     
         
     return render(request, "WCHDApp/clockifyImportPayroll.html", {"form": form, "message": message})
 
 def calculateActivitySelect(request, *args, **kwargs):
-    clockifyModel = apps.get_model('WCHDApp', 'Clockify')
-    data = clockifyModel.objects.all()
+    payrollModel = apps.get_model('WCHDApp', 'Payroll')
+    payperiodGroup = request.GET.get('payperiod')
+    if payperiodGroup == None:
+        data = payrollModel.objects.all()
+    else:
+        data = payrollModel.objects.filter(payperiod=payperiodGroup)
     for obj in data:
         print(obj.ActivityList.fund)
     fields = []
     verboseNames = []
-    for field in clockifyModel._meta.get_fields():
+    for field in payrollModel._meta.get_fields():
         if field.is_relation:
             #Grab related model. This is why foreign keys have to be named after the model 
             parentModel = apps.get_model('WCHDApp', field.name)
@@ -989,7 +1011,8 @@ def calculateActivitySelect(request, *args, **kwargs):
         "activityChoices": activityChoices,
         "employeeChoices": employeeChoices,
         "fundChoices": fundChoices,
-        "data": data, "fields": fields, 
+        "data": data, 
+        "fields": fields, 
         "verboseFields": verboseNames}
 
     return render(request, "WCHDApp/calculateActivitySelect.html", context)
