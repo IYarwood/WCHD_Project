@@ -26,6 +26,11 @@ urlpatterns = [
     path('calculateActivitySelect/', views.calculateActivitySelect, name='calculateActivitySelect'),
     path('getActivities/', views.getActivities, name='getActivities'),
     path('clockifyImportPayroll/', views.clockifyImportPayroll, name='clockifyImportPayroll'),
+    path('payrollView/', views.payrollView, name='payrollView'),
+    path('payrollEntries/', views.payrollEntries, name='payrollEntries'),
+    path('fundSummary/', views.fundSummary, name='fundSummary'),
+    path('activitySummary/', views.activitySummary, name='activitySummary'),
+    path('employeeSummary/', views.employeeSummary, name='employeeSummary'),
 ]
 
     

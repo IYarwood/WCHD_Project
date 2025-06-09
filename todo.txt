@@ -10,3 +10,8 @@ pay rates etc. These would have to be taken from the funds cash balance
 
 I am still fuzzy on meaning of a range of dates. 
 I think range of dates will be after the fact that I can have htmx do a query for entries with wanted dates.
+
+
+Pay period -> activity -> fund -> employee
+Each time one changes we can send request to view to get a new table with new totals
+Each request should include the value for each dropdown to filter entries in the view

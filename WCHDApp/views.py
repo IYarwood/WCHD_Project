@@ -292,7 +292,7 @@ def viewTableSelect(request):
         if form.is_valid():
             tableName = form.cleaned_data['table'] 
             if tableName == 'Payroll':
-                return redirect('calculateActivitySelect')
+                return redirect('payrollView')
             if button == "seeTable":
                 return redirect('tableView', tableName)
             elif button == "create":
@@ -1004,13 +1004,16 @@ def clockifyImportPayroll(request, *args, **kwargs):
 
 def calculateActivitySelect(request, *args, **kwargs):
     payrollModel = apps.get_model('WCHDApp', 'Payroll')
-    payperiodGroup = request.GET.get('payperiod')
+    payperiodGroup = request.GET.get('payperiodDropdown')
+    print(payperiodGroup)
     if payperiodGroup == None:
         data = payrollModel.objects.all()
     else:
         data = payrollModel.objects.filter(payperiod=payperiodGroup)
-    for obj in data:
-        print(obj.ActivityList.fund)
+    #for obj in data:
+        #print(obj.ActivityList.fund)
+
+    #print(data)
     fields = []
     verboseNames = []
     for field in payrollModel._meta.get_fields():
@@ -1044,11 +1047,18 @@ def calculateActivitySelect(request, *args, **kwargs):
     fundChoices = []
     for fund in funds:
         fundChoices.append((fund.fund_id, fund.fund_name))
+
+    payperiodModel = apps.get_model("WCHDApp", "PayPeriod")
+    payperiods = payperiodModel.objects.all()
+    payperiodChoices = []
+    for payperiod in payperiods:
+        payperiodChoices.append(payperiod.payperiod_id)
     
     context = {
         "activityChoices": activityChoices,
         "employeeChoices": employeeChoices,
         "fundChoices": fundChoices,
+        "payperiodChoices": payperiodChoices,
         "data": data, 
         "fields": fields, 
         "verboseFields": verboseNames}
@@ -1067,3 +1077,155 @@ def getActivities(request):
         "activities": activityChoices
     }
     return JsonResponse(data)
+
+
+def payrollView(request, *args, **kwargs):
+    payperiodModel = apps.get_model("WCHDApp", "PayPeriod")
+    payperiods = payperiodModel.objects.all()
+    payperiodChoices = []
+    for payperiod in payperiods:
+        payperiodChoices.append(payperiod.payperiod_id)
+
+    activityModel = apps.get_model('WCHDApp', 'ActivityList')
+    activities = activityModel.objects.all()
+    activityChoices = []
+    for activity in activities:
+        activityChoices.append((activity.ActivityList_id, activity.program))
+    
+    employeeModel = apps.get_model("WCHDApp", "employee")
+    employees = employeeModel.objects.all()
+    employeeChoices = []
+    for employee in employees:
+        employeeChoices.append((employee.employee_id, employee.first_name))
+
+    fundModel = apps.get_model("WCHDApp", "fund")
+    funds = fundModel.objects.all()
+    fundChoices = []
+    for fund in funds:
+        fundChoices.append((fund.fund_id, fund.fund_name))
+    
+    context = {
+        "payperiodChoices": payperiodChoices,
+        "activityChoices": activityChoices,
+        "fundChoices": fundChoices,
+        "employeeChoices": employeeChoices,
+        }
+
+    return render(request, "WCHDApp/payrollView.html", context)
+
+def payrollEntries(request, *args, **kwargs):
+    payrollModel = apps.get_model('WCHDApp', 'Payroll')
+    payperiodGroup = request.GET.get('payperiodDropdown')
+    print(payperiodGroup)
+    if payperiodGroup == None:
+        data = payrollModel.objects.all()
+    else:
+        data = payrollModel.objects.filter(payperiod=payperiodGroup)
+    #for obj in data:
+        #print(obj.ActivityList.fund)
+
+    #print(data)
+    fields = []
+    verboseNames = []
+    for field in payrollModel._meta.get_fields():
+        if field.is_relation:
+            #Grab related model. This is why foreign keys have to be named after the model 
+            parentModel = apps.get_model('WCHDApp', field.name)
+
+            #Get the related models primary key
+            fkName = parentModel._meta.pk.name
+            verboseNames.append(parentModel._meta.pk.verbose_name)
+            fields.append(fkName)
+        else:
+            verboseNames.append(field.verbose_name)
+            fields.append(field.name)
+
+    context = {
+        "data": data,
+        "fields": fields,
+        "verboseFields": verboseNames
+    }
+    
+    return render(request, "WCHDApp/partials/payrollTable.html", context)
+
+
+def fundSummary(request):
+    fundID = request.GET.get("fundDropdown")
+    payperiodID = request.GET.get('payperiodDropdown')
+
+    fund = apps.get_model("WCHDApp", "fund")
+    selectedFund = fund.objects.get(fund_id=fundID)
+    fundName = selectedFund.fund_name
+
+    payrollModel = apps.get_model('WCHDApp', 'Payroll')
+    #Have to use double underscore instead of dot here for whatever reason
+    filteredRows = payrollModel.objects.filter(ActivityList__fund__fund_id=fundID, payperiod__payperiod_id=payperiodID)
+
+    totalPay = 0
+    totalHours = 0
+    for row in filteredRows:
+        totalPay += row.pay_amount
+        totalHours += row.hours
+
+    context = {
+        "specifiedField": "Fund Name",
+        "specifiedValue": fundName,
+        "sum": totalPay,
+        "totalHours": totalHours
+    }
+    
+    return render(request, "WCHDApp/partials/totalsOutput.html", context)
+
+def activitySummary(request):
+    activityID = request.GET.get("activityDropdown")
+    payperiodID = request.GET.get('payperiodDropdown')
+
+    activity = apps.get_model("WCHDApp", "ActivityList")
+    selectedActivity = activity.objects.get(ActivityList_id=activityID)
+    activityName = selectedActivity.program
+
+    payrollModel = apps.get_model('WCHDApp', 'Payroll')
+    #Have to use double underscore instead of dot here for whatever reason
+    filteredRows = payrollModel.objects.filter(ActivityList__ActivityList_id=activityID, payperiod__payperiod_id=payperiodID)
+
+    totalPay = 0
+    totalHours = 0
+    for row in filteredRows:
+        totalPay += row.pay_amount
+        totalHours += row.hours
+
+    context = {
+        "specifiedField": "Activity Name",
+        "specifiedValue": activityName,
+        "sum": totalPay,
+        "totalHours": totalHours
+    }
+    
+    return render(request, "WCHDApp/partials/totalsOutput.html", context)
+
+def employeeSummary(request):
+    employeeID = request.GET.get("employeeDropdown")
+    payperiodID = request.GET.get('payperiodDropdown')
+
+    employee = apps.get_model("WCHDApp", "Employee")
+    selectedEmployee = employee.objects.get(employee_id=employeeID)
+    employeeName = selectedEmployee.first_name + " " + selectedEmployee.surname
+
+    payrollModel = apps.get_model('WCHDApp', 'Payroll')
+    #Have to use double underscore instead of dot here for whatever reason
+    filteredRows = payrollModel.objects.filter(employee__employee_id=employeeID, payperiod__payperiod_id=payperiodID)
+
+    totalPay = 0
+    totalHours = 0
+    for row in filteredRows:
+        totalPay += row.pay_amount
+        totalHours += row.hours
+
+    context = {
+        "specifiedField": "Employee Name",
+        "specifiedValue": employeeName,
+        "sum": totalPay,
+        "totalHours": totalHours
+    }
+    
+    return render(request, "WCHDApp/partials/totalsOutput.html", context)
