@@ -536,7 +536,7 @@ def transactionsItem(request):
 
 def transactionsView(request,itemID):
     transactionModel = apps.get_model('WCHDApp', "transaction")
-    transactionValues = transactionModel.objects.filter(item_id=itemID)
+    transactionValues = transactionModel.objects.filter(item_id=itemID, type="Revenue")
 
     #Getting just field names from model
     fields = transactionModel._meta.get_fields()
