@@ -1221,11 +1221,25 @@ def employeeSummary(request):
         totalPay += row.pay_amount
         totalHours += row.hours
 
+    activityModel = apps.get_model("WCHDApp", "ActivityList")
+    activities = activityModel.objects.all()
+
+    activitiesDict = {}
+    for activity in activities:
+        activityFilteredRows = payrollModel.objects.filter(ActivityList=activity, payperiod__payperiod_id=payperiodID)
+        activityPay = 0
+        activityHours = 0
+        for activityRow in activityFilteredRows:
+            activityPay += activityRow.pay_amount
+            activityHours += activityRow.hours
+        
+        activitiesDict[activity.program] = {"name":activity.program, "sum":activityPay, "hours":activityHours}
+
     context = {
-        "specifiedField": "Employee Name",
-        "specifiedValue": employeeName,
+        "employeeName": employeeName,
+        "activitiesDict": activitiesDict,
         "sum": totalPay,
         "totalHours": totalHours
     }
     
-    return render(request, "WCHDApp/partials/totalsOutput.html", context)
+    return render(request, "WCHDApp/partials/employeeBreakdown.html", context)
