@@ -16,6 +16,7 @@ urlpatterns = [
     path('reports/', views.reports, name='reports'),
     path('imports/', views.imports, name='imports'),
     path('exports/', views.exports, name='exports'),
+    path('countyPayrollExport/', views.countyPayrollExport, name='countyPayrollExport'),
     path('transactionsItem/', views.transactionsItem, name='transactionsItem'),
     path('transactionsView/<str:itemID>', views.transactionsView, name='transactionsView'),
     path('noPrivileges/', views.noPrivileges, name='noPrivileges'),

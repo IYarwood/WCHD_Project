@@ -501,12 +501,14 @@ def imports(request):
 
 @permission_required('WCHDApp.has_full_access', raise_exception=True)
 def exports(request):
+
     message = ""
     if request.method == 'POST':
         form = ExportSelect(request.POST)
         if form.is_valid():
             tableName = form.cleaned_data['table']
             fileName = form.cleaned_data['fileName']
+            
             model = apps.get_model('WCHDApp', tableName)
             data = model.objects.all().values()
             exportData = pd.DataFrame.from_records(data)
@@ -524,6 +526,55 @@ def exports(request):
         form = ExportSelect()
         
     return render(request, "WCHDApp/exports.html", {"form": form, "message": message})
+
+def countyPayrollExport(request):
+    payperiodModel = apps.get_model('WCHDApp', "PayPeriod")
+    payperiods = payperiodModel.objects.all()
+
+    if request.method == "POST":
+        payperiod = request.POST.get('payPeriod')
+        fileName = request.POST.get('fileName')
+
+        payrollModel = apps.get_model('WCHDApp', "Payroll")
+        entries = payrollModel.objects.select_related('employee', "ActivityList").filter(payperiod__payperiod_id = payperiod)
+
+        """
+        Setting up dictionary to track workers total hours
+        employeeHours = {
+            empObject:80
+        }
+        """
+        employeeHours = {}
+        for entry in entries:
+            if entry.employee in employeeHours:
+                employeeHours[entry.employee] += entry.hours
+            else:
+                employeeHours[entry.employee] = entry.hours
+
+        exportData = []
+        for employee, hours in employeeHours.items():
+            #Gotta figure out how to do paycode
+            exportData.append({
+                "JobNumber": employee.employee_id,
+                "Paycode": "R-REGULAR PA",
+                "Time Group/Description": "",
+                "Hours": hours,
+                "HourlyRate": employee.pay_rate,
+                "Salary": "",
+                "AccountDistribution": employee.gen_pay_fund.fund_id
+            })
+        exportData = pd.DataFrame(exportData)
+
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = f'attachment; filename="{fileName}.csv"'
+        exportData.to_csv(path_or_buf=response, index=False)
+
+        return response
+        print(exportData)
+    context = {
+        "payperiods": payperiods
+    }
+    return render(request, "WCHDApp/countyPayrollExport.html", context)
 
 def transactionsItem(request):
     itemModel = apps.get_model('WCHDApp', "Item")

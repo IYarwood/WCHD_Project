@@ -54,7 +54,7 @@ class ExportSelect(forms.Form):
         modelsDict[model.__name__] = model.__name__
     
     table = forms.ChoiceField(choices=modelsDict, label="Select Table", required=True)
-    fileName = forms.CharField(max_length=20, label="File Name (do not include .csv)")
+    fileName = forms.CharField(max_length=20, label="File Name (do not include .csv)", required=True)
 
     
 
