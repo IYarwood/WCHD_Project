@@ -1298,7 +1298,7 @@ def fundSummary(request):
         
         return render(request, "WCHDApp/partials/totalsOutput.html", context)
     else:
-        return HttpResponse("No activity selected", status=204)
+        return HttpResponse("No Fund selected", status=204)
 
 def activitySummary(request):
     activityID = request.GET.get("activityDropdown")
@@ -1327,7 +1327,7 @@ def activitySummary(request):
         
         return render(request, "WCHDApp/partials/totalsOutput.html", context)
     else:
-        return HttpResponse("No activity selected", status=204)
+        return HttpResponse("No Activity selected", status=204)
 
 def employeeSummary(request):
     employeeID = request.GET.get("employeeDropdown")
@@ -1353,7 +1353,6 @@ def employeeSummary(request):
         activitiesDict = {}
         for activity in activities:
             activityFilteredRows = payrollModel.objects.filter(ActivityList=activity, payperiod__payperiod_id=payperiodID, employee__employee_id=employeeID)
-            print(activityFilteredRows)
             activityPay = 0
             activityHours = 0
             for activityRow in activityFilteredRows:
@@ -1371,4 +1370,4 @@ def employeeSummary(request):
         
         return render(request, "WCHDApp/partials/employeeBreakdown.html", context)
     else:
-        return HttpResponse("No activity selected", status=204)
+        return HttpResponse("No Employee selected", status=204)

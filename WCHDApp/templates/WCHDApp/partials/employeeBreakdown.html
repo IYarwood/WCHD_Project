@@ -10,13 +10,13 @@
     {% for key, activity in activitiesDict.items %}
     <tr>
         <td>{{activity.name}}</td>
-        <td>{{activity.sum}}</td>
-        <td>${{activity.hours}}</td>
+        <td>{{activity.hours}}</td>
+        <td>${{activity.sum}}</td>
     </tr>
     {% endfor %}
     <tr>
         <td>Totals</td>
-        <td>{{sum}}</td>
-        <td>${{totalHours}}</td>
+        <td>{{totalHours}}</td>
+        <td>${{sum}}</td>
     </tr>
 </table>
