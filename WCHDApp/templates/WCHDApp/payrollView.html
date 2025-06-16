@@ -19,10 +19,6 @@
   <select
     id="payperiodDropdown"
     name="payperiodDropdown"
-    hx-get="{% url 'payrollEntries' %}"
-    hx-target="#activityTable"
-    hx-include="#payperiodDropdown"
-    hx-trigger="change"
   >
     <option value="EMPTY" disabled selected>Select Pay Period</option>
     {% for choice in payperiodChoices %}

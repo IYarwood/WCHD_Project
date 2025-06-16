@@ -1235,6 +1235,8 @@ def payrollView(request, *args, **kwargs):
 
     return render(request, "WCHDApp/payrollView.html", context)
 
+#No longer wanted to show all entries
+"""
 def payrollEntries(request, *args, **kwargs):
     payrollModel = apps.get_model('WCHDApp', 'Payroll')
     payperiodGroup = request.GET.get('payperiodDropdown')
@@ -1269,6 +1271,7 @@ def payrollEntries(request, *args, **kwargs):
     }
     
     return render(request, "WCHDApp/partials/payrollTable.html", context)
+"""
 
 
 def fundSummary(request):
