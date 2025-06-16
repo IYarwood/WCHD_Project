@@ -1,0 +1,27 @@
+{% extends "WCHDApp/masterTemplate.html" %}
+{% load static %}
+{% load custom_filters %}
+
+
+{% block title %}Transactions Expenses{% endblock %}
+
+{% block content %}
+    <link rel="stylesheet" type="text/css" href="{% static 'WCHDAPP/css/formStyling.css' %}"> 
+    <link rel="stylesheet" type="text/css" href="{% static 'WCHDApp/css/cleanPages.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'WCHDApp/css/themes.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'WCHDAPP/css/tableStyling.css' %}"> 
+    <h1>Transaction Expenses</h1>
+    <form>
+        <select name="item" 
+        hx-get="{% url 'transactionsExpenseTableUpdate' %}"
+        hx-target="#output"
+        hx-trigger="change">
+            <option value="" disabled selected>Select Item</option>
+            {% for item in items %}
+            <option value="{{item.item_id}}">{{item.item_name}}</option>
+            {% endfor %}
+        </select>
+    </form>
+
+    <table id="output"></table>
+{% endblock %}

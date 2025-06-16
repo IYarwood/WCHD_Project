@@ -293,6 +293,8 @@ def viewTableSelect(request):
             tableName = form.cleaned_data['table'] 
             if tableName == 'Payroll':
                 return redirect('payrollView')
+            elif tableName == "Transaction":
+                return redirect('transactionCustomView')
             if button == "seeTable":
                 return redirect('tableView', tableName)
             elif button == "create":
@@ -727,6 +729,72 @@ def transactionsView(request,itemID):
         form = TransactionForm()
 
     return render(request, "WCHDApp/transactionsView.html", {"item": itemID, "transactions": transactionValues,"fields": fieldNames, "aliasNames": aliasNames, "data": transactionValues, "decimalFields": decimalFields, "form":form})
+
+def transactionsExpenses(request):
+    itemModel = apps.get_model("WCHDApp", "Item")
+    items = itemModel.objects.all()
+
+    context = {
+        "items": items
+    }
+    return render(request, "WCHDApp/transactionsExpenses.html", context)
+
+def transactionsExpenseTableUpdate(request):
+    itemID = request.GET.get('item')
+    print(itemID)
+    transactionModel = apps.get_model('WCHDApp', "transaction")
+    transactionValues = transactionModel.objects.filter(item_id=itemID, type="Expense")
+
+    #Getting just field names from model
+    fields = transactionModel._meta.get_fields()
+
+    #Lists to sort fields for styling
+    fieldNames = []
+    decimalFields = []
+    aliasNames = []
+
+    #Fields that should be accumulated
+    summedFields = {
+        "Fund": "fund_cash_balance", 
+        "Line": "line_total_income",
+        "Transaction": "amount",
+    }
+
+    for field in fields:
+
+        #Logic for foreign keys
+        if field.is_relation:
+            if field.auto_created:
+                continue
+            else:
+                #Grab related model. This is why foreign keys have to be named after the model 
+                parentModel = apps.get_model('WCHDApp', field.name)
+
+                #Get the related models primary key
+                fkName = parentModel._meta.pk.name
+
+                #Primary keys verbose name
+                fkAlias = parentModel._meta.pk.verbose_name
+
+                aliasNames.append(fkAlias)
+                fieldNames.append(fkName)
+        else:
+            #Decimal field logic so we can style them in html
+            if isinstance(field, DecimalField):
+                decimalFields.append(field.name)
+            aliasNames.append(field.verbose_name)  
+            fieldNames.append(field.name)
+
+    context = {
+        "transactions": transactionValues,
+        "fields": fieldNames, 
+        "aliasNames": aliasNames, 
+        "data": transactionValues, 
+        "decimalFields": decimalFields
+    }
+    return render(request, "WCHDApp/partials/transactionsTablePartial.html", context)
+
+
 
 def dailyReport(request):
     buffer = BytesIO()
@@ -1374,3 +1442,6 @@ def employeeSummary(request):
         return render(request, "WCHDApp/partials/employeeBreakdown.html", context)
     else:
         return HttpResponse("No Employee selected", status=204)
+
+def transactionCustomView(request):
+    return render(request, "WCHDApp/transactionCustomView.html")

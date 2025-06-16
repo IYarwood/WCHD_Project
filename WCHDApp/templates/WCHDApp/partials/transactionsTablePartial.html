@@ -1,0 +1,17 @@
+{% load custom_filters %}
+<tr>
+    {% for field in aliasNames%}
+        <th>{{field}}</th>
+    {% endfor%}
+</tr>
+{% for row in data%}
+<tr>
+    {% for field in fields%}
+        {% if field in decimalFields %}
+            <td style="text-align: right;">{{row|get_attr:field}}</td>
+        {% else %}
+            <td>{{row|get_attr:field}}</td>
+        {% endif %}
+    {% endfor%}
+</tr>
+{% endfor %}

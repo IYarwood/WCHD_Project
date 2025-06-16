@@ -28,10 +28,12 @@ urlpatterns = [
     path('getActivities/', views.getActivities, name='getActivities'),
     path('clockifyImportPayroll/', views.clockifyImportPayroll, name='clockifyImportPayroll'),
     path('payrollView/', views.payrollView, name='payrollView'),
-    path('payrollEntries/', views.payrollEntries, name='payrollEntries'),
     path('fundSummary/', views.fundSummary, name='fundSummary'),
     path('activitySummary/', views.activitySummary, name='activitySummary'),
     path('employeeSummary/', views.employeeSummary, name='employeeSummary'),
+    path('transactionCustomView/', views.transactionCustomView, name='transactionCustomView'),
+    path('transactionsExpenses/', views.transactionsExpenses, name='transactionsExpenses'),
+    path('transactionsExpenseTableUpdate/', views.transactionsExpenseTableUpdate, name='transactionsExpenseTableUpdate'),
 ]
 
     

@@ -111,6 +111,16 @@ button#create:hover {
     color: #fff;
 }
 
+button.secondary {
+    border-color: #82e0aa; /* Softer green border */
+    color: #82e0aa; /* Softer green text */
+}
+
+button.secondary:hover {
+    background-color: #82e0aa;
+    color: #fff;
+}
+
 button#daily {
     border-color: #82e0aa;
     color: #82e0aa;
