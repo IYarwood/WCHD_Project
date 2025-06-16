@@ -538,11 +538,81 @@ def countyPayrollExport(request):
         payrollModel = apps.get_model('WCHDApp', "Payroll")
         entries = payrollModel.objects.select_related('employee', "ActivityList").filter(payperiod__payperiod_id = payperiod)
 
+        employeeHoursByActivity = {}
+        codeMappings = {
+            "SICK": "S",
+            "COMP": "C",
+            "VAC": "V",
+            "HOLIDAY": "H"
+        }
+
+        secondaryMapping = {
+            "S": "S-SICK",
+            "C":  "C-COMPTIME",
+            "V": "V-VACATION",
+            "H": "H-HOLIDAY",
+            "R": "R-REGULAR PA"
+        }
+
+        for entry in entries:
+            activityName = entry.ActivityList.program.upper()
+            for keyword, code in codeMappings.items():
+                if keyword in activityName:
+                    paycode = code
+                    break
+                else:
+                    paycode = "R"
+            paycodeName = secondaryMapping[paycode]
+
+            if paycodeName not in employeeHoursByActivity:
+                employeeHoursByActivity[paycodeName] = {}
+
+            if entry.employee in employeeHoursByActivity[paycodeName]:
+                employeeHoursByActivity[paycodeName][entry.employee] += entry.hours
+            else:
+                employeeHoursByActivity[paycodeName][entry.employee] = entry.hours
+
+        exportData = []
+        for activity, employeeDict in employeeHoursByActivity.items():
+            for employee, hours in employeeDict.items():
+                exportData.append({
+                    "JobNumber": employee.employee_id,
+                    "Paycode": activity,
+                    "Time Group/Description": "",
+                    "Hours": hours,
+                    "HourlyRate": employee.pay_rate,
+                    "Salary": "",
+                    "AccountDistribution": employee.gen_pay_fund.fund_id
+                })
+        exportData = pd.DataFrame(exportData)
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = f'attachment; filename="{fileName}.csv"'
+        exportData.to_csv(path_or_buf=response, index=False)
+
+        return response
+        """
+        for entry in entries:
+            if entry.ActivityList not in employeeHoursByActivity:
+                if entry.ActivityList == 
+                employeeHoursByActivity[entry.ActivityList] = {}
+            if entry.employee in employeeHoursByActivity[entry.ActivityList]:
+                employeeHoursByActivity[entry.ActivityList][entry.employee] += entry.hours
+            else:
+                employeeHoursByActivity[entry.ActivityList][entry.employee] = entry.hours
+        """
         """
         Setting up dictionary to track workers total hours
-        employeeHours = {
-            empObject:80
+        employeeHoursByActivity = {
+            Gen Pay {
+                empObject:80,
+                empObject:90
+            }
+            Sick {
+                empObject: 70
+            }
         }
+        """
+
         """
         employeeHours = {}
         for entry in entries:
@@ -564,13 +634,14 @@ def countyPayrollExport(request):
                 "AccountDistribution": employee.gen_pay_fund.fund_id
             })
         exportData = pd.DataFrame(exportData)
-
         response = HttpResponse(content_type='text/csv')
         response['Content-Disposition'] = f'attachment; filename="{fileName}.csv"'
         exportData.to_csv(path_or_buf=response, index=False)
 
         return response
         print(exportData)
+        """
+
     context = {
         "payperiods": payperiods
     }
@@ -1277,7 +1348,8 @@ def employeeSummary(request):
 
     activitiesDict = {}
     for activity in activities:
-        activityFilteredRows = payrollModel.objects.filter(ActivityList=activity, payperiod__payperiod_id=payperiodID)
+        activityFilteredRows = payrollModel.objects.filter(ActivityList=activity, payperiod__payperiod_id=payperiodID, employee__employee_id=employeeID)
+        print(activityFilteredRows)
         activityPay = 0
         activityHours = 0
         for activityRow in activityFilteredRows:
