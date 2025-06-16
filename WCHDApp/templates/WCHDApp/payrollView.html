@@ -23,7 +23,7 @@
     hx-include="#payperiodDropdown"
     hx-trigger="change"
   >
-    <option value="" disabled selected>Select Pay Period</option>
+    <option value="EMPTY" disabled selected>Select Pay Period</option>
     {% for choice in payperiodChoices %}
     <!--choice.1 = choice[1]-->
     <option value="{{choice}}">{{choice}}</option>
@@ -35,7 +35,7 @@
     hx-target="#fundInfo"
     hx-include="#fundDropdown,#payperiodDropdown"
     hx-trigger="change, change from:#payperiodDropdown">
-    <option value="" disabled selected>Select Fund</option>
+    <option value="EMPTY" disabled selected>Select Fund</option>
     {% for choice in fundChoices %}
     <!--choice.1 = choice[1]-->
     <option value="{{choice.0}}">{{choice.1}}</option>
@@ -48,7 +48,7 @@
     hx-target="#activityInfo"
     hx-include="#activityDropdown,#payperiodDropdown"
     hx-trigger="change, change from:#payperiodDropdown">
-    <option value="" disabled selected>Select Activity</option>
+    <option value="EMPTY" disabled selected>Select Activity</option>
     {% for choice in activityChoices %}
     <!--choice.1 = choice[1]-->
     <option value="{{choice.0}}">{{choice.1}}</option>
@@ -61,7 +61,7 @@
     hx-target="#employeeInfo"
     hx-include="#employeeDropdown,#payperiodDropdown"
     hx-trigger="change, change from:#payperiodDropdown">
-    <option value="" disabled selected>Select Employee</option>
+    <option value="EMPTY" disabled selected>Select Employee</option>
     {% for choice in employeeChoices %}
     <!--choice.1 = choice[1]-->
     <option value="{{choice.0}}">{{choice.1}}</option>

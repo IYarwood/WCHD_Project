@@ -1274,95 +1274,101 @@ def payrollEntries(request, *args, **kwargs):
 def fundSummary(request):
     fundID = request.GET.get("fundDropdown")
     payperiodID = request.GET.get('payperiodDropdown')
+    if fundID != "EMPTY":
+        fund = apps.get_model("WCHDApp", "fund")
+        selectedFund = fund.objects.get(fund_id=fundID)
+        fundName = selectedFund.fund_name
 
-    fund = apps.get_model("WCHDApp", "fund")
-    selectedFund = fund.objects.get(fund_id=fundID)
-    fundName = selectedFund.fund_name
+        payrollModel = apps.get_model('WCHDApp', 'Payroll')
+        #Have to use double underscore instead of dot here for whatever reason
+        filteredRows = payrollModel.objects.filter(ActivityList__fund__fund_id=fundID, payperiod__payperiod_id=payperiodID)
 
-    payrollModel = apps.get_model('WCHDApp', 'Payroll')
-    #Have to use double underscore instead of dot here for whatever reason
-    filteredRows = payrollModel.objects.filter(ActivityList__fund__fund_id=fundID, payperiod__payperiod_id=payperiodID)
+        totalPay = 0
+        totalHours = 0
+        for row in filteredRows:
+            totalPay += row.pay_amount
+            totalHours += row.hours
 
-    totalPay = 0
-    totalHours = 0
-    for row in filteredRows:
-        totalPay += row.pay_amount
-        totalHours += row.hours
-
-    context = {
-        "specifiedField": "Fund Name",
-        "specifiedValue": fundName,
-        "sum": totalPay,
-        "totalHours": totalHours
-    }
-    
-    return render(request, "WCHDApp/partials/totalsOutput.html", context)
+        context = {
+            "specifiedField": "Fund Name",
+            "specifiedValue": fundName,
+            "sum": totalPay,
+            "totalHours": totalHours
+        }
+        
+        return render(request, "WCHDApp/partials/totalsOutput.html", context)
+    else:
+        return HttpResponse("No activity selected", status=204)
 
 def activitySummary(request):
     activityID = request.GET.get("activityDropdown")
     payperiodID = request.GET.get('payperiodDropdown')
+    if activityID != "EMPTY":
+        activity = apps.get_model("WCHDApp", "ActivityList")
+        selectedActivity = activity.objects.get(ActivityList_id=activityID)
+        activityName = selectedActivity.program
 
-    activity = apps.get_model("WCHDApp", "ActivityList")
-    selectedActivity = activity.objects.get(ActivityList_id=activityID)
-    activityName = selectedActivity.program
+        payrollModel = apps.get_model('WCHDApp', 'Payroll')
+        #Have to use double underscore instead of dot here for whatever reason
+        filteredRows = payrollModel.objects.filter(ActivityList__ActivityList_id=activityID, payperiod__payperiod_id=payperiodID)
 
-    payrollModel = apps.get_model('WCHDApp', 'Payroll')
-    #Have to use double underscore instead of dot here for whatever reason
-    filteredRows = payrollModel.objects.filter(ActivityList__ActivityList_id=activityID, payperiod__payperiod_id=payperiodID)
+        totalPay = 0
+        totalHours = 0
+        for row in filteredRows:
+            totalPay += row.pay_amount
+            totalHours += row.hours
 
-    totalPay = 0
-    totalHours = 0
-    for row in filteredRows:
-        totalPay += row.pay_amount
-        totalHours += row.hours
-
-    context = {
-        "specifiedField": "Activity Name",
-        "specifiedValue": activityName,
-        "sum": totalPay,
-        "totalHours": totalHours
-    }
-    
-    return render(request, "WCHDApp/partials/totalsOutput.html", context)
+        context = {
+            "specifiedField": "Activity Name",
+            "specifiedValue": activityName,
+            "sum": totalPay,
+            "totalHours": totalHours
+        }
+        
+        return render(request, "WCHDApp/partials/totalsOutput.html", context)
+    else:
+        return HttpResponse("No activity selected", status=204)
 
 def employeeSummary(request):
     employeeID = request.GET.get("employeeDropdown")
     payperiodID = request.GET.get('payperiodDropdown')
+    if employeeID != "EMPTY":
+        employee = apps.get_model("WCHDApp", "Employee")
+        selectedEmployee = employee.objects.get(employee_id=employeeID)
+        employeeName = selectedEmployee.first_name + " " + selectedEmployee.surname
 
-    employee = apps.get_model("WCHDApp", "Employee")
-    selectedEmployee = employee.objects.get(employee_id=employeeID)
-    employeeName = selectedEmployee.first_name + " " + selectedEmployee.surname
+        payrollModel = apps.get_model('WCHDApp', 'Payroll')
+        #Have to use double underscore instead of dot here for whatever reason
+        filteredRows = payrollModel.objects.filter(employee__employee_id=employeeID, payperiod__payperiod_id=payperiodID)
 
-    payrollModel = apps.get_model('WCHDApp', 'Payroll')
-    #Have to use double underscore instead of dot here for whatever reason
-    filteredRows = payrollModel.objects.filter(employee__employee_id=employeeID, payperiod__payperiod_id=payperiodID)
+        totalPay = 0
+        totalHours = 0
+        for row in filteredRows:
+            totalPay += row.pay_amount
+            totalHours += row.hours
 
-    totalPay = 0
-    totalHours = 0
-    for row in filteredRows:
-        totalPay += row.pay_amount
-        totalHours += row.hours
+        activityModel = apps.get_model("WCHDApp", "ActivityList")
+        activities = activityModel.objects.all()
 
-    activityModel = apps.get_model("WCHDApp", "ActivityList")
-    activities = activityModel.objects.all()
+        activitiesDict = {}
+        for activity in activities:
+            activityFilteredRows = payrollModel.objects.filter(ActivityList=activity, payperiod__payperiod_id=payperiodID, employee__employee_id=employeeID)
+            print(activityFilteredRows)
+            activityPay = 0
+            activityHours = 0
+            for activityRow in activityFilteredRows:
+                activityPay += activityRow.pay_amount
+                activityHours += activityRow.hours
+            
+            activitiesDict[activity.program] = {"name":activity.program, "sum":activityPay, "hours":activityHours}
 
-    activitiesDict = {}
-    for activity in activities:
-        activityFilteredRows = payrollModel.objects.filter(ActivityList=activity, payperiod__payperiod_id=payperiodID, employee__employee_id=employeeID)
-        print(activityFilteredRows)
-        activityPay = 0
-        activityHours = 0
-        for activityRow in activityFilteredRows:
-            activityPay += activityRow.pay_amount
-            activityHours += activityRow.hours
+        context = {
+            "employeeName": employeeName,
+            "activitiesDict": activitiesDict,
+            "sum": totalPay,
+            "totalHours": totalHours
+        }
         
-        activitiesDict[activity.program] = {"name":activity.program, "sum":activityPay, "hours":activityHours}
-
-    context = {
-        "employeeName": employeeName,
-        "activitiesDict": activitiesDict,
-        "sum": totalPay,
-        "totalHours": totalHours
-    }
-    
-    return render(request, "WCHDApp/partials/employeeBreakdown.html", context)
+        return render(request, "WCHDApp/partials/employeeBreakdown.html", context)
+    else:
+        return HttpResponse("No activity selected", status=204)
