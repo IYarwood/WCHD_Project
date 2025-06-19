@@ -832,13 +832,41 @@ def transactionsExpenseTableUpdate(request):
             aliasNames.append(field.verbose_name)  
             fieldNames.append(field.name)
 
+    #Making the view for the cashiers to be able to see and add transaction on the same page
+    expenseForm = modelform_factory(expenseModel, exclude=(["item", "date"]),  
+                                    widgets={
+                                        'people': forms.Select(attrs={'class': 'searchable-select'}),
+                                    })
+
+    #Getting values from our db so they dont have to
+    item = Item.objects.get(pk=itemID)  
+
+    if request.method == 'POST':
+        form = expenseForm(request.POST)
+        if form.is_valid():
+            #Create the instance but don't save it yet
+            revenue = form.save(commit=False)
+
+            #Adding the values from before
+            #transaction.fund = fund
+            #transaction.line = line
+            revenue.item = item
+
+            revenue.save()
+
+    else:
+        form = expenseForm()
+
+
     context = {
         "expenses": expenseValues,
         "fields": fieldNames, 
         "aliasNames": aliasNames, 
         "data": expenseValues, 
-        "decimalFields": decimalFields
+        "decimalFields": decimalFields,
+        "form": form
     }
+
     return render(request, "WCHDApp/partials/transactionsTablePartial.html", context)
 
 
