@@ -14,7 +14,7 @@ body {
 
 /* Main Content Styling */
 main {
-    max-width: 800px;
+    max-width: 1000px;
     margin: 30px auto; /* Increased top/bottom margin */
     padding: 30px; /* Increased padding */
     background-color: #fff;

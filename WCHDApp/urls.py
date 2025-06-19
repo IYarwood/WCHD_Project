@@ -18,7 +18,7 @@ urlpatterns = [
     path('exports/', views.exports, name='exports'),
     path('countyPayrollExport/', views.countyPayrollExport, name='countyPayrollExport'),
     path('transactionsItem/', views.transactionsItem, name='transactionsItem'),
-    path('transactionsView/<str:itemID>', views.transactionsView, name='transactionsView'),
+    path('transactionsView/<str:itemID>/', views.transactionsView, name='transactionsView'),
     path('noPrivileges/', views.noPrivileges, name='noPrivileges'),
     path('reconcile/', views.reconcile, name='reconcile'),
     path('dailyReport/', views.dailyReport, name='dailyReport'),
@@ -34,6 +34,7 @@ urlpatterns = [
     path('transactionCustomView/', views.transactionCustomView, name='transactionCustomView'),
     path('transactionsExpenses/', views.transactionsExpenses, name='transactionsExpenses'),
     path('transactionsExpenseTableUpdate/', views.transactionsExpenseTableUpdate, name='transactionsExpenseTableUpdate'),
+    path('addPeopleForm/', views.addPeopleForm, name='addPeopleForm'),
 ]
 
     

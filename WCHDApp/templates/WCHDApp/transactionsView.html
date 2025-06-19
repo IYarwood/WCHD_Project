@@ -6,7 +6,11 @@
 {% block title %}Transactions{% endblock %}
 
 {% block content %}
+    <!--SELECT 2 for searchable dropdowns-->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+
     <link rel="stylesheet" type="text/css" href="{% static 'WCHDAPP/css/formStyling.css' %}"> 
+    <link rel="stylesheet" type="text/css" href="{% static 'WCHDApp/css/transactionView.css' %}">
     <h1>Transactions</h1>
     <p>Item: {{item}}</p>
     <link rel="stylesheet" type="text/css" href="{% static 'WCHDAPP/css/tableStyling.css' %}"> 
@@ -35,12 +39,41 @@
         <form method="post">
             {% csrf_token %}
             {% for field in form %}
+                
                 <div class="FormGroup">
                     {{ field.label_tag }}
                     {{ field }}
                 </div>
+
+                {% if field.name == "people" %}
+                    <div>
+                        <a 
+                            hx-get="{% url 'addPeopleForm' %}" 
+                            hx-target="#peopleForm" 
+                            hx-swap="innerHTML"
+                            hx-vals='{"itemID": "{{ item }}"}'
+                        >
+                        + Add Person/Company</a>
+                    </div>
+                    <div id="peopleForm"></div>
+                {% endif %}
+                
             {% endfor %}
             <button type="submit">Submit</button>
         </form>
     </div>
+
+
+    <!-- jQuery (required for Select2) -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <!-- Select2 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+    <!-- Init Select2 -->
+    <script>
+        $(document).ready(function() {
+            $('.searchable-select').select2();
+        });
+    </script>
 {% endblock %}

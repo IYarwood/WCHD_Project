@@ -409,6 +409,8 @@ class paymentType(models.TextChoices):
     cash = "Cash"
     card = "Card"
     check = "Check"
+
+#WCHD Wanted this table split into 2, Revenue and expenses
 class Transaction(models.Model):
     fund = models.ForeignKey(Fund, on_delete=models.CASCADE)
     line = models.ForeignKey(Line, on_delete=models.CASCADE)
@@ -422,6 +424,37 @@ class Transaction(models.Model):
 
     class Meta:
         db_table = "Transactions"
+
+class Revenue(models.Model):
+    item = models.ForeignKey(Item, on_delete=models.CASCADE)
+    date = models.DateField(auto_now_add=True, verbose_name="Date")
+    people = models.ForeignKey(People, on_delete=models.PROTECT)
+    amount = models.DecimalField(max_digits=20, decimal_places=2, verbose_name="Amount")
+    payType = models.CharField(max_length=20, choices=paymentType.choices, verbose_name="Payment Type")
+    confirmation = models.CharField(max_length=500, verbose_name="Confirmation")
+    comment = models.CharField(max_length=500, verbose_name="Comment")
+    ActivityList = models.ForeignKey(ActivityList, on_delete=models.PROTECT)
+    line = models.ForeignKey(Line, on_delete=models.PROTECT)
+    odhafr = models.CharField(max_length=50, verbose_name="ODH AFR")
+    employee = models.ForeignKey(Employee, on_delete=models.PROTECT)
+
+    class Meta:
+        db_table = "Revenue"
+
+class Expense(models.Model):
+    item = models.ForeignKey(Item, on_delete=models.CASCADE)
+    date = models.DateField(auto_now_add=True, verbose_name="Date")
+    people = models.ForeignKey(People, on_delete=models.PROTECT)
+    amount = models.DecimalField(max_digits=20, decimal_places=2, verbose_name="Amount")
+    warrant = models.IntegerField(verbose_name="Warrant")
+    comment = models.CharField(max_length=500, verbose_name="Comment")
+    ActivityList = models.ForeignKey(ActivityList, on_delete=models.PROTECT)
+    line = models.ForeignKey(Line, on_delete=models.PROTECT)
+    odhafr = models.CharField(max_length=50, verbose_name="ODH AFR")
+    employee = models.ForeignKey(Employee, on_delete=models.PROTECT)
+
+    class Meta:
+        db_table = "Expense"
 
 class AccessControl(models.Model):
     title = models.CharField(max_length=100)

@@ -3,6 +3,7 @@ from django.http import HttpResponse, JsonResponse
 from .models import Fund, Testing, Item
 from .forms import FundForm, TableSelect, LineForm, InputSelect, ExportSelect,reconcileForm, activitySelect, FileInput
 from django.forms import modelform_factory
+from django import forms
 from django.apps import apps
 from django.db.models import DecimalField
 from django.contrib.auth import authenticate, login
@@ -296,6 +297,10 @@ def viewTableSelect(request):
             elif tableName == "Transaction":
                 return redirect('transactionCustomView')
             if button == "seeTable":
+                if tableName == "Expense":
+                    return redirect('transactionsExpenses')
+                elif tableName == "Revenue":
+                    return redirect('transactionsItem')
                 return redirect('tableView', tableName)
             elif button == "create":
                 return redirect('createEntry', tableName)
@@ -658,12 +663,13 @@ def transactionsItem(request):
     
     return render(request, "WCHDApp/transactionsItem.html", {"items":itemValues})
 
-def transactionsView(request,itemID):
-    transactionModel = apps.get_model('WCHDApp', "transaction")
-    transactionValues = transactionModel.objects.filter(item_id=itemID, type="Revenue")
+def transactionsView(request, itemID):
+    revenueModel = apps.get_model('WCHDApp', "revenue")
+    #itemID = request.GET.get('itemSelect')
+    revenueValues = revenueModel.objects.filter(item_id=itemID)
 
-    #Getting just field names from model
-    fields = transactionModel._meta.get_fields()
+    #Getting just field names from models
+    fields = revenueModel._meta.get_fields()
 
     #Lists to sort fields for styling
     fieldNames = []
@@ -704,32 +710,74 @@ def transactionsView(request,itemID):
 
             
     #Making the view for the cashiers to be able to see and add transaction on the same page
-    TransactionForm = modelform_factory(transactionModel, exclude=(["fund", "line", "item"]))
+    RevenueForm = modelform_factory(revenueModel, exclude=(["item", "date"]),  
+                                    widgets={
+                                        'people': forms.Select(attrs={'class': 'searchable-select'}),
+                                    })
+    """
+    MyModelForm = modelform_factory(
+    MyModel,
+    fields='__all__',
+    widgets={
+        'my_field': forms.Select(attrs={'class': 'searchable-select'}),
+    }
+)
+    """
+
+
     #Getting values from our db so they dont have to
     item = Item.objects.get(pk=itemID)
+    """
     fund = item.fund
     line = item.line
+    """
     
     
 
     if request.method == 'POST':
-        form = TransactionForm(request.POST)
+        form = RevenueForm(request.POST)
         if form.is_valid():
             #Create the instance but don't save it yet
-            transaction = form.save(commit=False)
+            revenue = form.save(commit=False)
 
-            #Adding thee values from before
-            transaction.fund = fund
-            transaction.line = line
-            transaction.item = item
+            #Adding the values from before
+            #transaction.fund = fund
+            #transaction.line = line
+            revenue.item = item
 
-            transaction.save()
+            revenue.save()
 
     else:
-        form = TransactionForm()
+        form = RevenueForm()
 
-    return render(request, "WCHDApp/transactionsView.html", {"item": itemID, "transactions": transactionValues,"fields": fieldNames, "aliasNames": aliasNames, "data": transactionValues, "decimalFields": decimalFields, "form":form})
+    return render(request, "WCHDApp/transactionsView.html", {"item": itemID, "revenue": revenueValues,"fields": fieldNames, "aliasNames": aliasNames, "data": revenueValues, "decimalFields": decimalFields, "form":form})
+    #return render(request, "WCHDApp/partials/revenueTableAndForm.html", {"item": itemID, "revenue": revenueValues,"fields": fieldNames, "aliasNames": aliasNames, "data": revenueValues, "decimalFields": decimalFields, "form":form})
 
+
+def addPeopleForm(request):
+    peopleModel = apps.get_model("WCHDApp", "people")
+    PeopleForm = modelform_factory(peopleModel, fields="__all__")
+    itemID = request.GET.get("itemID")
+    print(itemID)
+
+    if request.method == "POST":
+        form = PeopleForm(request.POST)
+        itemID = request.POST.get("itemID")
+        print(itemID)
+        if form.is_valid():
+            form.save()
+
+            return redirect('transactionsView', itemID)
+    else:
+        form = PeopleForm()
+    context ={
+        "form": form,
+        "itemID": itemID
+    }
+
+    return render(request, "WCHDApp/partials/formPartial.html", context)
+
+#these are named transaction expense because it was originally built on the transactions table whihc then got split into 2 different tables
 def transactionsExpenses(request):
     itemModel = apps.get_model("WCHDApp", "Item")
     items = itemModel.objects.all()
@@ -741,12 +789,11 @@ def transactionsExpenses(request):
 
 def transactionsExpenseTableUpdate(request):
     itemID = request.GET.get('item')
-    print(itemID)
-    transactionModel = apps.get_model('WCHDApp', "transaction")
-    transactionValues = transactionModel.objects.filter(item_id=itemID, type="Expense")
+    expenseModel = apps.get_model('WCHDApp', "expense")
+    expenseValues = expenseModel.objects.filter(item_id=itemID)
 
     #Getting just field names from model
-    fields = transactionModel._meta.get_fields()
+    fields = expenseModel._meta.get_fields()
 
     #Lists to sort fields for styling
     fieldNames = []
@@ -786,10 +833,10 @@ def transactionsExpenseTableUpdate(request):
             fieldNames.append(field.name)
 
     context = {
-        "transactions": transactionValues,
+        "expenses": expenseValues,
         "fields": fieldNames, 
         "aliasNames": aliasNames, 
-        "data": transactionValues, 
+        "data": expenseValues, 
         "decimalFields": decimalFields
     }
     return render(request, "WCHDApp/partials/transactionsTablePartial.html", context)

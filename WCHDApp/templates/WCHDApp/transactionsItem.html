@@ -7,17 +7,11 @@
 {% block content %}
     <link rel="stylesheet" type="text/css" href="{% static 'WCHDApp/css/cleanPages.css' %}">
     <link rel="stylesheet" type="text/css" href="{% static 'WCHDApp/css/themes.css' %}">
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            if (typeof initTheme === 'function') {
-                initTheme();
-            }
-        });
-    </script>
-    <script src="{% static 'WCHDApp/js/themeHandler.js' %}"></script>
+    
 
     <h1>Transactions</h1>
 
+    
     <form method="POST" action="{% url 'transactionsItem' %}">
         {% csrf_token %}
         <select name="itemSelect" onchange="this.form.submit()">
@@ -27,4 +21,5 @@
             {% endfor %}
         </select>
     </form>
+    
 {% endblock %}

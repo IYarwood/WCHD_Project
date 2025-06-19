@@ -10,7 +10,7 @@
     <link rel="stylesheet" type="text/css" href="{% static 'WCHDApp/css/cleanPages.css' %}">
     <link rel="stylesheet" type="text/css" href="{% static 'WCHDApp/css/themes.css' %}">
     <link rel="stylesheet" type="text/css" href="{% static 'WCHDAPP/css/tableStyling.css' %}"> 
-    <h1>Transaction Expenses</h1>
+    <h1>Expenses</h1>
     <form>
         <select name="item" 
         hx-get="{% url 'transactionsExpenseTableUpdate' %}"
@@ -24,4 +24,5 @@
     </form>
 
     <table id="output"></table>
+    
 {% endblock %}
