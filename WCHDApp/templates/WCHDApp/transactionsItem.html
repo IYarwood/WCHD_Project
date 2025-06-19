@@ -5,21 +5,51 @@
 {% block title %}Transactions{% endblock %}
 
 {% block content %}
-    <link rel="stylesheet" type="text/css" href="{% static 'WCHDApp/css/cleanPages.css' %}">
-    <link rel="stylesheet" type="text/css" href="{% static 'WCHDApp/css/themes.css' %}">
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="{% static 'WCHDAPP/css/formStyling.css' %}"> 
+    <link rel="stylesheet" type="text/css" href="{% static 'WCHDApp/css/transactionView.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'WCHDAPP/css/tableStyling.css' %}"> 
     
 
     <h1>Transactions</h1>
 
-    
-    <form method="POST" action="{% url 'transactionsItem' %}">
+    <form>
         {% csrf_token %}
-        <select name="itemSelect" onchange="this.form.submit()">
+        <select name="itemSelect" 
+        hx-get="{% url 'transactionsView' %}"
+        hx-target="#tableAndForm"
+        hx-trigger="change">
             <option default>Select Item</option>
             {% for item in items %}
                 <option value="{{item.item_id}}">{{item}}</option>
             {% endfor %}
         </select>
     </form>
+    <div id="tableAndForm"></div>
+    <!--
+        <form method="POST" action="{% url 'transactionsItem' %}">
+            {% csrf_token %}
+            <select name="itemSelect" onchange="this.form.submit()">
+                <option default>Select Item</option>
+                {% for item in items %}
+                    <option value="{{item.item_id}}">{{item}}</option>
+                {% endfor %}
+            </select>
+        </form>
     
+    -->
+    
+    <!-- jQuery (required for Select2) -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <!-- Select2 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+    <!-- Init Select2 -->
+    <script>
+        $(document).ready(function() {
+            $('.searchable-select').select2();
+        });
+    </script>
 {% endblock %}

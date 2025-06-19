@@ -663,9 +663,9 @@ def transactionsItem(request):
     
     return render(request, "WCHDApp/transactionsItem.html", {"items":itemValues})
 
-def transactionsView(request, itemID):
+def transactionsView(request):
     revenueModel = apps.get_model('WCHDApp', "revenue")
-    #itemID = request.GET.get('itemSelect')
+    itemID = request.GET.get('itemSelect')
     revenueValues = revenueModel.objects.filter(item_id=itemID)
 
     #Getting just field names from models
@@ -750,8 +750,8 @@ def transactionsView(request, itemID):
     else:
         form = RevenueForm()
 
-    return render(request, "WCHDApp/transactionsView.html", {"item": itemID, "revenue": revenueValues,"fields": fieldNames, "aliasNames": aliasNames, "data": revenueValues, "decimalFields": decimalFields, "form":form})
-    #return render(request, "WCHDApp/partials/revenueTableAndForm.html", {"item": itemID, "revenue": revenueValues,"fields": fieldNames, "aliasNames": aliasNames, "data": revenueValues, "decimalFields": decimalFields, "form":form})
+    #return render(request, "WCHDApp/transactionsView.html", {"item": itemID, "revenue": revenueValues,"fields": fieldNames, "aliasNames": aliasNames, "data": revenueValues, "decimalFields": decimalFields, "form":form})
+    return render(request, "WCHDApp/partials/revenueTableAndForm.html", {"item": itemID, "revenue": revenueValues,"fields": fieldNames, "aliasNames": aliasNames, "data": revenueValues, "decimalFields": decimalFields, "form":form})
 
 
 def addPeopleForm(request):
