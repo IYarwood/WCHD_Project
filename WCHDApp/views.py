@@ -747,11 +747,17 @@ def transactionsView(request):
 
             revenue.save()
 
+            fund = item.fund
+            print(fund)
+            
+            fund.fund_cash_balance += revenue.amount
+            fund.save()
+
     else:
         form = RevenueForm()
 
     #return render(request, "WCHDApp/transactionsView.html", {"item": itemID, "revenue": revenueValues,"fields": fieldNames, "aliasNames": aliasNames, "data": revenueValues, "decimalFields": decimalFields, "form":form})
-    return render(request, "WCHDApp/partials/revenueTableAndForm.html", {"item": itemID, "revenue": revenueValues,"fields": fieldNames, "aliasNames": aliasNames, "data": revenueValues, "decimalFields": decimalFields, "form":form})
+    return render(request, "WCHDApp/partials/revenueTableAndForm.html", {"itemObj":item, "item": itemID, "revenue": revenueValues,"fields": fieldNames, "aliasNames": aliasNames, "data": revenueValues, "decimalFields": decimalFields, "form":form})
 
 
 def addPeopleForm(request):
@@ -782,6 +788,8 @@ def transactionsExpenses(request):
     itemModel = apps.get_model("WCHDApp", "Item")
     items = itemModel.objects.all()
 
+    if request.method=="POST":
+        print("Submitted")
     context = {
         "items": items
     }
@@ -789,6 +797,7 @@ def transactionsExpenses(request):
 
 def transactionsExpenseTableUpdate(request):
     itemID = request.GET.get('item')
+    print(itemID)
     expenseModel = apps.get_model('WCHDApp', "expense")
     expenseValues = expenseModel.objects.filter(item_id=itemID)
 
@@ -840,20 +849,28 @@ def transactionsExpenseTableUpdate(request):
 
     #Getting values from our db so they dont have to
     item = Item.objects.get(pk=itemID)  
+    print(item)
 
     if request.method == 'POST':
+        print("SUBMITTED ON TABLE UPDATE")
         form = expenseForm(request.POST)
         if form.is_valid():
             #Create the instance but don't save it yet
-            revenue = form.save(commit=False)
+            expense = form.save(commit=False)
 
             #Adding the values from before
             #transaction.fund = fund
             #transaction.line = line
-            revenue.item = item
+            expense.item = item
 
-            revenue.save()
+            expense.save()
 
+            fund = item.fund
+            if fund.fund_cash_balance >= expense.amount:
+                fund.fund_cash_balance -= expense.amount
+            else:
+                print("Not enough fund cash balance")
+            fund.save()
     else:
         form = expenseForm()
 
@@ -864,7 +881,8 @@ def transactionsExpenseTableUpdate(request):
         "aliasNames": aliasNames, 
         "data": expenseValues, 
         "decimalFields": decimalFields,
-        "form": form
+        "form": form,
+        "item": item
     }
 
     return render(request, "WCHDApp/partials/transactionsTablePartial.html", context)
