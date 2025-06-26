@@ -796,6 +796,7 @@ def transactionsExpenses(request):
     return render(request, "WCHDApp/transactionsExpenses.html", context)
 
 def transactionsExpenseTableUpdate(request):
+    message = ""
     itemID = request.GET.get('item')
     print(itemID)
     expenseModel = apps.get_model('WCHDApp', "expense")
@@ -863,14 +864,17 @@ def transactionsExpenseTableUpdate(request):
             #transaction.line = line
             expense.item = item
 
-            expense.save()
+            
 
             fund = item.fund
             if fund.fund_cash_balance >= expense.amount:
                 fund.fund_cash_balance -= expense.amount
+                expense.save()
+                fund.save()
             else:
+                message = "Not Enough Fund Cash Balance"
                 print("Not enough fund cash balance")
-            fund.save()
+            
     else:
         form = expenseForm()
 
@@ -882,7 +886,8 @@ def transactionsExpenseTableUpdate(request):
         "data": expenseValues, 
         "decimalFields": decimalFields,
         "form": form,
-        "item": item
+        "item": item,
+        "message": message
     }
 
     return render(request, "WCHDApp/partials/transactionsTablePartial.html", context)
@@ -1267,7 +1272,12 @@ def clockifyImportPayroll(request, *args, **kwargs):
                 hours = line['hours']
                 amount = rate * hours
                 """
-                amount = line['pay_amount']
+
+                payRate = float(line['employee'].pay_rate)
+                hours = line['hours']
+                amount = payRate*hours
+                #Old way of testing
+                #amount = line['pay_amount']
                 balance = float(fund.fund_cash_balance)
                 if balance > amount:
                     balance -= amount
