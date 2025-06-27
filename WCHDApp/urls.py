@@ -35,6 +35,7 @@ urlpatterns = [
     path('transactionsExpenses/', views.transactionsExpenses, name='transactionsExpenses'),
     path('transactionsExpenseTableUpdate/', views.transactionsExpenseTableUpdate, name='transactionsExpenseTableUpdate'),
     path('addPeopleForm/', views.addPeopleForm, name='addPeopleForm'),
+    path('testingGrantAccess/', views.testingGrantAccess, name='testingGrantAccess'),
 ]
 
     

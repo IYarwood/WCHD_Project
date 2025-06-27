@@ -232,10 +232,10 @@ class Payroll(models.Model):
     class Meta:
         db_table = "Payroll"
 
-class Grants(models.Model):
+class Grant(models.Model):
     grant_id = models.AutoField(primary_key=True, verbose_name="Grant ID")
     grant_name = models.CharField(max_length=30, verbose_name="Grant Name")
-    fund = models.ForeignKey(Fund, on_delete=models.CASCADE)
+    funds = models.ManyToManyField(Fund, through='GrantAllocation')
     grant_year = models.PositiveSmallIntegerField(verbose_name="Grant Year")
     cfda = models.CharField(max_length=8, verbose_name="Catalog of Federal Domestic Assistance")
     program_name = models.CharField(max_length=150, verbose_name="Program Name")
@@ -249,6 +249,49 @@ class Grants(models.Model):
  
     class Meta:
             db_table = "Grants"
+
+class GrantLine(models.Model):
+    line_id = models.AutoField(primary_key=True, verbose_name="Line ID")
+    grant = models.ForeignKey(Grant, on_delete=models.CASCADE)
+    fund_year = models.SmallIntegerField(blank=False, verbose_name="Fund Year")
+    line_name = models.CharField(max_length=255, verbose_name="Line Name")
+    line_budgeted = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Budgeted")
+    line_encumbered = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Encumbered")
+    line_budget_spent = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Budget Spent")
+    line_total_income = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Total Income")
+    cofund = models.CharField(max_length=3, verbose_name="CoFund")
+    gen_ledger = models.IntegerField(blank=False, verbose_name="General Ledger")
+    county_code = models.CharField(max_length = 4, verbose_name="County Code")
+
+    class Meta:
+        db_table = "Grant Lines"
+
+class GrantItem(models.Model):
+    item_id = models.AutoField(primary_key=True, verbose_name="Item ID")
+    fund_type = models.CharField(max_length=50, choices=FundSource.choices, verbose_name="Fund Type")
+    line = models.ForeignKey(Line, on_delete=models.CASCADE)
+    fund_year = models.IntegerField(verbose_name="Fund Year")
+    item_name = models.CharField(max_length=255, verbose_name="Item Name")
+    line_item = models.CharField(max_length=255, verbose_name="Line")
+    category = models.CharField(max_length=50, verbose_name="Category")
+    fee_based = models.BooleanField(verbose_name="Fee Based")
+    month = models.IntegerField(verbose_name="Month")
+
+    class Meta:
+        db_table = "Grant Items"
+
+class GrantExpense(models.Model):
+    fund = models.ForeignKey(Fund, on_delete=models.CASCADE)
+    grantItem = models.ForeignKey(GrantItem, on_delete=models.CASCADE)
+    amount = models.DecimalField(max_digits=20, decimal_places=2, verbose_name="Amount")
+
+    class Meta:
+        db_table = "Grant Expenses"
+ 
+class GrantAllocation(models.Model):
+    grant = models.ForeignKey(Grant, on_delete=models.CASCADE)
+    fund = models.ForeignKey(Fund, on_delete=models.CASCADE)
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
 
 class BudgetActions(models.Model):
     ba_id = models.AutoField(primary_key=True, verbose_name="Budget Action ID")

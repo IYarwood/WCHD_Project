@@ -1548,3 +1548,19 @@ def employeeSummary(request):
 
 def transactionCustomView(request):
     return render(request, "WCHDApp/transactionCustomView.html")
+
+def testingGrantAccess(request):
+    grantModel = apps.get_model("WCHDApp", "Grant")
+    grants = grantModel.objects.all()
+    context ={
+        "grants": grants
+    }
+
+    fields = grantModel._meta.get_fields()
+
+    for field in fields:
+        print(getattr(grants[0],field))
+
+    print(grants)
+
+    return HttpResponse("Hello")

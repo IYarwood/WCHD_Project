@@ -1,6 +1,14 @@
 from django.contrib import admin
-from .models import Fund, Line, Dept, Item, Employee, People, Invoice,PurchaseOrder,Voucher,ActivityList, Payroll, PayPeriod, Grants, BudgetActions, Carryover, Benefits, Variable, Clockify, Testing
+from .models import Fund, Line, Dept, Item, Employee, People, Invoice,PurchaseOrder,Voucher,ActivityList, Payroll, PayPeriod, Grant, GrantAllocation, BudgetActions, Carryover, Benefits, Variable, Clockify, Testing
 
+
+class GrantAllocationInline(admin.TabularInline):
+    model = GrantAllocation
+    extra = 1
+
+class GrantAdmin(admin.ModelAdmin):
+    list_display = ("grant_id", "grant_name")
+    inlines = [GrantAllocationInline]
 # Register your models here.
 
 admin.site.register(Fund)
@@ -15,7 +23,7 @@ admin.site.register(Voucher)
 admin.site.register(ActivityList)
 admin.site.register(Payroll)
 admin.site.register(PayPeriod)
-admin.site.register(Grants)
+admin.site.register(Grant, GrantAdmin)
 admin.site.register(BudgetActions)
 admin.site.register(Carryover)
 admin.site.register(Benefits)
