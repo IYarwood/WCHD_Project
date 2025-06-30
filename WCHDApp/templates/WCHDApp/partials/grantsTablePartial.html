@@ -1,4 +1,3 @@
-{% load static %}
 {% load custom_filters %}
 <div id="tableAndForm">
     
@@ -26,7 +25,7 @@
     <div class="FormContainer">
         <form
             method="POST"
-            hx-post="{% url 'transactionsExpenseTableUpdate' %}?item={{ item.item_id }}"
+            hx-post="{% url 'grantsExpenseTableUpdate' %}?grantLine={{ grantLine.line_id }}"
             hx-target="#tableAndForm"
             hx-swap="outerHTML"
         >
@@ -34,7 +33,6 @@
             {% for field in form %}
     
                 <div class="FormGroup">
-                    
                     {{ field.label_tag }}
                     {{ field }}
                 </div>
@@ -60,9 +58,14 @@
 </div>
 
 
+<!-- jQuery (required for Select2) -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<!-- Select2 JS -->
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
 <!-- Init Select2 -->
 <script>
-    console.log("Running")
     $(document).ready(function() {
         $('.searchable-select').select2();
     });

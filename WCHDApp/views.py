@@ -2,8 +2,8 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.http import HttpResponse, JsonResponse
 from .models import Fund, Testing, Item
 from django.db.models.fields.related import ForeignKey, ManyToManyField, OneToOneField
-from .forms import FundForm, TableSelect, LineForm, InputSelect, ExportSelect,reconcileForm, activitySelect, FileInput
-from django.forms import modelform_factory
+from .forms import FundForm, TableSelect, LineForm, InputSelect, ExportSelect,reconcileForm, activitySelect, FileInput, GrantExpenseForm
+from django.forms import modelform_factory, Select
 from django import forms
 from django.apps import apps
 from django.db.models import DecimalField, AutoField
@@ -711,7 +711,7 @@ def transactionsView(request):
 
             
     #Making the view for the cashiers to be able to see and add transaction on the same page
-    RevenueForm = modelform_factory(revenueModel, exclude=(["item", "date"]),  
+    RevenueForm = modelform_factory(revenueModel, exclude=(["item", "date", "line"]),  
                                     widgets={
                                         'people': forms.Select(attrs={'class': 'searchable-select'}),
                                     })
@@ -745,7 +745,7 @@ def transactionsView(request):
             #transaction.fund = fund
             #transaction.line = line
             revenue.item = item
-
+            revenue.line = item.line
             revenue.save()
 
             fund = item.fund
@@ -844,7 +844,7 @@ def transactionsExpenseTableUpdate(request):
             fieldNames.append(field.name)
 
     #Making the view for the cashiers to be able to see and add transaction on the same page
-    expenseForm = modelform_factory(expenseModel, exclude=(["item", "date"]),  
+    expenseForm = modelform_factory(expenseModel, exclude=(["item", "date", "line"]),  
                                     widgets={
                                         'people': forms.Select(attrs={'class': 'searchable-select'}),
                                     })
@@ -864,7 +864,7 @@ def transactionsExpenseTableUpdate(request):
             #transaction.fund = fund
             #transaction.line = line
             expense.item = item
-
+            expense.line = item.line
             
 
             fund = item.fund
@@ -1550,6 +1550,96 @@ def employeeSummary(request):
 def transactionCustomView(request):
     return render(request, "WCHDApp/transactionCustomView.html")
 
+def grantExpenses(request):
+    grantLineModel = apps.get_model("WCHDApp", "GrantLine")
+    grantLines = grantLineModel.objects.all()
+
+    context = {
+        "grantLines": grantLines
+    }
+    return render(request, "WCHDApp/grantExpenses.html", context)
+
+def grantsExpenseTableUpdate(request):
+    message = ""
+    grantLineID = request.GET.get('grantLine')
+    grantExpenseModel = apps.get_model('WCHDApp', "GrantExpense")
+    grantExpenseValues = grantExpenseModel.objects.filter(grantLine=grantLineID)
+
+    #Getting just field names from model
+    fields = grantExpenseModel._meta.get_fields()
+
+    #Lists to sort fields for styling
+    fieldNames = []
+    decimalFields = []
+    aliasNames = []
+
+    for field in fields:
+
+        #Logic for foreign keys
+        if field.is_relation:
+            if field.auto_created:
+                continue
+            else:
+                #Grab related model. This is why foreign keys have to be named after the model 
+                parentModel = apps.get_model('WCHDApp', field.name)
+
+                #Get the related models primary key
+                fkName = parentModel._meta.pk.name
+
+                #Primary keys verbose name
+                fkAlias = parentModel._meta.pk.verbose_name
+
+                aliasNames.append(fkAlias)
+                fieldNames.append(fkName)
+        else:
+            #Decimal field logic so we can style them in html
+            if isinstance(field, DecimalField):
+                decimalFields.append(field.name)
+            aliasNames.append(field.verbose_name)  
+            fieldNames.append(field.name)
+
+    #Grabbing models for grant and grant allocation
+    grantLineModel = apps.get_model("WCHDApp", "GrantLine")
+    grantLine = grantLineModel.objects.get(pk=grantLineID)
+    
+    grant = grantLine.grant
+    grantAllocationModel = apps.get_model("WCHDApp", "GrantAllocation")
+    
+    if request.method == "POST":
+        form = GrantExpenseForm(request.POST, grant=grant)
+        if form.is_valid:
+            submission = form.save(commit=False)
+            #Fund ID to get fund object to sort allocations and give value to expense
+            fundID = request.POST['fund']
+
+            fund = Fund.objects.get(pk=fundID)
+            submission.fund = fund
+            grantAllocation = grantAllocationModel.objects.get(fund=fund, grant=grant)
+            
+            if grantAllocation.amount >= submission.amount:
+                grantAllocation.amount -= submission.amount
+                grantAllocation.save()
+            else:
+                message = "Not enough money"
+            submission.save()
+
+    else:
+        form = GrantExpenseForm(grant=grant)
+
+    context = {
+        "expenses": grantExpenseValues,
+        "fields": fieldNames, 
+        "aliasNames": aliasNames, 
+        "data": grantExpenseValues, 
+        "decimalFields": decimalFields,
+        "form": form,
+        "grantLine": grantLine,
+        "message": message
+    }
+
+    return render(request, "WCHDApp/partials/grantsTablePartial.html", context)
+
+
 def testingGrantAccess(request):
     grantModel = apps.get_model("WCHDApp", "Grant")
     grants = grantModel.objects.all()
@@ -1565,12 +1655,12 @@ def testingGrantAccess(request):
             print(field.name)
             if isinstance(field, ManyToManyField):
                 print("Many to many field")
-                print(grants[0].funds.all())
+                print(grants[0].fund.all())
             else:
                 print(getattr(grants[0], field.name))
 
 
-    relatedFunds = grants[0].funds.all()
+    relatedFunds = grants[0].fund.all()
     print(relatedFunds)
     context = {
         "funds": relatedFunds

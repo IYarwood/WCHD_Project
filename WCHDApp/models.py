@@ -235,7 +235,7 @@ class Payroll(models.Model):
 class Grant(models.Model):
     grant_id = models.AutoField(primary_key=True, verbose_name="Grant ID")
     grant_name = models.CharField(max_length=30, verbose_name="Grant Name")
-    funds = models.ManyToManyField(Fund, through='GrantAllocation')
+    fund = models.ManyToManyField(Fund, through='GrantAllocation')
     grant_year = models.PositiveSmallIntegerField(verbose_name="Grant Year")
     cfda = models.CharField(max_length=8, verbose_name="Catalog of Federal Domestic Assistance")
     program_name = models.CharField(max_length=150, verbose_name="Program Name")
@@ -282,7 +282,7 @@ class GrantItem(models.Model):
 
 class GrantExpense(models.Model):
     fund = models.ForeignKey(Fund, on_delete=models.CASCADE)
-    grantItem = models.ForeignKey(GrantItem, on_delete=models.CASCADE)
+    grantLine = models.ForeignKey(GrantLine, on_delete=models.CASCADE)
     amount = models.DecimalField(max_digits=20, decimal_places=2, verbose_name="Amount")
 
     class Meta:
@@ -291,7 +291,7 @@ class GrantExpense(models.Model):
 class GrantAllocation(models.Model):
     grant = models.ForeignKey(Grant, on_delete=models.CASCADE)
     fund = models.ForeignKey(Fund, on_delete=models.CASCADE)
-    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    amount = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Amount")
 
 class BudgetActions(models.Model):
     ba_id = models.AutoField(primary_key=True, verbose_name="Budget Action ID")
