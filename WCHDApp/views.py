@@ -1,11 +1,12 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import HttpResponse, JsonResponse
 from .models import Fund, Testing, Item
+from django.db.models.fields.related import ForeignKey, ManyToManyField, OneToOneField
 from .forms import FundForm, TableSelect, LineForm, InputSelect, ExportSelect,reconcileForm, activitySelect, FileInput
 from django.forms import modelform_factory
 from django import forms
 from django.apps import apps
-from django.db.models import DecimalField
+from django.db.models import DecimalField, AutoField
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.decorators import permission_required
 from django.contrib import messages
@@ -1557,10 +1558,21 @@ def testingGrantAccess(request):
     }
 
     fields = grantModel._meta.get_fields()
-
+    print(fields)
     for field in fields:
-        print(getattr(grants[0],field))
+        #if not field.auto_created or not isinstance(field, AutoField) or not field.is_relation:
+        if not field.auto_created:
+            print(field.name)
+            if isinstance(field, ManyToManyField):
+                print("Many to many field")
+                print(grants[0].funds.all())
+            else:
+                print(getattr(grants[0], field.name))
 
-    print(grants)
 
-    return HttpResponse("Hello")
+    relatedFunds = grants[0].funds.all()
+    print(relatedFunds)
+    context = {
+        "funds": relatedFunds
+    }
+    return render(request, "WCHDApp/grantExpenseTesting.html", context)
