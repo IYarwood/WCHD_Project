@@ -737,6 +737,7 @@ def transactionsView(request):
 
     if request.method == 'POST':
         form = RevenueForm(request.POST)
+        print(request.POST)
         if form.is_valid():
             #Create the instance but don't save it yet
             revenue = form.save(commit=False)
@@ -856,7 +857,9 @@ def transactionsExpenseTableUpdate(request):
     if request.method == 'POST':
         print("SUBMITTED ON TABLE UPDATE")
         form = expenseForm(request.POST)
+        print(request.POST)
         if form.is_valid():
+            print("Valid Form")
             #Create the instance but don't save it yet
             expense = form.save(commit=False)
 
@@ -879,7 +882,8 @@ def transactionsExpenseTableUpdate(request):
     else:
         form = expenseForm()
 
-
+    peopleModel = apps.get_model("WCHDApp", "People")
+    peopleOptions = peopleModel.objects.all()
     context = {
         "expenses": expenseValues,
         "fields": fieldNames, 
@@ -888,6 +892,7 @@ def transactionsExpenseTableUpdate(request):
         "decimalFields": decimalFields,
         "form": form,
         "item": item,
+        "peopleOptions": peopleOptions,
         "message": message
     }
 
