@@ -25,7 +25,7 @@
     <div class="FormContainer">
         <form
             method="POST"
-            hx-post="{% url 'grantsExpenseTableUpdate' %}?grantLine={{ grantLine.line_id }}"
+            hx-post="{% url 'grantsExpenseTableUpdate' %}?grantLine={{ grantLine.grantline_id }}"
             hx-target="#tableAndForm"
             hx-swap="outerHTML"
         >

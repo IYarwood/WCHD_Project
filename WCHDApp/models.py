@@ -246,12 +246,15 @@ class Grant(models.Model):
     end_date = models.DateField(verbose_name="End Date")
     fsid = models.CharField(max_length=10, verbose_name="FSID")
     funder = models.CharField(max_length=50, verbose_name="Funder")
- 
+    
+    def __str__(self):
+        return self.grant_name
+
     class Meta:
             db_table = "Grants"
 
 class GrantLine(models.Model):
-    line_id = models.AutoField(primary_key=True, verbose_name="Line ID")
+    grantline_id = models.AutoField(primary_key=True, verbose_name="Line ID")
     grant = models.ForeignKey(Grant, on_delete=models.CASCADE)
     fund_year = models.SmallIntegerField(blank=False, verbose_name="Fund Year")
     line_name = models.CharField(max_length=255, verbose_name="Line Name")
@@ -262,6 +265,9 @@ class GrantLine(models.Model):
     cofund = models.CharField(max_length=3, verbose_name="CoFund")
     gen_ledger = models.IntegerField(blank=False, verbose_name="General Ledger")
     county_code = models.CharField(max_length = 4, verbose_name="County Code")
+
+    def __str__(self):
+        return self.line_name
 
     class Meta:
         db_table = "Grant Lines"
@@ -281,8 +287,8 @@ class GrantItem(models.Model):
         db_table = "Grant Items"
 
 class GrantExpense(models.Model):
-    fund = models.ForeignKey(Fund, on_delete=models.CASCADE)
-    grantLine = models.ForeignKey(GrantLine, on_delete=models.CASCADE)
+    fund = models.ForeignKey(Fund, on_delete=models.CASCADE, verbose_name="Fund")
+    grantline = models.ForeignKey(GrantLine, on_delete=models.CASCADE, verbose_name="Grant Line")
     amount = models.DecimalField(max_digits=20, decimal_places=2, verbose_name="Amount")
 
     class Meta:

@@ -17,7 +17,7 @@
         hx-trigger="change">
             <option value="" disabled selected>Select Grant Line</option>
             {% for grantLine in grantLines %}
-            <option value="{{grantLine.line_id}}">{{grantLine.line_name}}</option>
+            <option value="{{grantLine.grantline_id}}">{{grantLine.line_name}}</option>
             {% endfor %}
         </select>
     </form>

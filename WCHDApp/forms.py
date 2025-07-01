@@ -97,7 +97,7 @@ class GrantExpenseForm(forms.ModelForm):
 
     class Meta:
         model = GrantExpense
-        exclude = ["fund"]
+        exclude = ["fund", "grantline"]
     def __init__(self, *args, **kwargs):
         grant = kwargs.pop('grant', None)
         super().__init__(*args, **kwargs)

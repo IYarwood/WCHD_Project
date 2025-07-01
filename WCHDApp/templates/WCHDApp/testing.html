@@ -1,16 +1,25 @@
 {% extends "WCHDApp/masterTemplate.html" %}
 {% load static %}
+{% load custom_filters %}
 
 
 {% block title %}New Line{% endblock %}
 
 {% block content %}
-    <link rel="stylesheet" type="text/css" href="{% static 'WCHDAPP/css/formStyling.css' %}"> 
-    <form method="post" enctype="multipart/form-data">
-        {% csrf_token %}
-        {{form}}
-        <button type="submit" name = "button" id="import" value = "import">Import</button>
-    </form>
-    
+<link rel="stylesheet" type="text/css" href="{% static 'WCHDAPP/css/tableStyling.css' %}"> 
+    <table>
+        <tr>
+        {% for field in verboseNames %}
+            <th>{{ field }}</th>
+        {% endfor %}
+        </tr>
+    {% for obj in objects %}
+        <tr>
+            {% for field in fieldNames %}
+                <td>{{ obj|get_attr:field }}</td>
+            {% endfor %}
+        </tr>
+    {% endfor %}
+    </table>
 {% endblock %}
 

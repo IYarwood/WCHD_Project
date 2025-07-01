@@ -297,6 +297,8 @@ def viewTableSelect(request):
                 return redirect('payrollView')
             elif tableName == "Transaction":
                 return redirect('transactionCustomView')
+            elif tableName == "GrantExpense":
+                return redirect('grantExpenses')
             if button == "seeTable":
                 if tableName == "Expense":
                     return redirect('transactionsExpenses')
@@ -304,6 +306,8 @@ def viewTableSelect(request):
                     return redirect('transactionsItem')
                 return redirect('tableView', tableName)
             elif button == "create":
+                if tableName == "Grant":
+                    return redirect('/admin/WCHDApp/grant/add')
                 return redirect('createEntry', tableName)
     else:
         form = TableSelect()
@@ -402,6 +406,7 @@ def createSelect(request):
 #New system to dynamically create forms based of model
 @permission_required('WCHDApp.has_full_access', raise_exception=True)
 def createEntry(request, tableName):
+    message = ""
     #Grabbing selected model in viewTableSelect
     model = apps.get_model('WCHDApp', tableName)
 
@@ -410,14 +415,38 @@ def createEntry(request, tableName):
         form = modelform_factory(model, fields="__all__")(request.POST)
 
         #Data validation then save to table linked to the model
-        if form.is_valid():
-            form.save()
-            return redirect('index')
+        if tableName == "GrantLine":
+            if form.is_valid():
+                form.save(commit=False)
+
+                budgetedAmount = float(request.POST["line_budgeted"])
+                grantID = request.POST['grant']
+                grantModel = apps.get_model("WCHDApp", "Grant")
+                grant = grantModel.objects.get(pk=grantID)
+
+                grantLineModel = apps.get_model("WCHDApp", "GrantLine")
+                grantLines = grantLineModel.objects.filter(grant=grant)
+
+                #Getting total money that is previously budgeted to lines
+                total = 0
+                for line in grantLines:
+                    total += line.line_budgeted
+                grantAwardAmount = grant.award_amount
+                grantAwardAmountRemaining = grantAwardAmount - total
+
+                if grantAwardAmountRemaining >= budgetedAmount:
+                    form.save()
+                else:
+                    message = "Budgeted is more than is left in Grant Award"
         else:
-            print(form.errors)
+            if form.is_valid():
+                form.save()
+                return redirect('index')
+            else:
+                print(form.errors)
     else:
         form = modelform_factory(model, fields="__all__")
-    return render(request, "WCHDApp/createEntry.html", {"form": form, "tableName": tableName})
+    return render(request, "WCHDApp/createEntry.html", {"form": form, "tableName": tableName, "message": message})
 
 @permission_required('WCHDApp.has_full_access', raise_exception=True)
 def imports(request):
@@ -1014,19 +1043,22 @@ def dailyReport(request):
     return response
 
 def testing(request):
-    if (request.user.is_superuser):
-        if request.method == 'POST':
-            form = InputSelect(request.POST, request.FILES)
-            if form.is_valid():
-                tableName = form.cleaned_data['table']
-                
-        else:
-            form = InputSelect()
-        
-            
-        return render(request, "WCHDApp/testing.html", {"form": form})
-    else:
-        return redirect(noPrivileges)
+    model = apps.get_model("WCHDApp", "Payroll")
+    objects = model.objects.all()
+    fields = model._meta.fields
+    fieldNames = []
+    verboseNames = []
+    for field in fields:
+        verboseNames.append(field.verbose_name)
+        fieldNames.append(field.name)
+    
+    context = {
+        "objects": objects,
+        "verboseNames": verboseNames,
+        "fieldNames": fieldNames
+    }
+
+    return render(request, "WCHDApp/testing.html", context)
 
 def checkPrivileges(request):
     print("Checking privileges")
@@ -1567,42 +1599,21 @@ def grantExpenses(request):
 def grantsExpenseTableUpdate(request):
     message = ""
     grantLineID = request.GET.get('grantLine')
+    print(grantLineID)
     grantExpenseModel = apps.get_model('WCHDApp', "GrantExpense")
-    grantExpenseValues = grantExpenseModel.objects.filter(grantLine=grantLineID)
+    grantExpenseValues = grantExpenseModel.objects.filter(grantline=grantLineID)
 
-    #Getting just field names from model
-    fields = grantExpenseModel._meta.get_fields()
-
-    #Lists to sort fields for styling
+    #Getting just field names from model for table
+    fields = grantExpenseModel._meta.fields
     fieldNames = []
+    verboseNames = []
     decimalFields = []
-    aliasNames = []
-
     for field in fields:
-
-        #Logic for foreign keys
-        if field.is_relation:
-            if field.auto_created:
-                continue
-            else:
-                #Grab related model. This is why foreign keys have to be named after the model 
-                parentModel = apps.get_model('WCHDApp', field.name)
-
-                #Get the related models primary key
-                fkName = parentModel._meta.pk.name
-
-                #Primary keys verbose name
-                fkAlias = parentModel._meta.pk.verbose_name
-
-                aliasNames.append(fkAlias)
-                fieldNames.append(fkName)
-        else:
-            #Decimal field logic so we can style them in html
-            if isinstance(field, DecimalField):
+        if isinstance(field, DecimalField):
                 decimalFields.append(field.name)
-            aliasNames.append(field.verbose_name)  
-            fieldNames.append(field.name)
-
+        verboseNames.append(field.verbose_name)  
+        fieldNames.append(field.name)
+    
     #Grabbing models for grant and grant allocation
     grantLineModel = apps.get_model("WCHDApp", "GrantLine")
     grantLine = grantLineModel.objects.get(pk=grantLineID)
@@ -1619,13 +1630,22 @@ def grantsExpenseTableUpdate(request):
 
             fund = Fund.objects.get(pk=fundID)
             submission.fund = fund
+            submission.grantline = grantLine
             grantAllocation = grantAllocationModel.objects.get(fund=fund, grant=grant)
             
-            if grantAllocation.amount >= submission.amount:
+            if (grantAllocation.amount >= submission.amount) and (grantLine.line_encumbered >= submission.amount):
+                grantLine.line_encumbered -= submission.amount
+                grantLine.line_budget_spent += submission.amount
                 grantAllocation.amount -= submission.amount
+
+                grantLine.save()
                 grantAllocation.save()
             else:
-                message = "Not enough money"
+                if grantAllocation.amount < submission.amount:
+                    message = "Grant does not have enough money"
+                else:
+                    message = "Line does not have enough encumbered money"
+
             submission.save()
 
     else:
@@ -1634,7 +1654,7 @@ def grantsExpenseTableUpdate(request):
     context = {
         "expenses": grantExpenseValues,
         "fields": fieldNames, 
-        "aliasNames": aliasNames, 
+        "aliasNames": verboseNames, 
         "data": grantExpenseValues, 
         "decimalFields": decimalFields,
         "form": form,
