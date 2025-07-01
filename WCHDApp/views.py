@@ -1644,6 +1644,59 @@ def grantsExpenseTableUpdate(request):
 
     return render(request, "WCHDApp/partials/grantsTablePartial.html", context)
 
+def grantStats(request):
+    grantModel = apps.get_model("WCHDApp", "Grant")
+    grants = grantModel.objects.all()
+
+    grantAllocationModel = apps.get_model("WCHDApp", "GrantAllocation")
+
+    #Going to be a list of dictionaries. Each grant will have a dictionary
+    grantList = []
+
+    for grant in grants:
+        grantAllocations = grantAllocationModel.objects.filter(grant = grant)
+
+        totalRemaining = 0
+        for grantAllocation in grantAllocations:
+            totalRemaining += grantAllocation.amount
+
+        totalSpent = grant.award_amount - totalRemaining
+
+        grantDict = {
+            "grantID": grant.grant_id,
+            "grantName": grant.grant_name,
+            "awardAmount": grant.award_amount,
+            "spent": totalSpent,
+            "remaining": totalRemaining
+        }
+
+        grantList.append(grantDict)
+
+    context = {
+        "grantList": grantList
+    }
+    return render(request, "WCHDApp/grantStats.html", context)
+
+def grantBreakdown(request):
+    grantID = request.GET.get("grantID")
+
+    grantAllocationModel = apps.get_model("WCHDApp", "GrantAllocation")
+
+    grantAllocations = grantAllocationModel.objects.filter(grant__grant_id = grantID)
+
+    allocationsList = []
+    for grantAllocation in grantAllocations:
+        allocationDict = {
+            "fundName": grantAllocation.fund.fund_name,
+            "amount": grantAllocation.amount
+        }
+        allocationsList.append(allocationDict)
+
+    context = {
+        "allocationsList": allocationsList
+    }
+
+    return render(request, "WCHDApp/partials/grantBreakdownTable.html", context)
 
 def testingGrantAccess(request):
     grantModel = apps.get_model("WCHDApp", "Grant")

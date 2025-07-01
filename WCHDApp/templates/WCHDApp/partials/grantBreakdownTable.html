@@ -1,0 +1,15 @@
+<table>
+    <tr>
+        <th>Fund</th>
+        <th>Amount</th>
+    </tr>
+    {% for allocation in allocationsList %}
+        <tr>
+            <td>{{allocation.fundName}}</td>
+            <td>$ {{allocation.amount}}</td>
+        </tr>
+    {% endfor %}
+</table>
+<button onclick="document.getElementById('breakdown').innerHTML = ''">
+    Close
+</button>

@@ -1,0 +1,37 @@
+{% extends 'WCHDApp/masterTemplate.html' %} 
+{% load static %} 
+{% load custom_filters %} 
+{% block title %}Grant Stats{% endblock %} 
+{% block content %}
+<link
+  rel="stylesheet"
+  type="text/css"
+  href="{% static 'WCHDApp/css/cleanPages.css' %}"
+/>
+<link
+  rel="stylesheet"
+  type="text/css"
+  href="{% static 'WCHDAPP/css/tableStyling.css' %}"
+/>
+<h1>Grant Stats</h1>
+<table>
+    <tr>
+        <th>Grant</th>
+        <th>Award Amount</th>
+        <th>Total Spent</th>
+        <th>Total Remaining</th>
+        <th>More Details</th>
+    </tr>
+    {% for grant in grantList %}
+        <tr>
+            <td>{{grant.grantName}}</td>
+            <td>$ {{grant.awardAmount}}</td>
+            <td>$ {{grant.spent}}</td>
+            <td>$ {{grant.remaining}}</td>
+            <td><button hx-get="{% url 'grantBreakdown' %}?grantID={{ grant.grantID }}" hx-target="#breakdown">See Breakdown</button></td>
+        </tr>
+        
+    {% endfor %}
+</table>
+<div id="breakdown"></div>
+{% endblock %}

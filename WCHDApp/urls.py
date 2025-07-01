@@ -38,7 +38,8 @@ urlpatterns = [
     path('testingGrantAccess/', views.testingGrantAccess, name='testingGrantAccess'),
     path('grantExpenses/', views.grantExpenses, name='grantExpenses'),
     path('grantsExpenseTableUpdate/', views.grantsExpenseTableUpdate, name='grantsExpenseTableUpdate'),
-    
+    path('grantStats/', views.grantStats, name='grantStats'),
+    path('grantBreakdown/', views.grantBreakdown, name='grantBreakdown'),
 ]
 
     
