@@ -1,3 +1,4 @@
+<h3>Fund Allocation Left</h3>
 <table>
     <tr>
         <th>Fund</th>
@@ -10,6 +11,25 @@
         </tr>
     {% endfor %}
 </table>
+
+<h3>Grant Line Breakdown</h3>
+<table>
+    <tr>
+        <th>Grant Line</th>
+        <th>Budgeted</th>
+        <th>Encumbered</th>
+        <th>Spent</th>
+    </tr>
+    {% for line in linesList %}
+        <tr>
+            <td>{{line.lineName}}</td>
+            <td>{{line.budgeted}}</td>
+            <td>{{line.encumbered}}</td>
+            <td>{{line.spent}}</td>
+        </tr>
+    {% endfor %}
+</table>
+<h4>Unbudgeted: {{unbudgeted}}</h4>
 <button onclick="document.getElementById('breakdown').innerHTML = ''">
     Close
 </button>

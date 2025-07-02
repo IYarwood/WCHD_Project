@@ -1704,9 +1704,28 @@ def grantStats(request):
 def grantBreakdown(request):
     grantID = request.GET.get("grantID")
 
-    grantAllocationModel = apps.get_model("WCHDApp", "GrantAllocation")
+    grantModel = apps.get_model("WCHDApp", "Grant")
+    grant = grantModel.objects.get(pk=grantID)
 
+    grantAllocationModel = apps.get_model("WCHDApp", "GrantAllocation")
     grantAllocations = grantAllocationModel.objects.filter(grant__grant_id = grantID)
+
+    grantLineModel = apps.get_model("WCHDApp", "GrantLine")
+    grantLines = grantLineModel.objects.filter(grant__grant_id=grantID)
+
+    linesList = []
+    total = 0
+    for line in grantLines:
+        total += line.line_budgeted
+        lineDict = {
+            "lineName": line.line_name,
+            "budgeted": line.line_budgeted,
+            "encumbered": line.line_encumbered,
+            "spent": line.line_budget_spent
+        }
+        linesList.append(lineDict)
+
+    unbudgeted = grant.award_amount - total
 
     allocationsList = []
     for grantAllocation in grantAllocations:
@@ -1717,7 +1736,9 @@ def grantBreakdown(request):
         allocationsList.append(allocationDict)
 
     context = {
-        "allocationsList": allocationsList
+        "allocationsList": allocationsList,
+        "linesList": linesList,
+        "unbudgeted": unbudgeted
     }
 
     return render(request, "WCHDApp/partials/grantBreakdownTable.html", context)
