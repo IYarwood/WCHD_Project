@@ -34,18 +34,8 @@
             {% for field in form %}
     
                 <div class="FormGroup">
-                    {% if field.name == "people" %}
-                        <label for="peopleSearch">People: </label>
-                        <input type="text" name="people" id="people" list="peopleList">
-                        <datalist id="peopleList">
-                            {% for option in peopleOptions %}
-                                <option value={{option.people_id}}>{{option.name}}</option>
-                            {% endfor %}
-                        </datalist>
-                    {% else %}
-                        {{ field.label_tag }}
-                        {{ field }}
-                    {% endif %}
+                    {{ field.label_tag }}
+                    {{ field }}
                 </div>
     
                 {% if field.name == "people" %}

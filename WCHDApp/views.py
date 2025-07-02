@@ -891,7 +891,6 @@ def transactionsExpenseTableUpdate(request):
             print("Valid Form")
             #Create the instance but don't save it yet
             expense = form.save(commit=False)
-
             #Adding the values from before
             #transaction.fund = fund
             #transaction.line = line
@@ -911,8 +910,6 @@ def transactionsExpenseTableUpdate(request):
     else:
         form = expenseForm()
 
-    peopleModel = apps.get_model("WCHDApp", "People")
-    peopleOptions = peopleModel.objects.all()
     context = {
         "expenses": expenseValues,
         "fields": fieldNames, 
@@ -921,7 +918,6 @@ def transactionsExpenseTableUpdate(request):
         "decimalFields": decimalFields,
         "form": form,
         "item": item,
-        "peopleOptions": peopleOptions,
         "message": message
     }
 
