@@ -412,12 +412,15 @@ def createEntry(request, tableName):
 
     if request.method == 'POST':
         #Django function that makes a form based off a provided model
-        form = modelform_factory(model, fields="__all__")(request.POST)
+        if tableName == "GrantLine":
+            form = modelform_factory(model, exclude=["line_budget_spent", "line_encumbered"])(request.POST)
+        else:
+            form = modelform_factory(model, fields="__all__")(request.POST)
 
         #Data validation then save to table linked to the model
         if tableName == "GrantLine":
             if form.is_valid():
-                form.save(commit=False)
+                line = form.save(commit=False)
 
                 budgetedAmount = float(request.POST["line_budgeted"])
                 grantID = request.POST['grant']
@@ -435,7 +438,9 @@ def createEntry(request, tableName):
                 grantAwardAmountRemaining = grantAwardAmount - total
 
                 if grantAwardAmountRemaining >= budgetedAmount:
-                    form.save()
+                    line.line_budget_spent = 0
+                    line.line_encumbered = budgetedAmount
+                    line.save()
                 else:
                     message = "Budgeted is more than is left in Grant Award"
         else:
@@ -445,7 +450,10 @@ def createEntry(request, tableName):
             else:
                 print(form.errors)
     else:
-        form = modelform_factory(model, fields="__all__")
+        if tableName == "GrantLine":
+            form = modelform_factory(model, exclude=["line_budget_spent", "line_encumbered"])(request.POST)
+        else:
+            form = modelform_factory(model, fields="__all__")(request.POST)
     return render(request, "WCHDApp/createEntry.html", {"form": form, "tableName": tableName, "message": message})
 
 @permission_required('WCHDApp.has_full_access', raise_exception=True)
