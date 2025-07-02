@@ -299,11 +299,11 @@ def viewTableSelect(request):
                 return redirect('transactionCustomView')
             elif tableName == "GrantExpense":
                 return redirect('grantExpenses')
+            elif tableName == "Expense":
+                return redirect('transactionsExpenses')
+            elif tableName == "Revenue":
+                return redirect('transactionsItem')
             if button == "seeTable":
-                if tableName == "Expense":
-                    return redirect('transactionsExpenses')
-                elif tableName == "Revenue":
-                    return redirect('transactionsItem')
                 return redirect('tableView', tableName)
             elif button == "create":
                 if tableName == "Grant":
