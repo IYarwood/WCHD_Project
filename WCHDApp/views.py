@@ -1047,7 +1047,7 @@ def dailyReport(request):
     return response
 
 def testing(request):
-    model = apps.get_model("WCHDApp", "Payroll")
+    model = apps.get_model("WCHDApp", "Employee")
     objects = model.objects.all()
     fields = model._meta.fields
     fieldNames = []
