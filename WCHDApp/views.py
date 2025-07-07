@@ -857,29 +857,10 @@ def transactionsExpenseTableUpdate(request):
     }
 
     for field in fields:
-
-        #Logic for foreign keys
-        if field.is_relation:
-            if field.auto_created:
-                continue
-            else:
-                #Grab related model. This is why foreign keys have to be named after the model 
-                parentModel = apps.get_model('WCHDApp', field.name)
-
-                #Get the related models primary key
-                fkName = parentModel._meta.pk.name
-
-                #Primary keys verbose name
-                fkAlias = parentModel._meta.pk.verbose_name
-
-                aliasNames.append(fkAlias)
-                fieldNames.append(fkName)
-        else:
-            #Decimal field logic so we can style them in html
-            if isinstance(field, DecimalField):
+        if isinstance(field, DecimalField):
                 decimalFields.append(field.name)
-            aliasNames.append(field.verbose_name)  
-            fieldNames.append(field.name)
+        aliasNames.append(field.verbose_name)  
+        fieldNames.append(field.name)
 
     #Making the view for the cashiers to be able to see and add transaction on the same page
     expenseForm = modelform_factory(expenseModel, exclude=(["item", "date", "line"]),  
@@ -906,10 +887,12 @@ def transactionsExpenseTableUpdate(request):
             expense.item = item
             expense.line = item.line
             
-
             fund = item.fund
-            if fund.fund_cash_balance >= expense.amount:
+            grantLine = expense.grantLine
+            if (fund.fund_cash_balance >= expense.amount) and (grantLine.line_budgeted >= expense.amount):
                 fund.fund_cash_balance -= expense.amount
+                grantLine.line_budgeted -= expense.amount
+                grantLine.save()
                 expense.save()
                 fund.save()
             else:
@@ -1604,7 +1587,6 @@ def grantExpenses(request):
 def grantsExpenseTableUpdate(request):
     message = ""
     grantLineID = request.GET.get('grantLine')
-    print(grantLineID)
     grantExpenseModel = apps.get_model('WCHDApp', "GrantExpense")
     grantExpenseValues = grantExpenseModel.objects.filter(grantline=grantLineID)
 

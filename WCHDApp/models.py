@@ -491,17 +491,17 @@ class Revenue(models.Model):
         db_table = "Revenue"
 
 class Expense(models.Model):
-    item = models.ForeignKey(Item, on_delete=models.CASCADE)
+    item = models.ForeignKey(Item, on_delete=models.CASCADE, verbose_name="Item")
     date = models.DateField(auto_now_add=True, verbose_name="Date")
-    people = models.ForeignKey(People, on_delete=models.PROTECT)
+    people = models.ForeignKey(People, on_delete=models.PROTECT, verbose_name="People")
     amount = models.DecimalField(max_digits=20, decimal_places=2, verbose_name="Amount")
     warrant = models.IntegerField(verbose_name="Warrant")
     comment = models.CharField(max_length=500, verbose_name="Comment")
-    ActivityList = models.ForeignKey(ActivityList, on_delete=models.PROTECT)
-    line = models.ForeignKey(Line, on_delete=models.PROTECT)
+    ActivityList = models.ForeignKey(ActivityList, on_delete=models.PROTECT, verbose_name="Activity List")
+    line = models.ForeignKey(Line, on_delete=models.PROTECT, verbose_name="Line")
     odhafr = models.CharField(max_length=50, verbose_name="ODH AFR")
-    employee = models.ForeignKey(Employee, on_delete=models.PROTECT)
-    grantLine = models.ForeignKey(GrantLine, on_delete=models.PROTECT, blank=True, null=True)
+    employee = models.ForeignKey(Employee, on_delete=models.PROTECT, verbose_name="Employee")
+    grantLine = models.ForeignKey(GrantLine, on_delete=models.PROTECT, blank=True, null=True, verbose_name="Grant Line")
 
     class Meta:
         db_table = "Expense"
