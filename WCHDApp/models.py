@@ -235,7 +235,7 @@ class Payroll(models.Model):
 class Grant(models.Model):
     grant_id = models.AutoField(primary_key=True, verbose_name="Grant ID")
     grant_name = models.CharField(max_length=30, verbose_name="Grant Name")
-    fund = models.ManyToManyField(Fund, through='GrantAllocation')
+    fund = models.ForeignKey(Fund, on_delete=models.CASCADE)
     grant_year = models.PositiveSmallIntegerField(verbose_name="Grant Year")
     cfda = models.CharField(max_length=8, verbose_name="Catalog of Federal Domestic Assistance")
     program_name = models.CharField(max_length=150, verbose_name="Program Name")
@@ -501,6 +501,7 @@ class Expense(models.Model):
     line = models.ForeignKey(Line, on_delete=models.PROTECT)
     odhafr = models.CharField(max_length=50, verbose_name="ODH AFR")
     employee = models.ForeignKey(Employee, on_delete=models.PROTECT)
+    grantLine = models.ForeignKey(GrantLine, on_delete=models.PROTECT, blank=True, null=True)
 
     class Meta:
         db_table = "Expense"

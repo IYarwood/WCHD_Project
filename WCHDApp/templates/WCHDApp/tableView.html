@@ -7,6 +7,7 @@
 
 {% block content %}
     <link rel="stylesheet" type="text/css" href="{% static 'WCHDAPP/css/tableStyling.css' %}"> 
+    <h1>{{tableName}}</h1>
     <table border="1">
         <tr>
             {% for field in aliasNames%}

@@ -8,15 +8,8 @@ class PeopleAdmin(admin.ModelAdmin):
 class ExpenseAdmin(admin.ModelAdmin):
     autocomplete_fields = ['people']
 
-
-
-class GrantAllocationInline(admin.TabularInline):
-    model = GrantAllocation
-    extra = 1
-
 class GrantAdmin(admin.ModelAdmin):
     list_display = ("grant_id", "grant_name")
-    inlines = [GrantAllocationInline]
 # Register your models here.
 
 admin.site.register(Fund)

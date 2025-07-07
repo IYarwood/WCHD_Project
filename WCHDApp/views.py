@@ -885,6 +885,7 @@ def transactionsExpenseTableUpdate(request):
     expenseForm = modelform_factory(expenseModel, exclude=(["item", "date", "line"]),  
                                     widgets={
                                         'people': forms.Select(attrs={'class': 'searchable-select'}),
+                                        'grantLine': forms.Select(attrs={'class': 'searchable-select'}),
                                     })
 
     #Getting values from our db so they dont have to
@@ -1635,20 +1636,24 @@ def grantsExpenseTableUpdate(request):
             fund = Fund.objects.get(pk=fundID)
             submission.fund = fund
             submission.grantline = grantLine
-            grantAllocation = grantAllocationModel.objects.get(fund=fund, grant=grant)
+            #grantAllocation = grantAllocationModel.objects.get(fund=fund, grant=grant)
             
-            if (grantAllocation.amount >= submission.amount) and (grantLine.line_encumbered >= submission.amount):
+            #if (grantAllocation.amount >= submission.amount) and (grantLine.line_encumbered >= submission.amount):
+            if (grantLine.line_encumbered >= submission.amount):   
                 grantLine.line_encumbered -= submission.amount
                 grantLine.line_budget_spent += submission.amount
-                grantAllocation.amount -= submission.amount
+                #grantAllocation.amount -= submission.amount
 
                 grantLine.save()
-                grantAllocation.save()
+                #grantAllocation.save()
             else:
+                """
                 if grantAllocation.amount < submission.amount:
                     message = "Grant does not have enough money"
                 else:
                     message = "Line does not have enough encumbered money"
+                """
+                message = "Line does not have enough encumbered money"
 
             submission.save()
 
