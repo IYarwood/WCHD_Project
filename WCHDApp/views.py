@@ -391,12 +391,16 @@ def createEntry(request, tableName):
 
     if request.method == 'POST':
         #Django function that makes a form based off a provided model
+        #FORM UPDATES IF NEEDED, MAKE SURE TO ADD EXCLUSIONS IN NON_POST RENDER AS WELL
         if tableName == "GrantLine":
+            form = modelform_factory(model, exclude=["line_budget_spent", "line_budget_remaining"])(request.POST)
+        elif tableName == "Line":
             form = modelform_factory(model, exclude=["line_budget_spent", "line_budget_remaining"])(request.POST)
         else:
             form = modelform_factory(model, fields="__all__")(request.POST)
 
         #Data validation then save to table linked to the model
+        #FORM VALIDATION IF NEEDED
         if tableName == "GrantLine":
             if form.is_valid():
                 line = form.save(commit=False)
@@ -422,6 +426,15 @@ def createEntry(request, tableName):
                     line.save()
                 else:
                     message = "Budgeted is more than is left in Grant Award"
+        elif tableName == "Line":
+            if form.is_valid():
+                line = form.save(commit=False)
+                budgeted = line.line_budgeted
+                line.line_budget_spent = 0
+                line.line_budget_remaining = budgeted
+                
+                print(budgeted)
+
         else:
             if form.is_valid():
                 form.save()
@@ -430,7 +443,9 @@ def createEntry(request, tableName):
                 print(form.errors)
     else:
         if tableName == "GrantLine":
-            form = modelform_factory(model, exclude=["line_budget_spent", "line_encumbered"])(request.POST)
+            form = modelform_factory(model, exclude=["line_budget_spent", "line_budget_remaining"])(request.POST)
+        elif tableName == "Line":
+            form = modelform_factory(model, exclude=["line_budget_spent", "line_budget_remaining"])(request.POST)
         else:
             form = modelform_factory(model, fields="__all__")(request.POST)
     return render(request, "WCHDApp/createEntry.html", {"form": form, "tableName": tableName, "message": message})
