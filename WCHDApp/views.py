@@ -2,7 +2,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.http import HttpResponse, JsonResponse
 from .models import Fund, Testing, Item
 from django.db.models.fields.related import ForeignKey, ManyToManyField, OneToOneField
-from .forms import FundForm, TableSelect, LineForm, InputSelect, ExportSelect,reconcileForm, activitySelect, FileInput, GrantExpenseForm
+from .forms import FundForm, TableSelect, InputSelect, ExportSelect,reconcileForm, activitySelect, FileInput, GrantExpenseForm
 from django.forms import modelform_factory, Select
 from django import forms
 from django.apps import apps
@@ -867,11 +867,15 @@ def transactionsExpenseTableUpdate(request):
             expense.line = item.line
             
             fund = item.fund
+            line = item.line
             grantLine = expense.grantLine
-            if (fund.fund_cash_balance >= expense.amount) and (grantLine.line_budgeted >= expense.amount):
+            if (fund.fund_cash_balance >= expense.amount) and (grantLine.line_budgeted >= expense.amount) and (line.line_budget_remaining >= expense.amount):
                 fund.fund_cash_balance -= expense.amount
                 grantLine.line_budget_remaining -= expense.amount
                 grantLine.line_budget_spent += expense.amount
+                line.line_budget_remaining -= expense.amount
+                line.line_budget_spent += expense.amount
+                line.save()
                 grantLine.save()
                 expense.save()
                 fund.save()

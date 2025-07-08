@@ -8,11 +8,13 @@ class FundForm(forms.ModelForm):
         model = Fund
         fields = ["fund_id","fund_name", "fund_cash_balance", "dept", "sof", "mac_elig"]
 
+"""
 class LineForm(forms.ModelForm):
     class Meta:
         model = Line
         fields = ["fund","fund_year", "line_name", "line_budgeted", "line_encumbered", "line_budget_spent", 
                   "line_total_income", "dept", "cofund", "gen_ledger", "county_code"]
+"""
 
 
 
