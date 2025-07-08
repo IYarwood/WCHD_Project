@@ -439,7 +439,7 @@ def createEntry(request, tableName):
 
                 if grantAwardAmountRemaining >= budgetedAmount:
                     line.line_budget_spent = 0
-                    line.line_encumbered = budgetedAmount
+                    line.line_budget_remaining = budgetedAmount
                     line.save()
                 else:
                     message = "Budgeted is more than is left in Grant Award"
@@ -891,7 +891,8 @@ def transactionsExpenseTableUpdate(request):
             grantLine = expense.grantLine
             if (fund.fund_cash_balance >= expense.amount) and (grantLine.line_budgeted >= expense.amount):
                 fund.fund_cash_balance -= expense.amount
-                grantLine.line_budgeted -= expense.amount
+                grantLine.line_budget_remaining -= expense.amount
+                grantLine.line_budget_spent += expense.amount
                 grantLine.save()
                 expense.save()
                 fund.save()
