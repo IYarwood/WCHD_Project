@@ -772,6 +772,7 @@ def transactionsView(request):
     RevenueForm = modelform_factory(revenueModel, exclude=(["item", "date", "line"]),  
                                     widgets={
                                         'people': forms.Select(attrs={'class': 'searchable-select'}),
+                                        'grantLine': forms.Select(attrs={'class': 'searchable-select'}),
                                     })
     """
     MyModelForm = modelform_factory(
@@ -805,11 +806,21 @@ def transactionsView(request):
             #transaction.line = line
             revenue.item = item
             revenue.line = item.line
+            line = item.line
+            grantLine = revenue.grantLine
+            if grantLine:
+                grantLine.line_total_income += revenue.amount
+                if grantLine.receivingLine:
+                    grant = grantLine.grant
+                    grant.received += revenue.amount
+                    grant.save()
+                grantLine.save()
+            
+
+            line.line_total_income += revenue.amount
             revenue.save()
 
             fund = item.fund
-            print(fund)
-            
             fund.fund_cash_balance += revenue.amount
             fund.save()
 
@@ -910,20 +921,33 @@ def transactionsExpenseTableUpdate(request):
             
             fund = item.fund
             line = item.line
-            grantLine = expense.grantLine
-            if (fund.fund_cash_balance >= expense.amount) and (grantLine.line_budgeted >= expense.amount) and (line.line_budget_remaining >= expense.amount):
-                fund.fund_cash_balance -= expense.amount
-                grantLine.line_budget_remaining -= expense.amount
-                grantLine.line_budget_spent += expense.amount
-                line.line_budget_remaining -= expense.amount
-                line.line_budget_spent += expense.amount
-                line.save()
-                grantLine.save()
-                expense.save()
-                fund.save()
+            
+            if expense.grantLine:
+                grantLine = expense.grantLine
+                if (fund.fund_cash_balance >= expense.amount) and (grantLine.line_budgeted >= expense.amount) and (line.line_budget_remaining >= expense.amount):
+                    fund.fund_cash_balance -= expense.amount
+                    grantLine.line_budget_remaining -= expense.amount
+                    grantLine.line_budget_spent += expense.amount
+                    line.line_budget_remaining -= expense.amount
+                    line.line_budget_spent += expense.amount
+                    line.save()
+                    grantLine.save()
+                    expense.save()
+                    fund.save()
+                else:
+                    message = "Not Enough Fund Cash Balance"
+                    print("Not enough fund cash balance")
             else:
-                message = "Not Enough Fund Cash Balance"
-                print("Not enough fund cash balance")
+                if (fund.fund_cash_balance >= expense.amount) and (line.line_budget_remaining >= expense.amount):
+                    fund.fund_cash_balance -= expense.amount
+                    line.line_budget_remaining -= expense.amount
+                    line.line_budget_spent += expense.amount
+                    line.save()
+                    expense.save()
+                    fund.save()
+                else:
+                    message = "Not Enough Fund Cash Balance"
+                    print("Not enough fund cash balance")
             
     else:
         form = expenseForm()
@@ -1696,7 +1720,6 @@ def grantStats(request):
         totalBudgeted = 0
         totalSpent = 0
         totalRemaining = 0
-        totalReceived = 0
         for grantLine in grantLines:
             totalRemaining += grantLine.line_budget_remaining
             totalSpent += grantLine.line_budget_spent
@@ -1725,9 +1748,6 @@ def grantBreakdown(request):
     grantModel = apps.get_model("WCHDApp", "Grant")
     grant = grantModel.objects.get(pk=grantID)
 
-    grantAllocationModel = apps.get_model("WCHDApp", "GrantAllocation")
-    grantAllocations = grantAllocationModel.objects.filter(grant__grant_id = grantID)
-
     grantLineModel = apps.get_model("WCHDApp", "GrantLine")
     grantLines = grantLineModel.objects.filter(grant__grant_id=grantID)
 
@@ -1739,22 +1759,14 @@ def grantBreakdown(request):
             "lineName": line.line_name,
             "budgeted": line.line_budgeted,
             "remaining": line.line_budget_remaining,
-            "spent": line.line_budget_spent
+            "spent": line.line_budget_spent,
+            "income":line.line_total_income
         }
         linesList.append(lineDict)
 
     unbudgeted = grant.award_amount - total
 
-    allocationsList = []
-    for grantAllocation in grantAllocations:
-        allocationDict = {
-            "fundName": grantAllocation.fund.fund_name,
-            "amount": grantAllocation.amount
-        }
-        allocationsList.append(allocationDict)
-
     context = {
-        "allocationsList": allocationsList,
         "linesList": linesList,
         "unbudgeted": unbudgeted
     }

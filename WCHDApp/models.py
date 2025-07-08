@@ -493,6 +493,7 @@ class Revenue(models.Model):
     line = models.ForeignKey(Line, on_delete=models.PROTECT)
     odhafr = models.CharField(max_length=50, verbose_name="ODH AFR")
     employee = models.ForeignKey(Employee, on_delete=models.PROTECT)
+    grantLine = models.ForeignKey(GrantLine, on_delete=models.PROTECT, blank=True, null=True, verbose_name="Grant Line")
 
     class Meta:
         db_table = "Revenue"
