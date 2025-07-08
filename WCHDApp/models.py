@@ -34,6 +34,9 @@ class Fund(models.Model):
     fund_id = models.SmallIntegerField(blank=True, primary_key=True, verbose_name = "Fund ID")
     fund_name = models.CharField(max_length=255, blank=False, verbose_name= "Fund Name")
     fund_cash_balance = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Cash Balance")
+    fund_total = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Total Given")
+    fund_budgeted = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Budgeted")
+    fund_remaining = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Remaining")
     dept = models.ForeignKey(Dept, on_delete=models.CASCADE, null=True, blank=True)
     sof = models.CharField(max_length=10, blank = False, choices=FundSource.choices, verbose_name="SoF")
     mac_elig = models.BooleanField(blank=False, verbose_name="MACE")
@@ -247,7 +250,8 @@ class Grant(models.Model):
     end_date = models.DateField(verbose_name="End Date")
     fsid = models.CharField(max_length=10, verbose_name="FSID")
     funder = models.CharField(max_length=50, verbose_name="Funder")
-    
+    received = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Received")
+
     def __str__(self):
         return self.grant_name
 
@@ -267,6 +271,7 @@ class GrantLine(models.Model):
     cofund = models.CharField(max_length=3, verbose_name="CoFund")
     gen_ledger = models.IntegerField(blank=False, verbose_name="General Ledger")
     county_code = models.CharField(max_length = 4, verbose_name="County Code")
+    receivingLine = models.BooleanField(blank=False, verbose_name="Receiving Line")
 
     def __str__(self):
         return self.line_name

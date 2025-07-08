@@ -17,14 +17,14 @@
     <tr>
         <th>Grant Line</th>
         <th>Budgeted</th>
-        <th>Encumbered</th>
+        <th>Remaining</th>
         <th>Spent</th>
     </tr>
     {% for line in linesList %}
         <tr>
             <td>{{line.lineName}}</td>
             <td>{{line.budgeted}}</td>
-            <td>{{line.encumbered}}</td>
+            <td>{{line.remaining}}</td>
             <td>{{line.spent}}</td>
         </tr>
     {% endfor %}

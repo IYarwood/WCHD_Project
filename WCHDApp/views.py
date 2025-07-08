@@ -394,6 +394,8 @@ def createEntry(request, tableName):
         #FORM UPDATES IF NEEDED, MAKE SURE TO ADD EXCLUSIONS IN NON_POST RENDER AS WELL
         if tableName == "GrantLine":
             form = modelform_factory(model, exclude=["line_budget_spent", "line_budget_remaining"])(request.POST)
+        elif tableName == "Fund":
+            form = modelform_factory(model, exclude=["fund_total", "fund_budgeted", "fund_remaining"])(request.POST)
         elif tableName == "Line":
             form = modelform_factory(model, exclude=["line_budget_spent", "line_budget_remaining"])(request.POST)
         else:
@@ -415,35 +417,60 @@ def createEntry(request, tableName):
 
                 #Getting total money that is previously budgeted to lines
                 total = 0
-                for line in grantLines:
-                    total += line.line_budgeted
+                hasReceivedLine = False
+                for lineIterable in grantLines:
+                    total += lineIterable.line_budgeted
+                    if lineIterable.receivingLine == True:
+                        hasReceivedLine = True
                 grantAwardAmount = grant.award_amount
                 grantAwardAmountRemaining = grantAwardAmount - total
 
                 if grantAwardAmountRemaining >= budgetedAmount:
                     line.line_budget_spent = 0
                     line.line_budget_remaining = budgetedAmount
-                    line.save()
+                    if (hasReceivedLine == True) and (line.receivingLine == True):
+                        message = "Already has a specified line to receive reimbursement"
+                    else:
+                        line.save()
                 else:
                     message = "Budgeted is more than is left in Grant Award"
+        elif tableName == "Fund":
+            if form.is_valid():
+                fund = form.save(commit=False)
+                balance = fund.fund_cash_balance
+                fund.fund_total = balance
+                fund.fund_budgeted = 0
+                fund.fund_remaining = balance
+
+                form.save()
+                return redirect('tableView', tableName)
         elif tableName == "Line":
             if form.is_valid():
                 line = form.save(commit=False)
                 budgeted = line.line_budgeted
                 line.line_budget_spent = 0
                 line.line_budget_remaining = budgeted
-                
-                print(budgeted)
 
+                fund = line.fund
+                if (fund.fund_remaining >= budgeted):
+                    fund.fund_remaining -= budgeted
+                    fund.fund_budgeted += budgeted
+                    fund.save()
+                    line.save()
+                    return redirect('tableView', tableName)
+                else:
+                    message="Not enough remaining balance in fund"
         else:
             if form.is_valid():
                 form.save()
-                return redirect('index')
+                return redirect('tableView', tableName)
             else:
                 print(form.errors)
     else:
         if tableName == "GrantLine":
             form = modelform_factory(model, exclude=["line_budget_spent", "line_budget_remaining"])(request.POST)
+        elif tableName == "Fund":
+            form = modelform_factory(model, exclude=["fund_total", "fund_budgeted", "fund_remaining"])(request.POST)
         elif tableName == "Line":
             form = modelform_factory(model, exclude=["line_budget_spent", "line_budget_remaining"])(request.POST)
         else:
@@ -1658,26 +1685,31 @@ def grantStats(request):
     grantModel = apps.get_model("WCHDApp", "Grant")
     grants = grantModel.objects.all()
 
-    grantAllocationModel = apps.get_model("WCHDApp", "GrantAllocation")
+    grantLineModel = apps.get_model("WCHDApp", "GrantLine")
 
     #Going to be a list of dictionaries. Each grant will have a dictionary
     grantList = []
 
     for grant in grants:
-        grantAllocations = grantAllocationModel.objects.filter(grant = grant)
+        grantLines = grantLineModel.objects.filter(grant = grant)
 
+        totalBudgeted = 0
+        totalSpent = 0
         totalRemaining = 0
-        for grantAllocation in grantAllocations:
-            totalRemaining += grantAllocation.amount
-
-        totalSpent = grant.award_amount - totalRemaining
+        totalReceived = 0
+        for grantLine in grantLines:
+            totalRemaining += grantLine.line_budget_remaining
+            totalSpent += grantLine.line_budget_spent
+            totalBudgeted += grantLine.line_budgeted
 
         grantDict = {
             "grantID": grant.grant_id,
             "grantName": grant.grant_name,
             "awardAmount": grant.award_amount,
             "spent": totalSpent,
-            "remaining": totalRemaining
+            "remaining": totalRemaining,
+            "budgeted": totalBudgeted,
+            "received": grant.received
         }
 
         grantList.append(grantDict)
@@ -1706,7 +1738,7 @@ def grantBreakdown(request):
         lineDict = {
             "lineName": line.line_name,
             "budgeted": line.line_budgeted,
-            "encumbered": line.line_encumbered,
+            "remaining": line.line_budget_remaining,
             "spent": line.line_budget_spent
         }
         linesList.append(lineDict)

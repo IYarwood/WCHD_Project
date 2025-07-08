@@ -18,6 +18,8 @@
     <tr>
         <th>Grant</th>
         <th>Award Amount</th>
+        <th>Received</th>
+        <th>Total Budgeted</th>
         <th>Total Spent</th>
         <th>Total Remaining</th>
         <th>More Details</th>
@@ -26,6 +28,8 @@
         <tr>
             <td>{{grant.grantName}}</td>
             <td>$ {{grant.awardAmount}}</td>
+            <td>$ {{grant.received}}</td>
+            <td>$ {{grant.budgeted}}</td>
             <td>$ {{grant.spent}}</td>
             <td>$ {{grant.remaining}}</td>
             <td><button hx-get="{% url 'grantBreakdown' %}?grantID={{ grant.grantID }}" hx-target="#breakdown">See Breakdown</button></td>
