@@ -324,12 +324,8 @@ def tableView(request, tableName):
     values = model.objects.all()
 
     #Getting just field names from model
-    fields = model._meta.get_fields()
-
-    #Lists to sort fields for styling
-    fieldNames = []
-    decimalFields = []
-    aliasNames = []
+    #Use .fields instead of .get_fields() because we do not want reverse relationships
+    fields = model._meta.fields
 
     #Any property that we define in models need to go here so our logic can include them in the table
     calculatedProperties = {
@@ -347,31 +343,14 @@ def tableView(request, tableName):
     }
     
 
+    fieldNames = []
+    aliasNames = []
+    decimalFields = []
     for field in fields:
-
-        #Logic for foreign keys
-        if field.is_relation:
-            if field.auto_created:
-                continue
-            else:
-                #Grab related model. This is why foreign keys have to be named after the model 
-                parentModel = apps.get_model('WCHDApp', field.name)
-
-                #Get the related models primary key
-                fkName = parentModel._meta.pk.name
-
-                #Primary keys verbose name
-                fkAlias = parentModel._meta.pk.verbose_name
-
-                aliasNames.append(fkAlias)
-                fieldNames.append(fkName)
-        else:
-            #Decimal field logic so we can style them in html
-            if isinstance(field, DecimalField):
+        if isinstance(field, DecimalField):
                 decimalFields.append(field.name)
-            aliasNames.append(field.verbose_name)  
-            fieldNames.append(field.name)
-    
+        aliasNames.append(field.verbose_name)  
+        fieldNames.append(field.name)
     #Making sure properties are added like normal fields to the tables
     if tableName in calculatedProperties:
         for property in calculatedProperties[tableName]:
