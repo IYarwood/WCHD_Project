@@ -413,7 +413,7 @@ def createEntry(request, tableName):
     if request.method == 'POST':
         #Django function that makes a form based off a provided model
         if tableName == "GrantLine":
-            form = modelform_factory(model, exclude=["line_budget_spent", "line_encumbered"])(request.POST)
+            form = modelform_factory(model, exclude=["line_budget_spent", "line_budget_remaining"])(request.POST)
         else:
             form = modelform_factory(model, fields="__all__")(request.POST)
 
@@ -837,7 +837,7 @@ def transactionsExpenses(request):
 def transactionsExpenseTableUpdate(request):
     message = ""
     itemID = request.GET.get('item')
-    print(itemID)
+    #print(itemID)
     expenseModel = apps.get_model('WCHDApp', "expense")
     expenseValues = expenseModel.objects.filter(item_id=itemID)
 
@@ -871,12 +871,12 @@ def transactionsExpenseTableUpdate(request):
 
     #Getting values from our db so they dont have to
     item = Item.objects.get(pk=itemID)  
-    print(item)
+    #print(item)
 
     if request.method == 'POST':
-        print("SUBMITTED ON TABLE UPDATE")
+        #print("SUBMITTED ON TABLE UPDATE")
         form = expenseForm(request.POST)
-        print(request.POST)
+        #print(request.POST)
         if form.is_valid():
             print("Valid Form")
             #Create the instance but don't save it yet
