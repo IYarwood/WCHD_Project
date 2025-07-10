@@ -11,6 +11,8 @@ import os
 
 from django.core.wsgi import get_wsgi_application
 
+print(">>>LOADED HERE THIS WAS LOADED")
+
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'WCHDProject.settings')
 
 application = get_wsgi_application()
