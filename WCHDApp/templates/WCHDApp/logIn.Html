@@ -7,27 +7,27 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login Page</title>
     <link rel="stylesheet" type="text/css" href="{% static 'WCHDApp/css/LogInStyle.css' %}">
-    <!--
+    
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
-    <script src="script.js"></script>-->
+    <!--<script src="script.js"></script>-->
 </head>
 <body>
     <nav class="navbar">
-        <a href="index.html" class="logo">WCHD.</a>
+        <a href="" class="logo">WCHD.</a>
         <ul>
            
-        </nav>
+    </nav>
 
     
     <div class="login-container">
         <div class="avatar">
             <i class="fa-solid fa-user"></i>  
         </div>
-        <h2>MEMBER LOGIN</h2>
+        <h2>LOGIN</h2>
         <form method="POST">
             {% csrf_token %}
             <div class="input-container">
-                <input type="email" name = "email" placeholder="Email" required>
+                <input type="text" name="username" placeholder="Username" required>  <!-- Changed from email to username -->
                 <span class="icon">&#9993;</span>
             </div>
             <div class="input-container">
@@ -40,6 +40,9 @@
             </div>
             <button type="submit">LOG IN</button>
         </form>
+        {% for message in messages %}
+            <p>{{ message }}</p>
+        {% endfor %}
     </div>
 </body>
 </html>

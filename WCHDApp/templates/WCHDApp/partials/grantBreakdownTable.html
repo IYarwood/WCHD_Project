@@ -1,0 +1,23 @@
+<h3>Grant Line Breakdown</h3>
+<table>
+    <tr>
+        <th>Grant Line</th>
+        <th>Budgeted</th>
+        <th>Remaining</th>
+        <th>Spent</th>
+        <th>Income</th>
+    </tr>
+    {% for line in linesList %}
+        <tr>
+            <td>{{line.lineName}}</td>
+            <td>{{line.budgeted}}</td>
+            <td>{{line.remaining}}</td>
+            <td>{{line.spent}}</td>
+            <td>{{line.income}}</td>
+        </tr>
+    {% endfor %}
+</table>
+<h4>Unbudgeted: {{unbudgeted}}</h4>
+<button onclick="document.getElementById('breakdown').innerHTML = ''">
+    Close
+</button>

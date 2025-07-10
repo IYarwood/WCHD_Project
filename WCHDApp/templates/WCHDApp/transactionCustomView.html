@@ -1,0 +1,17 @@
+{% extends "WCHDApp/masterTemplate.html" %}
+{% load static %}
+{% load custom_filters %}
+
+
+{% block title %}Transactions{% endblock %}
+
+{% block content %}
+    <link rel="stylesheet" type="text/css" href="{% static 'WCHDAPP/css/formStyling.css' %}"> 
+    <link rel="stylesheet" type="text/css" href="{% static 'WCHDApp/css/cleanPages.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'WCHDApp/css/themes.css' %}">
+    <h1>Transactions</h1>
+    <form method="get">
+        <button formaction="{% url 'transactionsItem' %}">Receipts</button>
+        <button class="secondary" formaction="{% url 'transactionsExpenses' %}">Expenses</button>
+    </form>
+{% endblock %}

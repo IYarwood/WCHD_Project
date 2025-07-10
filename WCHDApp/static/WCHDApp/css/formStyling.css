@@ -1,0 +1,74 @@
+.FormContainer {
+    padding: 30px;
+    border-radius: 10px;
+    max-width: 600px;
+    margin: 80px auto;
+    background-color: #1f242d;
+    color: white;
+}
+
+.FormGroup {
+    margin-bottom: 15px;
+}
+
+.FormGroup label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+.FormGroup input{
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 25px;
+    outline: none;
+    padding-left: auto;
+    background: rgba(255, 255, 255, 0.2);
+    color: rgb(255, 255, 255);
+    margin-bottom: 10px;
+    overflow: hidden;
+    text-overflow: hidden;
+    white-space: nowrap;
+    box-sizing:border-box;
+    display: block;
+}
+
+.FormGroup select{
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 25px;
+    outline: none;
+    padding-left: auto;
+    background: rgba(255, 255, 255, 0.2);
+    color: black;
+    margin-bottom: 10px;
+    overflow: hidden;
+    text-overflow: hidden;
+    white-space: nowrap;
+    box-sizing:border-box;
+    display: block;
+}
+
+.FormContainer button {
+    display: inline-block;
+    padding: 10px 25px;
+    background: #89CFF0;
+    border: 2px solid #89CFF0;
+    border-radius: 40px;
+    box-shadow: 0 0 10px #89CFF0;
+    font-size: 16px;
+    color: black;
+    font-weight: 600;
+    transition: 0.5s;
+    text-align: center;
+    margin-left: center;
+    margin-bottom: 5px;
+    margin-top: 10px;
+}
+
+.FormContainer button:hover {
+    background: none;
+    color: white;
+}

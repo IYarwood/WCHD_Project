@@ -1,0 +1,17 @@
+Clockify viewing table looks weird
+
+Payroll table seems to be what I have as clockify table. Will need to make a few tweaks to get to work
+    going to skip clockify table and go directly into payroll. Then can set up the clockify view to 
+    pull from payroll instead
+
+
+Project/Activity List = ad-admin is normal work while vac/sick is vacation and sick which is different 
+pay rates etc. These would have to be taken from the funds cash balance
+
+I am still fuzzy on meaning of a range of dates. 
+I think range of dates will be after the fact that I can have htmx do a query for entries with wanted dates.
+
+
+Pay period -> activity -> fund -> employee
+Each time one changes we can send request to view to get a new table with new totals
+Each request should include the value for each dropdown to filter entries in the view

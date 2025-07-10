@@ -1,0 +1,18 @@
+
+<div class="FormContainer">
+    <div class="secondaryForm">
+        <h3>Add Person/Company</h3>
+        <form method="post" action="{% url 'addPeopleForm' %}">
+            {% csrf_token %}
+            {% for field in form %}
+                <div class="FormGroup">
+                    {{ field.label_tag }}
+                    {{ field }}
+                </div>
+            {% endfor %}
+            <input type="hidden" name="itemID" value="{{itemID}}">
+            <input type="hidden" name="source" value="{{source}}">
+            <button type="submit">Submit</button>
+        </form>
+    </div>
+</div>

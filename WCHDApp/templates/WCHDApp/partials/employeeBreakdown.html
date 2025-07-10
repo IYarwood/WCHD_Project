@@ -1,0 +1,22 @@
+<table>
+    <tr>
+        <th>{{employeeName}}</th>
+    </tr>
+    <tr>
+        <th>Activity Name</th>
+        <th>Total Hours</th>
+        <th>Sum</th>
+    </tr>
+    {% for key, activity in activitiesDict.items %}
+    <tr>
+        <td>{{activity.name}}</td>
+        <td>{{activity.hours}}</td>
+        <td>${{activity.sum}}</td>
+    </tr>
+    {% endfor %}
+    <tr>
+        <td>Totals</td>
+        <td>{{totalHours}}</td>
+        <td>${{sum}}</td>
+    </tr>
+</table>

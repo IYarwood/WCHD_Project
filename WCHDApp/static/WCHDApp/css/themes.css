@@ -1,0 +1,743 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f4f6f8; /* Light grey background */
+    color: #333;
+    line-height: 1.6;
+    padding-top: 35px;
+}
+
+/* Main Content Styling */
+main {
+    max-width: 1000px;
+    margin: 30px auto; /* Increased top/bottom margin */
+    padding: 30px; /* Increased padding */
+    background-color: #fff;
+    border-radius: 12px; /* More rounded corners */
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); /* More pronounced shadow */
+}
+
+h1 {
+    text-align: center;
+    margin-bottom: 30px; /* Increased bottom margin */
+    color: #2c3e50; /* Darker heading color */
+}
+
+/* Form Styling */
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 25px; /* Further increased gap */
+}
+
+div { /* Targets the div wrapping the label and select */
+    background-color: #fff; /* White background for the boxes */
+    border: 2px solid #e0e0e0; /* Lighter grey border */
+    border-radius: 8px; /* More rounded corners for boxes */
+    padding: 20px; /* Increased padding for boxes */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05); /* Subtle shadow for boxes */
+}
+
+label {
+    font-weight: 600; /* Semi-bold label */
+    color: #555; /* Slightly lighter label color */
+    display: block;
+    margin-bottom: 12px; /* Increased bottom margin for label */
+}
+
+select {
+    padding: 12px;
+    font-size: 16px;
+    border: 2px solid #ddd;
+    border-radius: 6px;
+    background-color: #fff;
+    width: 100%;
+    max-width: 350px; /* Slightly wider select */
+    cursor: pointer;
+    transition: border-color 0.3s, box-shadow 0.3s; /* Added box-shadow transition */
+}
+
+select:focus {
+    outline: none;
+    border-color: #5dade2; /* A softer blue focus color */
+    box-shadow: 0 0 8px rgba(93, 173, 226, 0.3); /* Softer focus shadow */
+}
+
+/* Button Styling */
+button {
+    padding: 14px 28px; /* Increased padding for buttons */
+    font-size: 16px;
+    border: 2px solid #ccc;
+    border-radius: 8px; /* More rounded button corners */
+    cursor: pointer;
+    transition: background-color 0.3s, border-color 0.3s, color 0.3s, box-shadow 0.3s; /* Added color and shadow transitions */
+    background-color: #fff; /* White button background */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08); /* Subtle button shadow */
+}
+
+button {
+    border-color: #5dade2; /* Softer blue border */
+    color: #5dade2; /* Softer blue text */
+}
+
+button:hover {
+    background-color: #5dade2;
+    color: #fff;
+    box-shadow: 0 4px 8px rgba(93, 173, 226, 0.4); /* More prominent hover shadow */
+}
+
+button#seeTable {
+    border-color: #5dade2;
+    color: #5dade2;
+}
+
+button#seeTable:hover {
+    background-color: #5dade2;
+    color: #fff;
+}
+
+button#create {
+    border-color: #82e0aa; /* Softer green border */
+    color: #82e0aa; /* Softer green text */
+}
+
+button#create:hover {
+    background-color: #82e0aa;
+    color: #fff;
+}
+
+button.secondary {
+    border-color: #82e0aa; /* Softer green border */
+    color: #82e0aa; /* Softer green text */
+}
+
+button.secondary:hover {
+    background-color: #82e0aa;
+    color: #fff;
+}
+
+button#daily {
+    border-color: #82e0aa;
+    color: #82e0aa;
+}
+
+button#daily:hover {
+    background-color: #82e0aa;
+    color: #fff;
+}
+
+/* Responsive Design */
+@media (max-width: 600px) {
+    main {
+        margin: 15px;
+        padding: 20px;
+    }
+
+    select {
+        max-width: 100%;
+    }
+}
+
+/* Dark Mode Theme */
+.dark-mode {
+    background-color: #1e1e1e; /* Dark background */
+    color: #f5f5f5; /* Light text */
+}
+
+.dark-mode main {
+    background-color: #2c2c2c; /* Darker main background */
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3); /* Darker shadow */
+}
+
+.dark-mode h1 {
+    color: #eee;
+}
+
+.dark-mode div {
+    background-color: #333; /* Darker div background */
+    border-color: #555; /* Darker div border */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2); /* Darker shadow */
+}
+
+.dark-mode label {
+    color: #ddd;
+}
+
+.dark-mode select {
+    background-color: #444;
+    border-color: #666;
+    color: #eee;
+}
+
+.dark-mode select:focus {
+    border-color: #64b5f6; /* A different focus color for dark mode */
+    box-shadow: 0 0 8px rgba(100, 181, 246, 0.5); /* Darker focus shadow */
+}
+
+.dark-mode button {
+    background-color: #444;
+    color: #eee;
+    border-color: #666;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); /* Darker button shadow */
+}
+
+.dark-mode button:hover {
+    background-color: #64b5f6; /* Different hover color for dark mode */
+    color: #222;
+    border-color: #64b5f6;
+    box-shadow: 0 4px 8px rgba(100, 181, 246, 0.4); /* Darker hover shadow */
+}
+
+.dark-mode button#seeTable,
+.dark-mode button#seeTable:hover {
+    border-color: #64b5f6;
+    color: #64b5f6;
+}
+
+.dark-mode button#seeTable:hover {
+    background-color: #64b5f6;
+    color: #222;
+}
+
+.dark-mode button#create,
+.dark-mode button#create:hover {
+    border-color: #a5d6a7; /* Different green for dark mode */
+    color: #a5d6a7;
+}
+
+.dark-mode button#create:hover {
+    background-color: #a5d6a7;
+    color: #222;
+}
+
+.dark-mode button#daily,
+.dark-mode button#daily:hover {
+    border-color: #a5d6a7;
+    color: #a5d6a7;
+}
+
+.dark-mode button#daily:hover {
+    background-color: #a5d6a7;
+    color: #222;
+}
+
+/* Blue Theme */
+.blue-theme {
+    background-color: #e3f2fd;
+    color: #1e88e5;
+}
+
+.blue-theme main {
+    background-color: #fff;
+}
+
+.blue-theme h1 {
+    color: #1976d2;
+}
+
+.blue-theme div {
+    background-color: #f9fbe7;
+    border-color: #90caf9;
+}
+
+.blue-theme label {
+    color: #1565c0;
+}
+
+.blue-theme select {
+    border-color: #64b5f6;
+    background-color: #e0f7fa;
+    color: #1e88e5;
+}
+
+.blue-theme select:focus {
+    border-color: #1976d2;
+    box-shadow: 0 0 8px rgba(25, 118, 210, 0.3);
+}
+
+.blue-theme button {
+    border-color: #64b5f6;
+    color: #1e88e5;
+    background-color: #e0f7fa;
+}
+
+.blue-theme button:hover {
+    background-color: #1e88e5;
+    color: #fff;
+}
+
+.blue-theme button#seeTable {
+    border-color: #64b5f6;
+    color: #1e88e5;
+}
+
+.blue-theme button#seeTable:hover {
+    background-color: #1e88e5;
+    color: #fff;
+}
+
+.blue-theme button#create {
+    border-color: #4db6ac;
+    color: #009688;
+}
+
+.blue-theme button#create:hover {
+    background-color: #009688;
+    color: #fff;
+}
+
+.blue-theme button#daily {
+    border-color: #4db6ac;
+    color: #009688;
+}
+
+.blue-theme button#daily:hover {
+    background-color: #009688;
+    color: #fff;
+}
+
+/* Green Theme */
+.green-theme {
+    background-color: #e8f5e9;
+    color: #388e3c;
+}
+
+.green-theme main {
+    background-color: #fff;
+}
+
+.green-theme h1 {
+    color: #2e7d32;
+}
+
+.green-theme div {
+    background-color: #f1f8e9;
+    border-color: #81c784;
+}
+
+.green-theme label {
+    color: #1b5e20;
+}
+
+.green-theme select {
+    border-color: #66bb6a;
+    background-color: #e8f5e9;
+    color: #388e3c;
+}
+
+.green-theme select:focus {
+    border-color: #2e7d32;
+    box-shadow: 0 0 8px rgba(46, 125, 50, 0.3);
+}
+
+.green-theme button {
+    border-color: #66bb6a;
+    color: #388e3c;
+    background-color: #e8f5e9;
+}
+
+.green-theme button:hover {
+    background-color: #388e3c;
+    color: #fff;
+}
+
+.green-theme button#seeTable {
+    border-color: #66bb6a;
+    color: #388e3c;
+}
+
+.green-theme button#seeTable:hover {
+    background-color: #388e3c;
+    color: #fff;
+}
+
+.green-theme button#create {
+    border-color: #4db6ac;
+    color: #009688;
+}
+
+.green-theme button#create:hover {
+    background-color: #009688;
+    color: #fff;
+}
+
+.green-theme button#daily {
+    border-color: #4db6ac;
+    color: #009688;
+}
+
+.green-theme button#daily:hover {
+    background-color: #009688;
+    color: #fff;
+}
+
+/* Pink Theme */
+.pink-theme {
+    background-color: #fce4ec;
+    color: #c2185b;
+}
+
+.pink-theme main {
+    background-color: #fff;
+}
+
+.pink-theme h1 {
+    color: #ad1457;
+}
+
+.pink-theme div {
+    background-color: #f8bbd0;
+    border-color: #e91e63;
+}
+
+.pink-theme label {
+    color: #880e4f;
+}
+
+.pink-theme select {
+    border-color: #f06292;
+    background-color: #fce4ec;
+    color: #c2185b;
+}
+
+.pink-theme select:focus {
+    border-color: #ad1457;
+    box-shadow: 0 0 8px rgba(173, 20, 87, 0.3);
+}
+
+.pink-theme button {
+    border-color: #f06292;
+    color: #c2185b;
+    background-color: #fce4ec;
+}
+
+.pink-theme button:hover {
+    background-color: #c2185b;
+    color: #fff;
+}
+
+.pink-theme button#seeTable {
+    border-color: #f06292;
+    color: #c2185b;
+}
+
+.pink-theme button#seeTable:hover {
+    background-color: #c2185b;
+    color: #fff;
+}
+
+.pink-theme button#create {
+    border-color: #81c784;
+    color: #388e3c;
+}
+
+.pink-theme button#create:hover {
+    background-color: #388e3c;
+    color: #fff;
+}
+
+.pink-theme button#daily {
+    border-color: #81c784;
+    color: #388e3c;
+}
+
+.pink-theme button#daily:hover {
+    background-color: #388e3c;
+    color: #fff;
+}
+
+/* Purple Theme */
+.purple-theme {
+    background-color: #ede7f6;
+    color: #512da8;
+}
+
+.purple-theme main {
+    background-color: #fff;
+}
+
+.purple-theme h1 {
+    color: #4527a0;
+}
+
+.purple-theme div {
+    background-color: #e1bee7;
+    border-color: #9575cd;
+}
+
+.purple-theme label {
+    color: #311b92;
+}
+
+.purple-theme select {
+    border-color: #ba68c8;
+    background-color: #ede7f6;
+    color: #512da8;
+}
+
+.purple-theme select:focus {
+    border-color: #4527a0;
+    box-shadow: 0 0 8px rgba(69, 39, 160, 0.3);
+}
+
+.purple-theme button {
+    border-color: #ba68c8;
+    color: #512da8;
+    background-color: #ede7f6;
+}
+
+.purple-theme button:hover {
+    background-color: #512da8;
+    color: #fff;
+}
+
+.purple-theme button#seeTable {
+    border-color: #ba68c8;
+    color: #512da8;
+}
+
+.purple-theme button#seeTable:hover {
+    background-color: #512da8;
+    color: #fff;
+}
+
+.purple-theme button#create {
+    border-color: #66bb6a;
+    color: #388e3c;
+}
+
+.purple-theme button#create:hover {
+    background-color: #388e3c;
+    color: #fff;
+}
+
+.purple-theme button#daily {
+    border-color: #66bb6a;
+    color: #388e3c;
+}
+
+.purple-theme button#daily:hover {
+    background-color: #388e3c;
+    color: #fff;
+}
+
+
+/* Dark Mode applied on top of other themes */
+body.dark-mode {
+    background-color: #1e1e1e;
+    color: #f5f5f5;
+}
+
+body.dark-mode main {
+    background-color: #2c2c2c;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+}
+
+body.dark-mode h1 {
+    color: #eee;
+}
+
+body.dark-mode div {
+    background-color: #333;
+    border-color: #555;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+body.dark-mode label {
+    color: #ddd;
+}
+
+body.dark-mode select {
+    background-color: #444;
+    border-color: #666;
+    color: #eee;
+}
+
+body.dark-mode select:focus {
+    border-color: #64b5f6;
+    box-shadow: 0 0 8px rgba(100, 181, 246, 0.5);
+}
+
+body.dark-mode button {
+    background-color: #444;
+    color: #eee;
+    border-color: #666;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+body.dark-mode button:hover {
+    background-color: #64b5f6;
+    color: #222;
+    border-color: #64b5f6;
+    box-shadow: 0 4px 8px rgba(100, 181, 246, 0.4);
+}
+
+/* Dark Mode adjustments for Blue Theme */
+body.blue-theme.dark-mode {
+    background-color: #151e27; /* Darker blue background */
+    color: #bbdefb; /* Lighter blue text */
+}
+
+body.blue-theme.dark-mode main {
+    background-color: #1e2a38; /* Darker blue main */
+}
+
+body.blue-theme.dark-mode h1 {
+    color: #81d4fa; /* Lighter blue heading */
+}
+
+body.blue-theme.dark-mode div {
+    background-color: #26323e; /* Darker blue div */
+    border-color: #4f5b62;
+}
+
+body.blue-theme.dark-mode select {
+    background-color: #37474f;
+    border-color: #607d8b;
+    color: #bbdefb;
+}
+
+body.blue-theme.dark-mode select:focus {
+    border-color: #81d4fa;
+    box-shadow: 0 0 8px rgba(130, 204, 255, 0.5);
+}
+
+body.blue-theme.dark-mode button {
+    background-color: #37474f;
+    color: #bbdefb;
+    border-color: #607d8b;
+}
+
+body.blue-theme.dark-mode button:hover {
+    background-color: #81d4fa;
+    color: #263238;
+}
+
+/* Dark Mode adjustments for Green Theme */
+body.green-theme.dark-mode {
+    background-color: #1b211b; /* Darker green background */
+    color: #c8e6c9; /* Lighter green text */
+}
+
+body.green-theme.dark-mode main {
+    background-color: #222d22; /* Darker green main */
+}
+
+body.green-theme.dark-mode h1 {
+    color: #a5d6a7; /* Lighter green heading */
+}
+
+body.green-theme.dark-mode div {
+    background-color: #2e3d2e; /* Darker green div */
+    border-color: #435a43;
+}
+
+body.green-theme.dark-mode select {
+    background-color: #334d33;
+    border-color: #66bb6a;
+    color: #c8e6c9;
+}
+
+body.green-theme.dark-mode select:focus {
+    border-color: #a5d6a7;
+    box-shadow: 0 0 8px rgba(165, 214, 167, 0.5);
+}
+
+body.green-theme.dark-mode button {
+    background-color: #334d33;
+    color: #c8e6c9;
+    border-color: #66bb6a;
+}
+
+body.green-theme.dark-mode button:hover {
+    background-color: #a5d6a7;
+    color: #2e3d2e;
+}
+
+/* Dark Mode adjustments for Pink Theme */
+body.pink-theme.dark-mode {
+    background-color: #211319; /* Darker pink background */
+    color: #f48fb1; /* Lighter pink text */
+}
+
+body.pink-theme.dark-mode main {
+    background-color: #2c1922; /* Darker pink main */
+}
+
+body.pink-theme.dark-mode h1 {
+    color: #f06292; /* Lighter pink heading */
+}
+
+body.pink-theme.dark-mode div {
+    background-color: #381f28; /* Darker pink div */
+    border-color: #6a1b4d;
+}
+
+body.pink-theme.dark-mode select {
+    background-color: #4a2538;
+    border-color: #ad1457;
+    color: #f48fb1;
+}
+
+body.pink-theme.dark-mode select:focus {
+    border-color: #f06292;
+    box-shadow: 0 0 8px rgba(240, 98, 146, 0.5);
+}
+
+body.pink-theme.dark-mode button {
+    background-color: #4a2538;
+    color: #f48fb1;
+    border-color: #ad1457;
+}
+
+body.pink-theme.dark-mode button:hover {
+    background-color: #f06292;
+    color: #2c1922;
+}
+
+/* Dark Mode adjustments for Purple Theme */
+body.purple-theme.dark-mode {
+    background-color: #1d1823; /* Darker purple background */
+    color: #d1c4e9; /* Lighter purple text */
+}
+
+body.purple-theme.dark-mode main {
+    background-color: #282030; /* Darker purple main */
+}
+
+body.purple-theme.dark-mode h1 {
+    color: #b39ddb; /* Lighter purple heading */
+}
+
+body.purple-theme.dark-mode div {
+    background-color: #33283d; /* Darker purple div */
+    border-color: #5e35b1;
+}
+
+body.purple-theme.dark-mode select {
+    background-color: #3f304a;
+    border-color: #7e57c2;
+    color: #d1c4e9;
+}
+
+body.purple-theme.dark-mode select:focus {
+    border-color: #b39ddb;
+    box-shadow: 0 0 8px rgba(179, 157, 219, 0.5);
+}
+
+body.purple-theme.dark-mode button {
+    background-color: #3f304a;
+    color: #d1c4e9;
+    border-color: #7e57c2;
+}
+
+body.purple-theme.dark-mode button:hover {
+    background-color: #b39ddb;
+    color: #282030;
+}
+

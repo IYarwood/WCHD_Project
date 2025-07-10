@@ -1,10 +1,306 @@
-{% extends "WCHDApp/masterTemplate.html" %}
+{% load static %}
 
-{% block title %} Index {% endblock %}
+{% block title %}{% endblock %}
 
 {% block content %}
-    <h1>HUB</h1>
-    <a href="{% url 'viewTableSelect' %}">Table View Select</a>
-    <a href="{% url 'newFund' %}">Create Funds</a>
-    <a href="{% url 'newLine' %}">Create Lines</a>
+<link href="https://fonts.googleapis.com/css2?family=Inter&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+<link rel="stylesheet" type="text/css" href="{% static 'WCHDApp/css/hubStyles.css' %}">
+<link href="https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap" rel="stylesheet">
+
+
+<nav class="hubNavbar-top">
+    <div class="hubNavbar-left">
+        <div id="liveTime" style="width: 120px; font-size: 18px; font-family: 'Roboto Mono', monospace; text-align: center;">00:00:00 AM</div>
+        <div id="liveDate" style="font-size: 15px; margin-top: 2px;"></div>
+    </div>
+    <div class="hubNavbar-center">
+        <label class="switch">
+            <input type="checkbox" id="toggleTheme">
+            <span class="slider"></span>
+        </label>
+        <select id="themeSelector">
+            <option value="default">MC25 Theme</option>
+            <option value="blue">Ocean Blue</option>
+            <option value="green">Forest Green</option>
+            <option value="pink">Sweet Pink</option>
+        </select>
+    </div>
+    <div class="hubNavbar-right">
+        <span
+          class="cursive-welcome"
+          style="font-family: 'Great Vibes', cursive; font-size: 1.6rem;"
+        >
+          Welcome, {{ request.user }}
+        </span><br>
+        <div style="display: flex; align-items: center; gap: 8px; margin-top: 1px;">
+          <p style="font-size: 10px; text-align: left; margin: 0; color: grey;">
+            Session time: <span id="sessionTimeValue">{{ duration }}</span>
+          </p>
+          <button
+            id="toggleSessionTime"
+            style="padding: 2px 6px; font-size: 12px; background-color: transparent; border: none; cursor: pointer;"
+            title="Click to hide your session time"
+          >
+            🚫
+          </button>
+        </div>
+      </div>
+    </div>
+</nav>
+
+<nav class="hubNavbar-main">
+    <ul class="hubNavbar-links"></ul>
+    <div class="hubNavbar-action">
+        <form id="logout-form" method="POST" action="{% url 'logout' %}" style="display: inline;">
+            {% csrf_token %}
+            <a href="#" onclick="document.getElementById('logout-form').submit();" class="hubNavbar-link">
+                LOG&nbsp;OUT
+            </a>
+        </form>
+    </div>
+</nav>
+
+<div style="display: flex; ">
+
+    <div class="left-panel" id="leftPanel">
+        <div class="panel-section">
+            <h3>Today's Summary</h3>
+            <p>Total Revenue: <span id="totalRevenue">$14.23</span></p>
+            <p>Total Expenses: <span id="totalExpenses">$0.00</span></p>
+        </div>
+        <div class="panel-section">
+            <h3>Online</h3>
+            <ul id="onlineUsers">
+                <li>{{ request.user.username }} </li>
+            </ul>
+            <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                function fetchOnlineUsers() {
+                    fetch('/api/online_users/')
+                        .then(response => response.json())
+                        .then(data => {
+                            const onlineUsersList = document.getElementById('onlineUsers');
+                            onlineUsersList.innerHTML = `<li>{{ request.user.username }} (You)</li>`;
+                            data.online_users.forEach(username => {
+                                if (username !== '{{ request.user.username }}') {
+                                    const li = document.createElement('li');
+                                    li.textContent = username;
+                                    onlineUsersList.appendChild(li);
+                                }
+                            });
+                        })
+                        .catch(error => console.error('Error fetching online users:', error));
+                }
+                fetchOnlineUsers();
+                setInterval(fetchOnlineUsers, 15000);
+            });
+            </script>
+        </div>
+    </div>
+
+    <div class="content-area">
+        <div class="logoBox" style="display: flex; justify-content: center; max-height: 250px; margin-top: 1px;">
+            <img src="{% static 'WCHDApp/images/logo2.png' %}" alt="logo" style="max-width: 100%; max-height: 235px;">
+        </div>
+
+        <div id="dragBoxContainer" class="container">
+            <div class="box" data-id="reports"><a href="{% url 'reports' %}">Reports</a></div>
+            <div class="box" data-id="table"><a href="{% url 'viewTableSelect' %}">Table View Select</a></div>
+            <div class="box" data-id="imports"><a href="{% url 'imports' %}">Imports</a></div>
+            <div class="box" data-id="exports"><a href="{% url 'exports' %}">Exports</a></div>
+            <div class="box" data-id="transactions"><a href="{% url 'transactionsItem' %}">Transactions</a></div>
+            <div class="box" data-id="reconcile"><a href="{% url 'reconcile' %}">Reconcile</a></div>
+            <div class="box" data-id="grantStats"><a href="{% url 'grantStats' %}">Grant Stats</a></div>
+        </div>
+        
+        <script>document.addEventListener('DOMContentLoaded', () => {
+            const boxes = document.querySelectorAll('.box');
+            let draggedItem = null;
+          
+            boxes.forEach(box => {
+              box.setAttribute('draggable', true);
+          
+              box.addEventListener('dragstart', (e) => {
+                draggedItem = box;
+                box.classList.add('dragging');
+                boxes.forEach(b => {
+                  if (b !== box) b.classList.add('sad-grey');
+                });
+                e.dataTransfer.effectAllowed = 'move';
+              });
+          
+              box.addEventListener('dragend', () => {
+                box.classList.remove('dragging');
+                boxes.forEach(b => b.classList.remove('sad-grey'));
+                draggedItem = null;
+              });
+          
+              box.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'move';
+              });
+          
+              box.addEventListener('drop', (e) => {
+                e.preventDefault();
+                if (draggedItem && draggedItem !== box) {
+                  const container = document.getElementById('dragBoxContainer');
+                  const boxesArray = Array.from(container.querySelectorAll('.box'));
+                  const draggedIndex = boxesArray.indexOf(draggedItem);
+                  const targetIndex = boxesArray.indexOf(box);
+          
+                  if (draggedIndex < targetIndex) {
+                    container.insertBefore(draggedItem, box.nextSibling);
+                  } else {
+                    container.insertBefore(draggedItem, box);
+                  }
+                }
+              });
+            });
+          });
+          </script>
+
+        <button id="resetOrderBtn" style="
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 10px 16px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            z-index: 100;
+        ">
+            🔄 Reset Layout
+        </button>
+
+        <div id="colorPalette" class="color-palette" style="display: none;"></div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const body = document.body;
+    const container = document.getElementById('dragBoxContainer');
+    const resetBtn = document.getElementById('resetOrderBtn');
+    const toggleSessionBtn = document.getElementById('toggleSessionTime');
+    const sessionValue = document.getElementById('sessionTimeValue');
+    const liveTimeEl = document.getElementById('liveTime');
+    const liveDateEl = document.getElementById('liveDate');
+
+    function updateTime() {
+        const now = new Date();
+        let hours = now.getHours();
+        const minutes = now.getMinutes().toString().padStart(2, '0');
+        const seconds = now.getSeconds().toString().padStart(2, '0');
+        const ampm = hours >= 12 ? 'PM' : 'AM';
+        hours = hours % 12 || 12;
+        liveTimeEl.innerText = `${hours}:${minutes}:${seconds} ${ampm}`;
+    }
+
+    function updateDate() {
+        const now = new Date();
+        const month = (now.getMonth() + 1).toString().padStart(2, '0');
+        const day = now.getDate().toString().padStart(2, '0');
+        const year = now.getFullYear();
+        liveDateEl.innerText = `${month}/${day}/${year}`;
+    }
+
+    if (localStorage.getItem('loginDate') !== new Date().toDateString()) {
+        localStorage.setItem('loginDate', new Date().toDateString());
+        localStorage.setItem('loginTime', Date.now());
+    }
+    const startTime = parseInt(localStorage.getItem('loginTime'), 10) || Date.now();
+
+    function updateSessionTime() {
+        const now = Date.now();
+        const diff = now - startTime;
+        const h = Math.floor(diff / 3600000);
+        const m = Math.floor((diff % 3600000) / 60000);
+        const s = Math.floor((diff % 60000) / 1000);
+        sessionValue.innerText = `${h}h ${m}m ${s}s`;
+        if (h >= 8) {
+            sessionValue.style.color = 'red';
+        } else {
+            sessionValue.style.color = '';
+        }
+    }
+
+    updateTime();
+    updateDate();
+    updateSessionTime();
+    setInterval(updateTime, 1000);
+    setInterval(updateSessionTime, 1000);
+
+    toggleSessionBtn.addEventListener('click', () => {
+        const isHidden = sessionValue.style.display === 'none';
+        sessionValue.style.display = isHidden ? 'inline' : 'none';
+        toggleSessionBtn.title = isHidden ? 'Click to hide your session time' : 'Click to show your session time';
+        toggleSessionBtn.textContent = isHidden ? '🚫' : '👁️';
+        localStorage.setItem('sessionTimeHidden', !isHidden);
+    });
+
+    if (localStorage.getItem('sessionTimeHidden') === 'true') {
+        sessionValue.style.display = 'none';
+        toggleSessionBtn.title = 'Click to show your session time';
+        toggleSessionBtn.textContent = '👁️';
+    }
+
+    let sortableInstance;
+    function saveOrder() {
+        const order = Array.from(container.children).map(box => box.dataset.id);
+        localStorage.setItem('boxOrder', JSON.stringify(order));
+    }
+
+    function loadOrder() {
+        const savedOrder = JSON.parse(localStorage.getItem('boxOrder'));
+        if (savedOrder) {
+            const boxMap = {};
+            Array.from(container.children).forEach(box => {
+                if (box.dataset.id) boxMap[box.dataset.id] = box;
+            });
+            savedOrder.forEach(id => {
+                if (boxMap[id]) container.appendChild(boxMap[id]);
+            });
+        }
+        if (!sortableInstance) {
+            sortableInstance = new Sortable(container, {
+                animation: 150,
+                ghostClass: 'sortable-ghost',
+                chosenClass: 'sortable-chosen',
+                dragClass: 'sortable-drag',
+                onEnd: saveOrder
+            });
+        }
+    }
+
+    loadOrder();
+
+    resetBtn.addEventListener('click', () => {
+        const boxes = Array.from(container.children);
+        boxes.forEach((box, i) => {
+            setTimeout(() => {
+                box.style.transition = 'transform 0.1s ease-out, background-color 0.1s ease-out';
+                box.style.transform = 'translateY(-10px)';
+                box.style.backgroundColor = '#ddd';
+            }, i * 30);
+        });
+        setTimeout(() => {
+            localStorage.removeItem('boxOrder');
+            location.reload();
+        }, boxes.length * 30 + 200);
+    });
+
+    if (typeof initTheme === 'function') initTheme();
+    if (typeof initColorPalette === 'function') initColorPalette();
+});
+</script>
+
+<script src="{% static 'WCHDApp/js/themeHandler.js' %}"></script>
+
+
 {% endblock %}

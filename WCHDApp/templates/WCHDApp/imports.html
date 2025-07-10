@@ -1,0 +1,27 @@
+{% extends "WCHDApp/masterTemplate.html" %}
+{% load static %}
+
+{% block title %}Imports{% endblock %}
+
+{% block content %}
+    <link rel="stylesheet" type="text/css" href="{% static 'WCHDApp/css/cleanPages.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'WCHDApp/css/themes.css' %}">
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+           
+            if (typeof initTheme === 'function') {
+                initTheme();
+            }
+        });
+    </script>
+    <script src="{% static 'WCHDApp/js/themeHandler.js' %}"></script>
+
+    <h1>Imports</h1>
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        {{form}}
+        <button type="submit" name="button" id="import" value="import">Import</button>
+    </form>
+
+    {{message}}
+{% endblock %}

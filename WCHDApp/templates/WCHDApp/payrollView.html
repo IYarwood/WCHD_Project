@@ -1,0 +1,78 @@
+{% extends 'WCHDApp/masterTemplate.html' %} 
+{% load static %} 
+{% load custom_filters %} 
+{% block title %}Payroll View{% endblock %} 
+{% block content %}
+<link
+  rel="stylesheet"
+  type="text/css"
+  href="{% static 'WCHDApp/css/cleanPages.css' %}"
+/>
+<link
+  rel="stylesheet"
+  type="text/css"
+  href="{% static 'WCHDAPP/css/tableStyling.css' %}"
+/>
+<h1>Payroll View</h1>
+<form method="post">
+  {% csrf_token %}
+  <select
+    id="payperiodDropdown"
+    name="payperiodDropdown"
+  >
+    <option value="EMPTY" disabled selected>Select Pay Period</option>
+    {% for choice in payperiodChoices %}
+    <!--choice.1 = choice[1]-->
+    <option value="{{choice}}">{{choice}}</option>
+    {% endfor %}
+  </select>
+  <select id="fundDropdown"
+    name="fundDropdown"
+    hx-get="{% url 'fundSummary' %}"
+    hx-target="#fundInfo"
+    hx-include="#fundDropdown,#payperiodDropdown"
+    hx-trigger="change, change from:#payperiodDropdown">
+    <option value="EMPTY" disabled selected>Select Fund</option>
+    {% for choice in fundChoices %}
+    <!--choice.1 = choice[1]-->
+    <option value="{{choice.0}}">{{choice.1}}</option>
+    {% endfor %}
+  </select>
+
+  <select id="activityDropdown"
+    name="activityDropdown"
+    hx-get="{% url 'activitySummary' %}"
+    hx-target="#activityInfo"
+    hx-include="#activityDropdown,#payperiodDropdown"
+    hx-trigger="change, change from:#payperiodDropdown">
+    <option value="EMPTY" disabled selected>Select Activity</option>
+    {% for choice in activityChoices %}
+    <!--choice.1 = choice[1]-->
+    <option value="{{choice.0}}">{{choice.1}}</option>
+    {% endfor %}
+  </select>
+
+  <select id="employeeDropdown"
+    name="employeeDropdown"
+    hx-get="{% url 'employeeSummary' %}"
+    hx-target="#employeeInfo"
+    hx-include="#employeeDropdown,#payperiodDropdown"
+    hx-trigger="change, change from:#payperiodDropdown">
+    <option value="EMPTY" disabled selected>Select Employee</option>
+    {% for choice in employeeChoices %}
+    <!--choice.1 = choice[1]-->
+    <option value="{{choice.0}}">{{choice.1}}</option>
+    {% endfor %}
+  </select>
+</form>
+<form method="get" action="{% url 'countyPayrollExport' %}">
+  <button type="submit">Export To CSV</button>
+</form>
+<p id="fundInfo"></p>
+<p id="activityInfo"></p>
+<p id="employeeInfo"></p>
+<p id="totalHourOutput"></p>
+
+<table id="activityTable"></table>
+
+{% endblock %}
