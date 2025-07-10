@@ -23,7 +23,6 @@ handler403 = 'WCHDApp.views.noPrivileges'
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', lambda request: HttpResponse("🚀 Django is working!")),
-    #path('', include('WCHDApp.urls')),  
+    path('', include('WCHDApp.urls')),  
 ]
 
