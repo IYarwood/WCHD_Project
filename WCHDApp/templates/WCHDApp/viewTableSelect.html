@@ -6,6 +6,8 @@
 {% block content %}
     <link rel="stylesheet" type="text/css" href="{% static 'WCHDApp/css/cleanPages.css' %}">
     <link rel="stylesheet" type="text/css" href="{% static 'WCHDApp/css/themes.css' %}">
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             if (typeof initTheme === 'function') {
@@ -23,4 +25,9 @@
         <button type="submit" name="button" id="seeTable" value="seeTable">See Table</button>
         <button type="submit" name="button" id="create" value="create">Create</button>
     </form>
+    <script>
+        $(document).ready(function() {
+            $('.searchable-select').select2();
+        });
+    </script>
 {% endblock %}

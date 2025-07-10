@@ -43,7 +43,7 @@
                             hx-get="{% url 'addPeopleForm' %}"
                             hx-target="#peopleForm"
                             hx-swap="innerHTML"
-                            hx-vals='{"itemID": "{{ item }}"}'
+                            hx-vals='{"itemID": "{{ item }}", "source":"revenue"}'
                         >
                         + Add Person/Company</a>
                     </div>
@@ -53,6 +53,7 @@
             {% endfor %}
             <button type="submit">Submit</button>
         </form>
+        {{message}}
     </div>
 </div>
 

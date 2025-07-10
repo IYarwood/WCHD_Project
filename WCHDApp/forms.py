@@ -25,7 +25,7 @@ class TableSelect(forms.Form):
     modelsDict= {}
     for model in models:
         modelsDict[model.__name__] = model.__name__
-    table = forms.ChoiceField(choices=modelsDict, label="Select Table", required=True)
+    table = forms.ChoiceField(choices=modelsDict, label="Select Table", required=True,  widget=forms.Select(attrs={'class': 'searchable-select'}))
 
 class InputSelect(forms.Form):
     #Pulling models

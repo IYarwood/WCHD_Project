@@ -22,6 +22,7 @@ import numpy as np
 from datetime import datetime
 import json
 from django.shortcuts import render
+from django.urls import reverse
 from django.utils.timezone import now
 from django.utils.dateparse import parse_datetime
 import re
@@ -329,10 +330,10 @@ def tableView(request, tableName):
 
     #Any property that we define in models need to go here so our logic can include them in the table
     calculatedProperties = {
-        #"Fund": [("fundBalanceMinus3", "Fund Balance Minus 3")],
         "Testing": [("fundBalanceMinus3", "Fund Balance Minus 3")],
         "Benefits": [("pers", "Public Employee Retirement System"), ("medicare", "Medicare"),("wc", "Workers Comp"), ("plar", "Paid Leave Accumulation Rate"), ("vacation", "Vacation"), ("sick", "Sick Leave"), ("holiday", "Holiday Leave"), ("total_hrly", "Total Hourly Cost"), ("percent_leave", "Percent Leave"), ("monthly_hours", "Monthly Hours"), ("board_share_hrly", "Board Share Hourly"), ("life_hourly", "Life Hourly"), ("salary", "Salary"), ("fringes", "Fringes"), ("total_comp", "Total Compensation")],
-        "Payroll": [("pay_rate", "Pay Rate")]
+        "Payroll": [("pay_rate", "Pay Rate")],
+        "Fund":[("calcRemaining", "Remaining")]
     }
 
     #This is used to decide which fields we want to show in the accumulator based on each model
@@ -354,6 +355,7 @@ def tableView(request, tableName):
     #Making sure properties are added like normal fields to the tables
     if tableName in calculatedProperties:
         for property in calculatedProperties[tableName]:
+            print(property)
             aliasNames.append(property[1])
             fieldNames.append(property[0])
             decimalFields.append(property[0])
@@ -715,7 +717,7 @@ def countyPayrollExport(request):
 
 def transactionsItem(request):
     itemModel = apps.get_model('WCHDApp', "Item")
-    itemValues = itemModel.objects.all()
+    itemValues = itemModel.objects.filter(line__lineType="Revenue")
     if request.method == "POST":
         itemID = request.POST.get('itemSelect')
         return redirect(transactionsView,itemID)
@@ -723,8 +725,11 @@ def transactionsItem(request):
     return render(request, "WCHDApp/transactionsItem.html", {"items":itemValues})
 
 def transactionsView(request):
+    message = ""
     revenueModel = apps.get_model('WCHDApp', "revenue")
     itemID = request.GET.get('itemSelect')
+    print("ITEM ID")
+    print(itemID)
     revenueValues = revenueModel.objects.filter(item_id=itemID)
 
     #Getting just field names from models
@@ -796,7 +801,6 @@ def transactionsView(request):
 
     if request.method == 'POST':
         form = RevenueForm(request.POST)
-        print(request.POST)
         if form.is_valid():
             #Create the instance but don't save it yet
             revenue = form.save(commit=False)
@@ -807,49 +811,56 @@ def transactionsView(request):
             revenue.item = item
             revenue.line = item.line
             line = item.line
-            grantLine = revenue.grantLine
-            if grantLine:
-                grantLine.line_total_income += revenue.amount
-                if grantLine.receivingLine:
-                    grant = grantLine.grant
-                    grant.received += revenue.amount
-                    grant.save()
-                grantLine.save()
-            
+            if line.lineType == "Revenue":
+                grantLine = revenue.grantLine
+                if grantLine:
+                    grantLine.line_total_income += revenue.amount
+                    if grantLine.lineType == "Revenue":
+                        grant = grantLine.grant
+                        grant.received += revenue.amount
+                        grant.save()
+                    grantLine.save()
+                
 
-            line.line_total_income += revenue.amount
-            revenue.save()
+                line.line_total_income += revenue.amount
+                revenue.save()
 
-            fund = item.fund
-            fund.fund_cash_balance += revenue.amount
-            fund.save()
+                fund = item.fund
+                fund.fund_cash_balance += revenue.amount
+                fund.save()
+                message = "Revenue Posted"
+            else:
+                message = "Please select a revenue line"
 
     else:
         form = RevenueForm()
 
     #return render(request, "WCHDApp/transactionsView.html", {"item": itemID, "revenue": revenueValues,"fields": fieldNames, "aliasNames": aliasNames, "data": revenueValues, "decimalFields": decimalFields, "form":form})
-    return render(request, "WCHDApp/partials/revenueTableAndForm.html", {"itemObj":item, "item": itemID, "revenue": revenueValues,"fields": fieldNames, "aliasNames": aliasNames, "data": revenueValues, "decimalFields": decimalFields, "form":form})
+    return render(request, "WCHDApp/partials/revenueTableAndForm.html", {"itemObj":item, "item": itemID, "revenue": revenueValues,"fields": fieldNames, "aliasNames": aliasNames, "data": revenueValues, "decimalFields": decimalFields, "form":form, "message":message})
 
 
 def addPeopleForm(request):
     peopleModel = apps.get_model("WCHDApp", "people")
     PeopleForm = modelform_factory(peopleModel, fields="__all__")
     itemID = request.GET.get("itemID")
-    print(itemID)
+    source = request.GET.get("source")
 
     if request.method == "POST":
         form = PeopleForm(request.POST)
         itemID = request.POST.get("itemID")
-        print(itemID)
+        source = request.POST.get("source")
         if form.is_valid():
             form.save()
-
-            return redirect('transactionsView', itemID)
+            if source == "revenue":
+                return redirect('transactionsItem')
+            else:
+                return redirect('transactionsExpenses')
     else:
         form = PeopleForm()
     context ={
         "form": form,
-        "itemID": itemID
+        "itemID": itemID,
+        "source": source
     }
 
     return render(request, "WCHDApp/partials/formPartial.html", context)
@@ -857,7 +868,8 @@ def addPeopleForm(request):
 #these are named transaction expense because it was originally built on the transactions table whihc then got split into 2 different tables
 def transactionsExpenses(request):
     itemModel = apps.get_model("WCHDApp", "Item")
-    items = itemModel.objects.all()
+    items = itemModel.objects.filter(line__lineType="Expense")
+
 
     if request.method=="POST":
         print("Submitted")
@@ -921,33 +933,43 @@ def transactionsExpenseTableUpdate(request):
             
             fund = item.fund
             line = item.line
-            
-            if expense.grantLine:
-                grantLine = expense.grantLine
-                if (fund.fund_cash_balance >= expense.amount) and (grantLine.line_budgeted >= expense.amount) and (line.line_budget_remaining >= expense.amount):
-                    fund.fund_cash_balance -= expense.amount
-                    grantLine.line_budget_remaining -= expense.amount
-                    grantLine.line_budget_spent += expense.amount
-                    line.line_budget_remaining -= expense.amount
-                    line.line_budget_spent += expense.amount
-                    line.save()
-                    grantLine.save()
-                    expense.save()
-                    fund.save()
+            if line.lineType == "Expense":
+                if expense.grantLine:
+                    grantLine = expense.grantLine
+                    if (fund.fund_cash_balance >= expense.amount) and (grantLine.line_budgeted >= expense.amount) and (line.line_budget_remaining >= expense.amount):
+                        fund.fund_cash_balance -= expense.amount
+                        grantLine.line_budget_remaining -= expense.amount
+                        grantLine.line_budget_spent += expense.amount
+                        line.line_budget_remaining -= expense.amount
+                        line.line_budget_spent += expense.amount
+                        line.save()
+                        grantLine.save()
+                        expense.save()
+                        fund.save()
+                        message = "Expense Posted"
+                    else:
+                        if (line.line_budget_remaining < expense.amount):
+                            message = "Not Enough Line Budgeted"
+                        elif (grantLine.line_budgeted < expense.amount):
+                            message = "Not Enough Grant Line Budgeted"
+                        else:
+                            message = "Not enough Fund Cash Balance"
+                        
                 else:
-                    message = "Not Enough Fund Cash Balance"
-                    print("Not enough fund cash balance")
+                    if (fund.fund_cash_balance >= expense.amount) and (line.line_budget_remaining >= expense.amount):
+                        fund.fund_cash_balance -= expense.amount
+                        line.line_budget_remaining -= expense.amount
+                        line.line_budget_spent += expense.amount
+                        line.save()
+                        expense.save()
+                        fund.save()
+                    else:
+                        if (line.line_budget_remaining < expense.amount):
+                            message = "Not Enough Line Budgeted"
+                        else:
+                            message = "Not enough Fund Cash Balance"
             else:
-                if (fund.fund_cash_balance >= expense.amount) and (line.line_budget_remaining >= expense.amount):
-                    fund.fund_cash_balance -= expense.amount
-                    line.line_budget_remaining -= expense.amount
-                    line.line_budget_spent += expense.amount
-                    line.save()
-                    expense.save()
-                    fund.save()
-                else:
-                    message = "Not Enough Fund Cash Balance"
-                    print("Not enough fund cash balance")
+                message = "Please select an expense line"
             
     else:
         form = expenseForm()

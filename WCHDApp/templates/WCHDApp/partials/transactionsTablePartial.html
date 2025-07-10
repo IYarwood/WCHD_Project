@@ -44,7 +44,7 @@
                             hx-get="{% url 'addPeopleForm' %}"
                             hx-target="#peopleForm"
                             hx-swap="innerHTML"
-                            hx-vals='{"itemID": "{{ item }}"}'
+                            hx-vals='{"itemID": "{{ item }}", "source":"expense"}'
                         >
                         + Add Person/Company</a>
                     </div>

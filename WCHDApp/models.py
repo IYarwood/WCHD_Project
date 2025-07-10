@@ -36,11 +36,19 @@ class Fund(models.Model):
     fund_cash_balance = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Cash Balance")
     fund_total = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Total Given")
     fund_budgeted = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Budgeted")
-    fund_remaining = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Remaining")
     dept = models.ForeignKey(Dept, on_delete=models.CASCADE, null=True, blank=True)
     sof = models.CharField(max_length=10, blank = False, choices=FundSource.choices, verbose_name="SoF")
     mac_elig = models.BooleanField(blank=False, verbose_name="MACE")
- 
+
+    @property
+    def calcRemaining(self):
+        lines = self.lines.filter(lineType="Expense")
+        total = 0
+        for line in lines:
+            total += float(line.line_budget_spent)
+        remaining = float(self.fund_budgeted) - total
+        return f"{remaining:.2f}" 
+
     def __str__(self):
         return self.fund_name
     
@@ -50,7 +58,7 @@ class Fund(models.Model):
 
 class Line(models.Model):
     line_id = models.AutoField(primary_key=True, verbose_name="Line ID")
-    fund = models.ForeignKey(Fund, on_delete=models.CASCADE, verbose_name="Fund")
+    fund = models.ForeignKey(Fund, on_delete=models.CASCADE, verbose_name="Fund", related_name="lines")
     fund_year = models.SmallIntegerField(blank=False, verbose_name="Fund Year")
     line_name = models.CharField(max_length=255, verbose_name="Line Name")
     line_budgeted = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Budgeted")
@@ -62,6 +70,7 @@ class Line(models.Model):
     cofund = models.CharField(max_length=3, verbose_name="CoFund")
     gen_ledger = models.IntegerField(blank=False, verbose_name="General Ledger")
     county_code = models.CharField(max_length = 4, verbose_name="County Code")
+    lineType = models.CharField(choices=[("Revenue","Revenue"), ("Expense", "Expense")], verbose_name="Line Type")
 
     
     def __str__(self): 
@@ -271,7 +280,7 @@ class GrantLine(models.Model):
     cofund = models.CharField(max_length=3, verbose_name="CoFund")
     gen_ledger = models.IntegerField(blank=False, verbose_name="General Ledger")
     county_code = models.CharField(max_length = 4, verbose_name="County Code")
-    receivingLine = models.BooleanField(blank=False, verbose_name="Receiving Line")
+    lineType = models.CharField(choices=[("Revenue","Revenue"), ("Expense", "Expense")], verbose_name="Line Type")
 
     def __str__(self):
         return self.line_name
