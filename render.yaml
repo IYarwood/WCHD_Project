@@ -18,5 +18,5 @@ services:
 
 databases:
   - name: my-db
-    databaseName: WCHD
+    databaseName: wchd
     user: postgres
