@@ -27,8 +27,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy the Django project to the container
 COPY . /WCHDApp/
-RUN python manage.py collectstatic --noinput
-RUN echo "STATIC_ROOT: $STATIC_ROOT"
+
 # Expose the Django port
 EXPOSE 8000
 
