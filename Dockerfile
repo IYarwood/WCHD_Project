@@ -24,6 +24,7 @@ COPY requirements.txt  /WCHDApp/
 
 # run this command to install all dependencies 
 RUN pip install --no-cache-dir -r requirements.txt
+RUN python manage.py collectstatic --noinput
 
 # Copy the Django project to the container
 COPY . /WCHDApp/
