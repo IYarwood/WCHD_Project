@@ -19,4 +19,4 @@ services:
 databases:
   - name: my-db
     databaseName: wchd
-    user: postgres
+    user: wchduser
