@@ -18,8 +18,8 @@ services:
    container_name: WCHD-Container
    ports:
      - "8000:8000"
-   volumes:
-     - .:/WCHDApp
+   #volumes:
+     #- .:/WCHDApp
    depends_on:
      - db
    environment:
