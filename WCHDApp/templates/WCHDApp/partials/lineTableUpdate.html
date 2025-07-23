@@ -1,0 +1,68 @@
+{% load static %}
+{% load custom_filters %}
+<div id="tableAndForm">
+    
+    <table border="1">
+        <tr>
+            {% for field in aliasNames%}
+                <th>{{field}}</th>
+            {% endfor%}
+        </tr>
+        {% for row in data%}
+            <tr>
+            {% for field in fields%}
+                {% if field in decimalFields %}
+                    <td style="text-align: right;">{{row|get_attr:field}}</td>
+                {% else %}
+                    <td>{{row|get_attr:field}}</td>
+                {% endif %}
+            {% endfor%}
+            </tr>
+        {% endfor %}
+    </table>
+    
+    <h3>Accumulator:</h3>
+    
+    <div class="FormContainer">
+        <form
+            method="POST"
+            hx-post="{% url 'lineTableUpdate' %}?fund={{ fund.fund_id }}"
+            hx-target="#tableAndForm"
+            hx-swap="outerHTML"
+        >
+            {% csrf_token %}
+            {% for field in form %}
+    
+                <div class="FormGroup">
+                    {{ field.label_tag }}
+                    {{ field }}
+                </div>
+    
+                {% if field.name == "people" %}
+                    <div>
+                        <a
+                            hx-get="{% url 'addPeopleForm' %}"
+                            hx-target="#peopleForm"
+                            hx-swap="innerHTML"
+                            hx-vals='{"itemID": "{{ item }}", "source":"expense"}'
+                        >
+                        + Add Person/Company</a>
+                    </div>
+                    <div id="peopleForm"></div>
+                {% endif %}
+    
+            {% endfor %}
+            <button type="submit">Submit</button>
+            <p>{{message}}</p>
+        </form>
+    </div>
+</div>
+
+
+<!-- Init Select2 -->
+<script>
+    console.log("Running")
+    $(document).ready(function() {
+        $('.searchable-select').select2();
+    });
+</script>

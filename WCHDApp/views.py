@@ -304,6 +304,8 @@ def viewTableSelect(request):
                 return redirect('transactionsExpenses')
             elif tableName == "Revenue":
                 return redirect('transactionsItem')
+            elif tableName == "Line":
+                return redirect('lineView')
             if button == "seeTable":
                 return redirect('tableView', tableName)
             elif button == "create":
@@ -454,8 +456,8 @@ def createEntry(request, tableName):
                 line.line_budget_remaining = budgeted
 
                 fund = line.fund
-                if (fund.fund_remaining >= budgeted):
-                    fund.fund_remaining -= budgeted
+                remaining = fund.fund_total - fund.fund_budgeted
+                if (remaining >= budgeted):
                     fund.fund_budgeted += budgeted
                     fund.save()
                     line.save()
@@ -987,7 +989,69 @@ def transactionsExpenseTableUpdate(request):
 
     return render(request, "WCHDApp/partials/transactionsTablePartial.html", context)
 
+def lineView(request):
+    funds = Fund.objects.all()
+    
+    context = {
+        "funds": funds
+    }
+    return render(request, "WCHDApp/lineView.html", context)
 
+def lineTableUpdate(request):
+    fundID = request.GET.get("fund")
+    fund = Fund.objects.get(pk=fundID)
+    
+    Line = apps.get_model('WCHDApp', "line")
+    lines = Line.objects.filter(fund=fund)
+
+    #Getting just field names from model
+    fields = Line._meta.fields
+
+    #Lists to sort fields for styling
+    fieldNames = []
+    decimalFields = []
+    aliasNames = []
+
+    #Fields that should be accumulated
+    summedFields = {
+        "Fund": "fund_cash_balance", 
+        "Line": "line_total_income",
+        "Transaction": "amount",
+    }
+
+    for field in fields:
+        if isinstance(field, DecimalField):
+                decimalFields.append(field.name)
+        aliasNames.append(field.verbose_name)  
+        fieldNames.append(field.name)
+    if request.method == 'POST':
+        form = modelform_factory(Line, exclude=["fund","line_budget_spent", "line_budget_remaining"])(request.POST)
+        if form.is_valid():
+            line = form.save(commit=False)
+            budgeted = line.line_budgeted
+            line.line_budget_spent = 0
+            line.line_budget_remaining = budgeted
+
+            line.fund = fund
+            remaining = fund.fund_total - fund.fund_budgeted
+            if (remaining >= budgeted):
+                fund.fund_budgeted += budgeted
+                fund.save()
+                line.save()
+            else:
+                message="Not enough remaining balance in fund"
+    else:
+        form = modelform_factory(Line, exclude=["fund","line_budget_spent", "line_budget_remaining"])(request.POST)
+    context = {
+        "fields": fieldNames, 
+        "aliasNames": aliasNames, 
+        "data": lines, 
+        "decimalFields": decimalFields,
+        "form": form,
+        "fund": fund
+    }
+
+    return render(request, "WCHDApp/partials/lineTableUpdate.html", context)
 
 def dailyReport(request):
     buffer = BytesIO()

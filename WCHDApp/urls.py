@@ -40,6 +40,8 @@ urlpatterns = [
     path('grantsExpenseTableUpdate/', views.grantsExpenseTableUpdate, name='grantsExpenseTableUpdate'),
     path('grantStats/', views.grantStats, name='grantStats'),
     path('grantBreakdown/', views.grantBreakdown, name='grantBreakdown'),
+    path('lineView/', views.lineView, name='lineView'),
+    path('lineTableUpdate/', views.lineTableUpdate, name='lineTableUpdate'),
 ]
 
     
