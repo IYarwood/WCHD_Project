@@ -682,6 +682,7 @@ def countyPayrollExport(request):
     }
     return render(request, "WCHDApp/countyPayrollExport.html", context)
 
+#This is for revenue but was named previous to table split
 def transactionsItem(request):
     itemModel = apps.get_model('WCHDApp', "Item")
     itemValues = itemModel.objects.filter(line__lineType="Revenue")
