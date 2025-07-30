@@ -20,7 +20,7 @@ class Variable(models.Model):
 
 #REMINDER TO TAKE OUT null=True and blank=True from all instances of dept once we have a department populated
 class Dept(models.Model):
-    dept_id = models.SmallIntegerField(primary_key=True, verbose_name="Department ID")
+    dept_id = models.AutoField(primary_key=True, verbose_name="Department ID")
     dept_name = models.CharField(max_length=255, verbose_name="Department Name")
  
     def __str__(self):
@@ -529,6 +529,7 @@ class AccessControl(models.Model):
     class Meta:
         permissions = [("has_full_access", "Has full access to all views")]
 
+"""
 class Clockify(models.Model):
     ActivityList = models.ForeignKey(ActivityList, on_delete=models.PROTECT)
     dept = models.ForeignKey(Dept, on_delete=models.PROTECT)
@@ -541,6 +542,7 @@ class Clockify(models.Model):
 
     class Meta:
         db_table = "Clockify"
+"""
 
 class Testing(models.Model):
     testing_name = models.CharField(max_length=200, blank=True)
