@@ -2,7 +2,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.http import HttpResponse, JsonResponse
 from .models import Fund, Testing, Item
 from django.db.models.fields.related import ForeignKey, ManyToManyField, OneToOneField
-from .forms import FundForm, TableSelect, InputSelect, ExportSelect,reconcileForm, activitySelect, FileInput, GrantExpenseForm
+from .forms import FundForm, TableSelect, InputSelect, ExportSelect,reconcileForm, activitySelect, FileInput
 from django.forms import modelform_factory, Select
 from django import forms
 from django.apps import apps
@@ -239,29 +239,6 @@ def index(request):
     # Pass formatted string to template
     return render(request, "WCHDApp/index.html", {'duration': duration_display})
 
-#newFund and newLine are depricated, used in our old way of doing things
-#Will eventually clean this system out
-def newFund(request):
-    if request.method == 'POST':
-        form = FundForm(request.POST)
-        form.save()
-        return redirect('index')
-    else:
-        form = FundForm()
-    
-    return render(request, "WCHDApp/newFund.html", {'form': form})
-
-def newLine(request):
-    if request.method == 'POST':
-        form = LineForm(request.POST)
-        form.save()
-        return redirect('index')
-    else:
-        form = LineForm()
-    
-    return render(request, "WCHDApp/newLine.html", {'form': form})
-
-
 #Login page logic
 def logIn(request):
     #Getting username and password from the form
@@ -357,7 +334,7 @@ def tableView(request, tableName):
     #Making sure properties are added like normal fields to the tables
     if tableName in calculatedProperties:
         for property in calculatedProperties[tableName]:
-            print(property)
+            #print(property)
             aliasNames.append(property[1])
             fieldNames.append(property[0])
             decimalFields.append(property[0])
@@ -373,18 +350,6 @@ def tableView(request, tableName):
         context = {"fields": fieldNames, "aliasNames": aliasNames, "data": values, "tableName": tableName, "decimalFields": decimalFields}
 
     return render(request, "WCHDApp/tableView.html", context)
-
-#Also depricated, will clean soon
-@permission_required('WCHDApp.has_full_access', raise_exception=True)
-def createSelect(request):
-    if request.method == 'POST':
-        form = TableSelect(request.POST)
-        if form.is_valid():
-            tableName = form.cleaned_data['table'] 
-            return redirect('createEntry', tableName)
-    else:
-        form = TableSelect()
-    return render(request, "WCHDApp/createSelect.html", {'form': form})
 
 #New system to dynamically create forms based of model
 @permission_required('WCHDApp.has_full_access', raise_exception=True)
@@ -717,6 +682,7 @@ def countyPayrollExport(request):
     }
     return render(request, "WCHDApp/countyPayrollExport.html", context)
 
+#This is for revenue but was named previous to table split
 def transactionsItem(request):
     itemModel = apps.get_model('WCHDApp', "Item")
     itemValues = itemModel.objects.filter(line__lineType="Revenue")
@@ -1195,106 +1161,6 @@ def checkPrivileges(request):
 def noPrivileges(request, exception):
     return render(request, "WCHDApp/noPrivileges.html")
 
-#Deprecated
-def clockifyImport(request, *args, **kwargs):
-    message = ""
-    #Mapping fields from clockify to fields our models use
-    fieldMap = {
-        "Project": "ActivityList",
-        "Department": "dept",
-        "User": "employee",
-        "Start Date": "startDate",
-        "End Date": "endDate",
-        "Billable Rate (USD)": "billableRate",
-        "Billable Amount (USD)": "billableAmount",
-        "Duration (decimal)": "hours"
-    }
-
-    modelFields = {
-        "ActivityList": "program",
-        "dept": "dept_name"
-    }
-
-
-    if request.method == 'POST':
-        form = InputSelect(request.POST, request.FILES)
-        if form.is_valid():
-            tableName = form.cleaned_data['table']
-            selectedFile = form.cleaned_data['file']
-            file = pd.read_csv(selectedFile)
-            file.dropna(how='all', inplace=True)
-            columns = file.columns
-            row = file.iloc[0]
-            data = []
-            #Getting all the fields for Clockify
-            model = apps.get_model('WCHDApp', 'Clockify')
-            fields = model._meta.get_fields()
-            neededFields = []
-            #Exclude autocreated fields like id
-            for field in fields:
-                if not field.auto_created:
-                    neededFields.append(field.name)
-
-            columns = list(columns)
-            
-            #Creating a list of indices that we want from columns
-            neededIndexes = []
-            for i in range(len(columns)):
-                if columns[i] in fieldMap:
-                    #updated columns[i] to the name we need for the model
-                    columns[i] = fieldMap[columns[i]]
-                    neededIndexes.append(i)
-
-            #Creating a list of dictionaries for each row with the values we need
-            for i in range(len(file)):
-                dict = {}
-                row = file.iloc[i]
-               
-                for j in neededIndexes:
-                    column = columns[j]
-                    dict[column] = row[j]
-                data.append(dict)
-            #print(data)
-            """
-            if neededFields != list(columns):
-                message = "Bad File. Please check your CSV format and try again."
-                return render(request, "WCHDApp/imports.html", {"form": form, "message": message})
-            """
-            lookUpFields = []
-            fks = []
-            for field in fields:
-                #Logic for foreign keys
-                if field.is_relation:
-                    fks.append(field.name)
-                else:
-                    lookUpFields.append(field)
-            
-            print(fks)
-            for line in data:
-                for key in line:
-                    if type(line[key]) == np.int64:
-                        line[key] = int(line[key])
-                    if key in fks:
-                        #Linking objects with the fields we have
-                        parentModel = apps.get_model('WCHDApp', key)
-                        if key == "employee":
-                            names = line[key].split(" ")
-                            line[key] = parentModel.objects.get(first_name=names[0], surname=names[1])
-                        elif key == "ActivityList":
-                            line[key] = parentModel.objects.get(program=line[key])
-                        elif key == "dept":
-                            line[key] = parentModel.objects.get(dept_name=line[key])
-                #print(line)
-                obj, _ = model.objects.update_or_create(
-                    **line,
-                    defaults = line
-                )    
-    else:
-        form = InputSelect()
-    
-        
-    return render(request, "WCHDApp/clockifyImport.html", {"form": form, "message": message})
-
 def clockifyImportPayroll(request, *args, **kwargs):
     message = ""
 
@@ -1315,7 +1181,7 @@ def clockifyImportPayroll(request, *args, **kwargs):
 
     #Creating a list of activities that are tracked by employee so we can grab fund from employee not from activity
     #employeeTrackedActivities = ["AD-ADMIN", "AD-ADMIN out", "AD-COMP", "AD-COMP out", "AD-HOLIDAY", "AD-HOLIDAY out", "AD-MAC", "AD-SICK", "AD-SICK out", "AD-VAC", "AD-VAC out"]
-    activityFundMap = {
+    """activityFundMap = {
         "AD-ADMIN": "gen_pay_fund",
         "AD-ADMIN out": "gen_pay_fund",
         "AD-COMP": "comp_pay_fund",
@@ -1327,13 +1193,21 @@ def clockifyImportPayroll(request, *args, **kwargs):
         "AD-VAC": "vac_pay_fund",
         "AD-VAC out": "vac_pay_fund",
         "AD-MAC": "mac_pay_fund"
-    }
-    
-    #Ended up not using these and hard coding it instead
-    modelFields = {
-        "ActivityList": "program",
-        "dept": "dept_name"
-    }
+    }"""
+
+    activityFundMap = [
+        "AD-ADMIN",
+        "AD-ADMIN out",
+        "AD-COMP",
+        "AD-COMP out",
+        "AD-HOLIDAY",
+        "AD-HOLIDAY out",
+        "AD-SICK",
+        "AD-SICK out",
+        "AD-VAC",
+        "AD-VAC out",
+        "AD-MAC"
+    ]
 
 
     if request.method == 'POST':
@@ -1345,7 +1219,7 @@ def clockifyImportPayroll(request, *args, **kwargs):
             columns = file.columns
             row = file.iloc[0]
             data = []
-            #Getting all the fields for Clockify
+            
             model = apps.get_model('WCHDApp', 'Payroll')
             fields = model._meta.get_fields()
             neededFields = []
@@ -1383,18 +1257,10 @@ def clockifyImportPayroll(request, *args, **kwargs):
                     else:
                         dict[column] = row[j]
 
-                
-                print(dict)
                 #dict['payroll_id'] = str(year)+"-"+str(idTracker)
                 idTracker += 1
                 data.append(dict)
 
-            #print(data)
-            """
-            if neededFields != list(columns):
-                message = "Bad File. Please check your CSV format and try again."
-                return render(request, "WCHDApp/imports.html", {"form": form, "message": message})
-            """
             lookUpFields = []
             fks = []
             for field in fields:
@@ -1404,7 +1270,6 @@ def clockifyImportPayroll(request, *args, **kwargs):
                 else:
                     lookUpFields.append(field)
             
-            print(fks)
             for line in data:
                 for key in line:
                     if type(line[key]) == np.int64:
@@ -1425,7 +1290,8 @@ def clockifyImportPayroll(request, *args, **kwargs):
                 if activityName in activityFundMap:
                     employee = line['employee']
                     fieldName = activityFundMap[activityName]
-                    fund = getattr(employee, fieldName)
+                    fund = employee.specialFund
+                    #fund = getattr(employee, fieldName)
                 else:
                     fund = activity.fund
                 #This is getting the total from clockify which ALyssa said isnt right all the time
@@ -1533,7 +1399,6 @@ def getActivities(request):
     }
     return JsonResponse(data)
 
-
 def payrollView(request, *args, **kwargs):
     payperiodModel = apps.get_model("WCHDApp", "PayPeriod")
     payperiods = payperiodModel.objects.all()
@@ -1567,45 +1432,6 @@ def payrollView(request, *args, **kwargs):
         }
 
     return render(request, "WCHDApp/payrollView.html", context)
-
-#No longer wanted to show all entries
-"""
-def payrollEntries(request, *args, **kwargs):
-    payrollModel = apps.get_model('WCHDApp', 'Payroll')
-    payperiodGroup = request.GET.get('payperiodDropdown')
-    print(payperiodGroup)
-    if payperiodGroup == None:
-        data = payrollModel.objects.all()
-    else:
-        data = payrollModel.objects.filter(payperiod=payperiodGroup)
-    #for obj in data:
-        #print(obj.ActivityList.fund)
-
-    #print(data)
-    fields = []
-    verboseNames = []
-    for field in payrollModel._meta.get_fields():
-        if field.is_relation:
-            #Grab related model. This is why foreign keys have to be named after the model 
-            parentModel = apps.get_model('WCHDApp', field.name)
-
-            #Get the related models primary key
-            fkName = parentModel._meta.pk.name
-            verboseNames.append(parentModel._meta.pk.verbose_name)
-            fields.append(fkName)
-        else:
-            verboseNames.append(field.verbose_name)
-            fields.append(field.name)
-
-    context = {
-        "data": data,
-        "fields": fields,
-        "verboseFields": verboseNames
-    }
-    
-    return render(request, "WCHDApp/partials/payrollTable.html", context)
-"""
-
 
 def fundSummary(request):
     fundID = request.GET.get("fundDropdown")
@@ -1710,86 +1536,6 @@ def employeeSummary(request):
 
 def transactionCustomView(request):
     return render(request, "WCHDApp/transactionCustomView.html")
-
-def grantExpenses(request):
-    grantLineModel = apps.get_model("WCHDApp", "GrantLine")
-    grantLines = grantLineModel.objects.all()
-
-    context = {
-        "grantLines": grantLines
-    }
-    return render(request, "WCHDApp/grantExpenses.html", context)
-
-def grantsExpenseTableUpdate(request):
-    message = ""
-    grantLineID = request.GET.get('grantLine')
-    grantExpenseModel = apps.get_model('WCHDApp', "GrantExpense")
-    grantExpenseValues = grantExpenseModel.objects.filter(grantline=grantLineID)
-
-    #Getting just field names from model for table
-    fields = grantExpenseModel._meta.fields
-    fieldNames = []
-    verboseNames = []
-    decimalFields = []
-    for field in fields:
-        if isinstance(field, DecimalField):
-                decimalFields.append(field.name)
-        verboseNames.append(field.verbose_name)  
-        fieldNames.append(field.name)
-    
-    #Grabbing models for grant and grant allocation
-    grantLineModel = apps.get_model("WCHDApp", "GrantLine")
-    grantLine = grantLineModel.objects.get(pk=grantLineID)
-    
-    grant = grantLine.grant
-    grantAllocationModel = apps.get_model("WCHDApp", "GrantAllocation")
-    
-    if request.method == "POST":
-        form = GrantExpenseForm(request.POST, grant=grant)
-        if form.is_valid:
-            submission = form.save(commit=False)
-            #Fund ID to get fund object to sort allocations and give value to expense
-            fundID = request.POST['fund']
-
-            fund = Fund.objects.get(pk=fundID)
-            submission.fund = fund
-            submission.grantline = grantLine
-            #grantAllocation = grantAllocationModel.objects.get(fund=fund, grant=grant)
-            
-            #if (grantAllocation.amount >= submission.amount) and (grantLine.line_encumbered >= submission.amount):
-            if (grantLine.line_encumbered >= submission.amount):   
-                grantLine.line_encumbered -= submission.amount
-                grantLine.line_budget_spent += submission.amount
-                #grantAllocation.amount -= submission.amount
-
-                grantLine.save()
-                #grantAllocation.save()
-            else:
-                """
-                if grantAllocation.amount < submission.amount:
-                    message = "Grant does not have enough money"
-                else:
-                    message = "Line does not have enough encumbered money"
-                """
-                message = "Line does not have enough encumbered money"
-
-            submission.save()
-
-    else:
-        form = GrantExpenseForm(grant=grant)
-
-    context = {
-        "expenses": grantExpenseValues,
-        "fields": fieldNames, 
-        "aliasNames": verboseNames, 
-        "data": grantExpenseValues, 
-        "decimalFields": decimalFields,
-        "form": form,
-        "grantLine": grantLine,
-        "message": message
-    }
-
-    return render(request, "WCHDApp/partials/grantsTablePartial.html", context)
 
 def grantStats(request):
     grantModel = apps.get_model("WCHDApp", "Grant")

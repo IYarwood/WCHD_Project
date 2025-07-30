@@ -20,7 +20,7 @@ class Variable(models.Model):
 
 #REMINDER TO TAKE OUT null=True and blank=True from all instances of dept once we have a department populated
 class Dept(models.Model):
-    dept_id = models.SmallIntegerField(primary_key=True, verbose_name="Department ID")
+    dept_id = models.AutoField(primary_key=True, verbose_name="Department ID")
     dept_name = models.CharField(max_length=255, verbose_name="Department Name")
  
     def __str__(self):
@@ -113,12 +113,12 @@ class Employee(models.Model):
     yos = models.FloatField(verbose_name="YoS")
     job_title = models.CharField(max_length=255, verbose_name="Job Title")
     pay_rate = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Pay Rate")
-    gen_pay_fund = models.ForeignKey(Fund, on_delete=models.PROTECT,related_name="gen_pay_fund")
-    vac_pay_fund = models.ForeignKey(Fund, on_delete=models.PROTECT,related_name="vac_pay_fund")
-    sick_pay_fund = models.ForeignKey(Fund, on_delete=models.PROTECT,related_name="sick_pay_fund")
-    comp_pay_fund = models.ForeignKey(Fund, on_delete=models.PROTECT,related_name="comp_pay_fund")
-    holiday_pay_fund = models.ForeignKey(Fund, on_delete=models.PROTECT,related_name="holiday_pay_fund")
-    mac_pay_fund = models.ForeignKey(Fund, on_delete=models.PROTECT,related_name="mac_pay_fund")
+    specialFund = models.ForeignKey(Fund, on_delete=models.PROTECT,related_name="special_fund")
+    #vac_pay_fund = models.ForeignKey(Fund, on_delete=models.PROTECT,related_name="vac_pay_fund")
+    #sick_pay_fund = models.ForeignKey(Fund, on_delete=models.PROTECT,related_name="sick_pay_fund")
+    #comp_pay_fund = models.ForeignKey(Fund, on_delete=models.PROTECT,related_name="comp_pay_fund")
+    #holiday_pay_fund = models.ForeignKey(Fund, on_delete=models.PROTECT,related_name="holiday_pay_fund")
+    #mac_pay_fund = models.ForeignKey(Fund, on_delete=models.PROTECT,related_name="mac_pay_fund")
 
     def __str__(self):
         return f"{self.first_name} {self.surname}"
@@ -301,19 +301,6 @@ class GrantItem(models.Model):
 
     class Meta:
         db_table = "Grant Items"
-
-class GrantExpense(models.Model):
-    fund = models.ForeignKey(Fund, on_delete=models.CASCADE, verbose_name="Fund")
-    grantline = models.ForeignKey(GrantLine, on_delete=models.CASCADE, verbose_name="Grant Line")
-    amount = models.DecimalField(max_digits=20, decimal_places=2, verbose_name="Amount")
-
-    class Meta:
-        db_table = "Grant Expenses"
- 
-class GrantAllocation(models.Model):
-    grant = models.ForeignKey(Grant, on_delete=models.CASCADE)
-    fund = models.ForeignKey(Fund, on_delete=models.CASCADE)
-    amount = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Amount")
 
 class BudgetActions(models.Model):
     ba_id = models.AutoField(primary_key=True, verbose_name="Budget Action ID")
@@ -529,6 +516,7 @@ class AccessControl(models.Model):
     class Meta:
         permissions = [("has_full_access", "Has full access to all views")]
 
+"""
 class Clockify(models.Model):
     ActivityList = models.ForeignKey(ActivityList, on_delete=models.PROTECT)
     dept = models.ForeignKey(Dept, on_delete=models.PROTECT)
@@ -541,6 +529,7 @@ class Clockify(models.Model):
 
     class Meta:
         db_table = "Clockify"
+"""
 
 class Testing(models.Model):
     testing_name = models.CharField(max_length=200, blank=True)
