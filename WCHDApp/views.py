@@ -239,29 +239,6 @@ def index(request):
     # Pass formatted string to template
     return render(request, "WCHDApp/index.html", {'duration': duration_display})
 
-#newFund and newLine are depricated, used in our old way of doing things
-#Will eventually clean this system out
-def newFund(request):
-    if request.method == 'POST':
-        form = FundForm(request.POST)
-        form.save()
-        return redirect('index')
-    else:
-        form = FundForm()
-    
-    return render(request, "WCHDApp/newFund.html", {'form': form})
-
-def newLine(request):
-    if request.method == 'POST':
-        form = LineForm(request.POST)
-        form.save()
-        return redirect('index')
-    else:
-        form = LineForm()
-    
-    return render(request, "WCHDApp/newLine.html", {'form': form})
-
-
 #Login page logic
 def logIn(request):
     #Getting username and password from the form
