@@ -1181,7 +1181,7 @@ def clockifyImportPayroll(request, *args, **kwargs):
 
     #Creating a list of activities that are tracked by employee so we can grab fund from employee not from activity
     #employeeTrackedActivities = ["AD-ADMIN", "AD-ADMIN out", "AD-COMP", "AD-COMP out", "AD-HOLIDAY", "AD-HOLIDAY out", "AD-MAC", "AD-SICK", "AD-SICK out", "AD-VAC", "AD-VAC out"]
-    activityFundMap = {
+    """activityFundMap = {
         "AD-ADMIN": "gen_pay_fund",
         "AD-ADMIN out": "gen_pay_fund",
         "AD-COMP": "comp_pay_fund",
@@ -1193,13 +1193,21 @@ def clockifyImportPayroll(request, *args, **kwargs):
         "AD-VAC": "vac_pay_fund",
         "AD-VAC out": "vac_pay_fund",
         "AD-MAC": "mac_pay_fund"
-    }
-    
-    #Ended up not using these and hard coding it instead
-    modelFields = {
-        "ActivityList": "program",
-        "dept": "dept_name"
-    }
+    }"""
+
+    activityFundMap = [
+        "AD-ADMIN",
+        "AD-ADMIN out",
+        "AD-COMP",
+        "AD-COMP out",
+        "AD-HOLIDAY",
+        "AD-HOLIDAY out",
+        "AD-SICK",
+        "AD-SICK out",
+        "AD-VAC",
+        "AD-VAC out",
+        "AD-MAC"
+    ]
 
 
     if request.method == 'POST':
@@ -1249,18 +1257,10 @@ def clockifyImportPayroll(request, *args, **kwargs):
                     else:
                         dict[column] = row[j]
 
-                
-                print(dict)
                 #dict['payroll_id'] = str(year)+"-"+str(idTracker)
                 idTracker += 1
                 data.append(dict)
 
-            #print(data)
-            """
-            if neededFields != list(columns):
-                message = "Bad File. Please check your CSV format and try again."
-                return render(request, "WCHDApp/imports.html", {"form": form, "message": message})
-            """
             lookUpFields = []
             fks = []
             for field in fields:
@@ -1270,7 +1270,6 @@ def clockifyImportPayroll(request, *args, **kwargs):
                 else:
                     lookUpFields.append(field)
             
-            print(fks)
             for line in data:
                 for key in line:
                     if type(line[key]) == np.int64:
@@ -1291,7 +1290,8 @@ def clockifyImportPayroll(request, *args, **kwargs):
                 if activityName in activityFundMap:
                     employee = line['employee']
                     fieldName = activityFundMap[activityName]
-                    fund = getattr(employee, fieldName)
+                    fund = employee.specialFund
+                    #fund = getattr(employee, fieldName)
                 else:
                     fund = activity.fund
                 #This is getting the total from clockify which ALyssa said isnt right all the time

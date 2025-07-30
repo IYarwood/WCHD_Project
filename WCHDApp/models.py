@@ -113,12 +113,12 @@ class Employee(models.Model):
     yos = models.FloatField(verbose_name="YoS")
     job_title = models.CharField(max_length=255, verbose_name="Job Title")
     pay_rate = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Pay Rate")
-    gen_pay_fund = models.ForeignKey(Fund, on_delete=models.PROTECT,related_name="gen_pay_fund")
-    vac_pay_fund = models.ForeignKey(Fund, on_delete=models.PROTECT,related_name="vac_pay_fund")
-    sick_pay_fund = models.ForeignKey(Fund, on_delete=models.PROTECT,related_name="sick_pay_fund")
-    comp_pay_fund = models.ForeignKey(Fund, on_delete=models.PROTECT,related_name="comp_pay_fund")
-    holiday_pay_fund = models.ForeignKey(Fund, on_delete=models.PROTECT,related_name="holiday_pay_fund")
-    mac_pay_fund = models.ForeignKey(Fund, on_delete=models.PROTECT,related_name="mac_pay_fund")
+    specialFund = models.ForeignKey(Fund, on_delete=models.PROTECT,related_name="special_fund")
+    #vac_pay_fund = models.ForeignKey(Fund, on_delete=models.PROTECT,related_name="vac_pay_fund")
+    #sick_pay_fund = models.ForeignKey(Fund, on_delete=models.PROTECT,related_name="sick_pay_fund")
+    #comp_pay_fund = models.ForeignKey(Fund, on_delete=models.PROTECT,related_name="comp_pay_fund")
+    #holiday_pay_fund = models.ForeignKey(Fund, on_delete=models.PROTECT,related_name="holiday_pay_fund")
+    #mac_pay_fund = models.ForeignKey(Fund, on_delete=models.PROTECT,related_name="mac_pay_fund")
 
     def __str__(self):
         return f"{self.first_name} {self.surname}"
