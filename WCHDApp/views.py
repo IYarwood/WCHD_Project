@@ -1434,45 +1434,6 @@ def payrollView(request, *args, **kwargs):
 
     return render(request, "WCHDApp/payrollView.html", context)
 
-#No longer wanted to show all entries
-"""
-def payrollEntries(request, *args, **kwargs):
-    payrollModel = apps.get_model('WCHDApp', 'Payroll')
-    payperiodGroup = request.GET.get('payperiodDropdown')
-    print(payperiodGroup)
-    if payperiodGroup == None:
-        data = payrollModel.objects.all()
-    else:
-        data = payrollModel.objects.filter(payperiod=payperiodGroup)
-    #for obj in data:
-        #print(obj.ActivityList.fund)
-
-    #print(data)
-    fields = []
-    verboseNames = []
-    for field in payrollModel._meta.get_fields():
-        if field.is_relation:
-            #Grab related model. This is why foreign keys have to be named after the model 
-            parentModel = apps.get_model('WCHDApp', field.name)
-
-            #Get the related models primary key
-            fkName = parentModel._meta.pk.name
-            verboseNames.append(parentModel._meta.pk.verbose_name)
-            fields.append(fkName)
-        else:
-            verboseNames.append(field.verbose_name)
-            fields.append(field.name)
-
-    context = {
-        "data": data,
-        "fields": fields,
-        "verboseFields": verboseNames
-    }
-    
-    return render(request, "WCHDApp/partials/payrollTable.html", context)
-"""
-
-
 def fundSummary(request):
     fundID = request.GET.get("fundDropdown")
     payperiodID = request.GET.get('payperiodDropdown')
