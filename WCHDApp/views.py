@@ -1399,7 +1399,6 @@ def getActivities(request):
     }
     return JsonResponse(data)
 
-
 def payrollView(request, *args, **kwargs):
     payperiodModel = apps.get_model("WCHDApp", "PayPeriod")
     payperiods = payperiodModel.objects.all()
