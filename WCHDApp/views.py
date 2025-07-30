@@ -334,7 +334,7 @@ def tableView(request, tableName):
     #Making sure properties are added like normal fields to the tables
     if tableName in calculatedProperties:
         for property in calculatedProperties[tableName]:
-            print(property)
+            #print(property)
             aliasNames.append(property[1])
             fieldNames.append(property[0])
             decimalFields.append(property[0])
@@ -350,18 +350,6 @@ def tableView(request, tableName):
         context = {"fields": fieldNames, "aliasNames": aliasNames, "data": values, "tableName": tableName, "decimalFields": decimalFields}
 
     return render(request, "WCHDApp/tableView.html", context)
-
-#Also depricated, will clean soon
-@permission_required('WCHDApp.has_full_access', raise_exception=True)
-def createSelect(request):
-    if request.method == 'POST':
-        form = TableSelect(request.POST)
-        if form.is_valid():
-            tableName = form.cleaned_data['table'] 
-            return redirect('createEntry', tableName)
-    else:
-        form = TableSelect()
-    return render(request, "WCHDApp/createSelect.html", {'form': form})
 
 #New system to dynamically create forms based of model
 @permission_required('WCHDApp.has_full_access', raise_exception=True)

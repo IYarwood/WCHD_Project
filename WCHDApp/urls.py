@@ -7,7 +7,6 @@ urlpatterns = [
     path('index/', views.index, name='index'),
     path("tableViewSelect/", views.viewTableSelect, name="viewTableSelect"),
     path("tableView/<str:tableName>/", views.tableView, name="tableView"),
-    path("createSelect/", views.createSelect, name="createSelect"),
     path("createEntry/<str:tableName>/", views.createEntry, name="createEntry"),
     path("testing/", views.testing, name="testing"),
     path('generate_pdf/<str:tableName>/', views.generate_pdf, name='generate_pdf'),
