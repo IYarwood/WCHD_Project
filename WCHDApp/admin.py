@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Fund, Line, Dept, Item, Employee, People, Invoice,PurchaseOrder,Voucher,ActivityList, Payroll, PayPeriod, Grant, GrantAllocation, BudgetActions, Carryover, Benefits, Variable, Testing, GrantLine, Expense, GrantExpense
+from .models import Fund, Line, Dept, Item, Employee, People, Invoice,PurchaseOrder,Voucher,ActivityList, Payroll, PayPeriod, Grant, BudgetActions, Carryover, Benefits, Variable, Testing, GrantLine, Expense
 
 
 class PeopleAdmin(admin.ModelAdmin):
@@ -31,7 +31,6 @@ admin.site.register(Carryover)
 admin.site.register(Benefits)
 admin.site.register(Variable)
 admin.site.register(Expense, ExpenseAdmin)
-admin.site.register(GrantExpense)
 
 
 

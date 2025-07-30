@@ -302,19 +302,6 @@ class GrantItem(models.Model):
     class Meta:
         db_table = "Grant Items"
 
-class GrantExpense(models.Model):
-    fund = models.ForeignKey(Fund, on_delete=models.CASCADE, verbose_name="Fund")
-    grantline = models.ForeignKey(GrantLine, on_delete=models.CASCADE, verbose_name="Grant Line")
-    amount = models.DecimalField(max_digits=20, decimal_places=2, verbose_name="Amount")
-
-    class Meta:
-        db_table = "Grant Expenses"
- 
-class GrantAllocation(models.Model):
-    grant = models.ForeignKey(Grant, on_delete=models.CASCADE)
-    fund = models.ForeignKey(Fund, on_delete=models.CASCADE)
-    amount = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Amount")
-
 class BudgetActions(models.Model):
     ba_id = models.AutoField(primary_key=True, verbose_name="Budget Action ID")
     ba_date = models.DateField(verbose_name="Budget Action Date")

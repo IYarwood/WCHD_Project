@@ -1,5 +1,5 @@
 from django import forms
-from .models import Fund,Line, GrantExpense
+from .models import Fund,Line
 from django.apps import apps
 
 #New Fund Form/ sets up inputs for the given fields of the model
@@ -94,16 +94,4 @@ class activitySelect(forms.Form):
     activityName = forms.ChoiceField(choices=activityChoices, label="Select Activity", required=True)
     
     
-class GrantExpenseForm(forms.ModelForm):
-    fund = forms.ModelChoiceField(queryset=Fund.objects.none())
-
-    class Meta:
-        model = GrantExpense
-        exclude = ["fund", "grantline"]
-    def __init__(self, *args, **kwargs):
-        grant = kwargs.pop('grant', None)
-        super().__init__(*args, **kwargs)
-
-        self.fields['fund'].queryset = grant.fund.all()
-
     
