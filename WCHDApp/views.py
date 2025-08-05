@@ -875,7 +875,7 @@ def transactionsExpenseTableUpdate(request):
         fieldNames.append(field.name)
 
     #Making the view for the cashiers to be able to see and add transaction on the same page
-    expenseForm = modelform_factory(expenseModel, exclude=(["item", "date", "line"]),  
+    expenseForm = modelform_factory(expenseModel, exclude=(["item", "date", "line", "employee"]),  
                                     widgets={
                                         'people': forms.Select(attrs={'class': 'searchable-select'}),
                                         'grantLine': forms.Select(attrs={'class': 'searchable-select'}),
@@ -890,9 +890,19 @@ def transactionsExpenseTableUpdate(request):
         form = expenseForm(request.POST)
         #print(request.POST)
         if form.is_valid():
-            print("Valid Form")
             #Create the instance but don't save it yet
             expense = form.save(commit=False)
+            print(request.user)
+            user  = request.user
+            employeeGrab = False
+            try:
+                employeeModel = apps.get_model('WCHDApp', "employee")
+                employee = employeeModel.objects.get(user=user)
+                expense.employee = employee
+                employeeGrab = True
+            except:
+                
+                message = "No employee with signed in user"
             #Adding the values from before
             #transaction.fund = fund
             #transaction.line = line
@@ -901,43 +911,44 @@ def transactionsExpenseTableUpdate(request):
             
             fund = item.fund
             line = item.line
-            if line.lineType == "Expense":
-                if expense.grantLine:
-                    grantLine = expense.grantLine
-                    if (fund.fund_cash_balance >= expense.amount) and (grantLine.line_budgeted >= expense.amount) and (line.line_budget_remaining >= expense.amount):
-                        fund.fund_cash_balance -= expense.amount
-                        grantLine.line_budget_remaining -= expense.amount
-                        grantLine.line_budget_spent += expense.amount
-                        line.line_budget_remaining -= expense.amount
-                        line.line_budget_spent += expense.amount
-                        line.save()
-                        grantLine.save()
-                        expense.save()
-                        fund.save()
-                        message = "Expense Posted"
-                    else:
-                        if (line.line_budget_remaining < expense.amount):
-                            message = "Not Enough Line Budgeted"
-                        elif (grantLine.line_budgeted < expense.amount):
-                            message = "Not Enough Grant Line Budgeted"
+            if employeeGrab:
+                if line.lineType == "Expense":
+                    if expense.grantLine:
+                        grantLine = expense.grantLine
+                        if (fund.fund_cash_balance >= expense.amount) and (grantLine.line_budgeted >= expense.amount) and (line.line_budget_remaining >= expense.amount):
+                            fund.fund_cash_balance -= expense.amount
+                            grantLine.line_budget_remaining -= expense.amount
+                            grantLine.line_budget_spent += expense.amount
+                            line.line_budget_remaining -= expense.amount
+                            line.line_budget_spent += expense.amount
+                            line.save()
+                            grantLine.save()
+                            expense.save()
+                            fund.save()
+                            message = "Expense Posted"
                         else:
-                            message = "Not enough Fund Cash Balance"
-                        
+                            if (line.line_budget_remaining < expense.amount):
+                                message = "Not Enough Line Budgeted"
+                            elif (grantLine.line_budgeted < expense.amount):
+                                message = "Not Enough Grant Line Budgeted"
+                            else:
+                                message = "Not enough Fund Cash Balance"
+                            
+                    else:
+                        if (fund.fund_cash_balance >= expense.amount) and (line.line_budget_remaining >= expense.amount):
+                            fund.fund_cash_balance -= expense.amount
+                            line.line_budget_remaining -= expense.amount
+                            line.line_budget_spent += expense.amount
+                            line.save()
+                            expense.save()
+                            fund.save()
+                        else:
+                            if (line.line_budget_remaining < expense.amount):
+                                message = "Not Enough Line Budgeted"
+                            else:
+                                message = "Not enough Fund Cash Balance"
                 else:
-                    if (fund.fund_cash_balance >= expense.amount) and (line.line_budget_remaining >= expense.amount):
-                        fund.fund_cash_balance -= expense.amount
-                        line.line_budget_remaining -= expense.amount
-                        line.line_budget_spent += expense.amount
-                        line.save()
-                        expense.save()
-                        fund.save()
-                    else:
-                        if (line.line_budget_remaining < expense.amount):
-                            message = "Not Enough Line Budgeted"
-                        else:
-                            message = "Not enough Fund Cash Balance"
-            else:
-                message = "Please select an expense line"
+                    message = "Please select an expense line"
             
     else:
         form = expenseForm()
@@ -1014,7 +1025,8 @@ def lineTableUpdate(request):
         "data": lines, 
         "decimalFields": decimalFields,
         "form": form,
-        "fund": fund
+        "fund": fund,
+        "message": message
     }
 
     return render(request, "WCHDApp/partials/lineTableUpdate.html", context)
@@ -1289,7 +1301,7 @@ def clockifyImportPayroll(request, *args, **kwargs):
                 activityName = activity.program
                 if activityName in activityFundMap:
                     employee = line['employee']
-                    fieldName = activityFundMap[activityName]
+                    #fieldName = activityFundMap[activityName]
                     fund = employee.specialFund
                     #fund = getattr(employee, fieldName)
                 else:
