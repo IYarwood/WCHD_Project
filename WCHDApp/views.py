@@ -696,11 +696,9 @@ def transactionsView(request):
     message = ""
     revenueModel = apps.get_model('WCHDApp', "revenue")
     itemID = request.GET.get('itemSelect')
-    print("ITEM ID")
-    print(itemID)
     revenueValues = revenueModel.objects.filter(item_id=itemID)
 
-    #Getting just field names from models
+    #Getting just field names from model
     fields = revenueModel._meta.get_fields()
 
     #Lists to sort fields for styling
@@ -716,89 +714,63 @@ def transactionsView(request):
     }
 
     for field in fields:
-
-        #Logic for foreign keys
-        if field.is_relation:
-            if field.auto_created:
-                continue
-            else:
-                #Grab related model. This is why foreign keys have to be named after the model 
-                parentModel = apps.get_model('WCHDApp', field.name)
-
-                #Get the related models primary key
-                fkName = parentModel._meta.pk.name
-
-                #Primary keys verbose name
-                fkAlias = parentModel._meta.pk.verbose_name
-
-                aliasNames.append(fkAlias)
-                fieldNames.append(fkName)
-        else:
-            #Decimal field logic so we can style them in html
-            if isinstance(field, DecimalField):
+        if isinstance(field, DecimalField):
                 decimalFields.append(field.name)
-            aliasNames.append(field.verbose_name)  
-            fieldNames.append(field.name)
+        aliasNames.append(field.verbose_name)  
+        fieldNames.append(field.name)
 
             
     #Making the view for the cashiers to be able to see and add transaction on the same page
-    RevenueForm = modelform_factory(revenueModel, exclude=(["item", "date", "line"]),  
+    RevenueForm = modelform_factory(revenueModel, exclude=(["item", "date", "line", "employee"]),  
                                     widgets={
                                         'people': forms.Select(attrs={'class': 'searchable-select'}),
                                         'grantLine': forms.Select(attrs={'class': 'searchable-select'}),
                                     })
-    """
-    MyModelForm = modelform_factory(
-    MyModel,
-    fields='__all__',
-    widgets={
-        'my_field': forms.Select(attrs={'class': 'searchable-select'}),
-    }
-)
-    """
-
 
     #Getting values from our db so they dont have to
     item = Item.objects.get(pk=itemID)
-    """
-    fund = item.fund
-    line = item.line
-    """
-    
-    
 
     if request.method == 'POST':
         form = RevenueForm(request.POST)
         if form.is_valid():
             #Create the instance but don't save it yet
             revenue = form.save(commit=False)
-
+            user  = request.user
+            employeeGrab = False
+            try:
+                employeeModel = apps.get_model('WCHDApp', "employee")
+                employee = employeeModel.objects.get(user=user)
+                revenue.employee = employee
+                employeeGrab = True
+            except:
+                message = "No employee with signed in user"
             #Adding the values from before
             #transaction.fund = fund
             #transaction.line = line
             revenue.item = item
             revenue.line = item.line
             line = item.line
-            if line.lineType == "Revenue":
-                grantLine = revenue.grantLine
-                if grantLine:
-                    grantLine.line_total_income += revenue.amount
-                    if grantLine.lineType == "Revenue":
-                        grant = grantLine.grant
-                        grant.received += revenue.amount
-                        grant.save()
-                    grantLine.save()
-                
+            if employeeGrab:
+                if line.lineType == "Revenue":
+                    grantLine = revenue.grantLine
+                    if grantLine:
+                        grantLine.line_total_income += revenue.amount
+                        if grantLine.lineType == "Revenue":
+                            grant = grantLine.grant
+                            grant.received += revenue.amount
+                            grant.save()
+                        grantLine.save()
+                    
 
-                line.line_total_income += revenue.amount
-                revenue.save()
+                    line.line_total_income += revenue.amount
+                    revenue.save()
 
-                fund = item.fund
-                fund.fund_cash_balance += revenue.amount
-                fund.save()
-                message = "Revenue Posted"
-            else:
-                message = "Please select a revenue line"
+                    fund = item.fund
+                    fund.fund_cash_balance += revenue.amount
+                    fund.save()
+                    message = "Revenue Posted"
+                else:
+                    message = "Please select a revenue line"
 
     else:
         form = RevenueForm()
@@ -892,7 +864,6 @@ def transactionsExpenseTableUpdate(request):
         if form.is_valid():
             #Create the instance but don't save it yet
             expense = form.save(commit=False)
-            print(request.user)
             user  = request.user
             employeeGrab = False
             try:
@@ -901,7 +872,6 @@ def transactionsExpenseTableUpdate(request):
                 expense.employee = employee
                 employeeGrab = True
             except:
-                
                 message = "No employee with signed in user"
             #Adding the values from before
             #transaction.fund = fund
