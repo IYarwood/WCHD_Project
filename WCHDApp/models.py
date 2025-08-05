@@ -1,5 +1,6 @@
 from django.db import models
 from djmoney.models.fields import MoneyField
+from django.contrib.auth.models import User
 
 
 class FundSource(models.TextChoices):
@@ -114,6 +115,7 @@ class Employee(models.Model):
     job_title = models.CharField(max_length=255, verbose_name="Job Title")
     pay_rate = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Pay Rate")
     specialFund = models.ForeignKey(Fund, on_delete=models.PROTECT,related_name="special_fund")
+    user = models.ForeignKey(User, on_delete=models.RESTRICT, verbose_name="User account")
     #vac_pay_fund = models.ForeignKey(Fund, on_delete=models.PROTECT,related_name="vac_pay_fund")
     #sick_pay_fund = models.ForeignKey(Fund, on_delete=models.PROTECT,related_name="sick_pay_fund")
     #comp_pay_fund = models.ForeignKey(Fund, on_delete=models.PROTECT,related_name="comp_pay_fund")
@@ -238,6 +240,9 @@ class Payroll(models.Model):
     #other_hours = models.DecimalField(max_digits=6, decimal_places=2, verbose_name="Other Hours")
     #other_rate = models.DecimalField(max_digits=6, decimal_places=2, verbose_name="Other Rate")
     
+    def __str__(self):
+        return (str(self.id))
+
     @property
     def pay_rate(self):
         return self.employee.pay_rate
@@ -491,6 +496,10 @@ class Revenue(models.Model):
     employee = models.ForeignKey(Employee, on_delete=models.PROTECT)
     grantLine = models.ForeignKey(GrantLine, on_delete=models.PROTECT, blank=True, null=True, verbose_name="Grant Line")
 
+
+    def __str__(self):
+        return (str(self.date) + " $" + str(self.amount))
+    
     class Meta:
         db_table = "Revenue"
 
@@ -506,6 +515,9 @@ class Expense(models.Model):
     odhafr = models.CharField(max_length=50, verbose_name="ODH AFR")
     employee = models.ForeignKey(Employee, on_delete=models.PROTECT, verbose_name="Employee")
     grantLine = models.ForeignKey(GrantLine, on_delete=models.PROTECT, blank=True, null=True, verbose_name="Grant Line")
+
+    def __str__(self):
+        return (str(self.date) + " $" + str(self.amount))
 
     class Meta:
         db_table = "Expense"
