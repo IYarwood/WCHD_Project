@@ -58,7 +58,7 @@ class Fund(models.Model):
 
 
 class Line(models.Model):
-    line_id = models.AutoField(primary_key=True, verbose_name="Line ID")
+    line_id = models.CharField(primary_key=True, max_length=20, verbose_name="Line ID")
     fund = models.ForeignKey(Fund, on_delete=models.CASCADE, verbose_name="Fund", related_name="lines")
     fund_year = models.SmallIntegerField(blank=False, verbose_name="Fund Year")
     line_name = models.CharField(max_length=255, verbose_name="Line Name")
