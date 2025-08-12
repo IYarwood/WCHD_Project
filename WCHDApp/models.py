@@ -37,7 +37,7 @@ class Fund(models.Model):
     fund_cash_balance = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Cash Balance")
     fund_total = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Total Given")
     fund_budgeted = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Budgeted")
-    dept = models.ForeignKey(Dept, on_delete=models.CASCADE, null=True, blank=True)
+    dept = models.ForeignKey(Dept, on_delete=models.CASCADE, null=True, blank=True, verbose_name="Department")
     sof = models.CharField(max_length=10, blank = False, choices=FundSource.choices, verbose_name="SoF")
     mac_elig = models.BooleanField(blank=False, verbose_name="MACE")
 
@@ -82,9 +82,9 @@ class Line(models.Model):
     
 class Item(models.Model):
     item_id = models.AutoField(primary_key=True, verbose_name="Item ID")
-    fund = models.ForeignKey(Fund, on_delete=models.CASCADE)
+    fund = models.ForeignKey(Fund, on_delete=models.CASCADE, verbose_name="Fund")
     fund_type = models.CharField(max_length=50, choices=FundSource.choices, verbose_name="Fund Type")
-    line = models.ForeignKey(Line, on_delete=models.CASCADE)
+    line = models.ForeignKey(Line, on_delete=models.CASCADE, verbose_name="Line")
     fund_year = models.IntegerField(verbose_name="Fund Year")
     item_name = models.CharField(max_length=255, verbose_name="Item Name")
     line_item = models.CharField(max_length=255, verbose_name="Line Item")
@@ -102,7 +102,7 @@ class Employee(models.Model):
     employee_id = models.IntegerField(primary_key=True, verbose_name="Employee ID")
     first_name = models.CharField(max_length=255, verbose_name="First Name")
     surname = models.CharField(max_length=255, verbose_name="Surname")
-    dept = models.ForeignKey(Dept, on_delete=models.CASCADE, null=True, blank=True)
+    dept = models.ForeignKey(Dept, on_delete=models.CASCADE, null=True, blank=True, verbose_name="Department")
     street_address = models.CharField(max_length=255, verbose_name="Street Address")
     city = models.CharField(max_length=255, verbose_name="City")
     state = models.CharField(max_length=2, verbose_name="State")
@@ -114,7 +114,7 @@ class Employee(models.Model):
     yos = models.FloatField(verbose_name="YoS")
     job_title = models.CharField(max_length=255, verbose_name="Job Title")
     pay_rate = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Pay Rate")
-    specialFund = models.ForeignKey(Fund, on_delete=models.PROTECT,related_name="special_fund")
+    specialFund = models.ForeignKey(Fund, on_delete=models.PROTECT,related_name="special_fund", verbose_name="Special Fund")
     user = models.ForeignKey(User, on_delete=models.RESTRICT, verbose_name="User account")
     #vac_pay_fund = models.ForeignKey(Fund, on_delete=models.PROTECT,related_name="vac_pay_fund")
     #sick_pay_fund = models.ForeignKey(Fund, on_delete=models.PROTECT,related_name="sick_pay_fund")
@@ -151,7 +151,7 @@ class Invoice(models.Model):
     invoice_number = models.AutoField(primary_key=True, verbose_name="Invoice Number")
     invoice_amount = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Invoice Amount")
     description = models.TextField(verbose_name="Description")
-    people = models.ForeignKey(People, on_delete=models.CASCADE)
+    people = models.ForeignKey(People, on_delete=models.CASCADE, verbose_name="People")
     date = models.DateField(verbose_name="Date")
     fund = models.ForeignKey(Fund, on_delete=models.CASCADE)
     paid = models.BooleanField(default=False,verbose_name="Paid")
@@ -165,7 +165,7 @@ class Invoice(models.Model):
  
 class PurchaseOrder(models.Model):
     po_num = models.AutoField(primary_key=True, verbose_name="PO Number")
-    people = models.ForeignKey(People, on_delete=models.CASCADE)
+    people = models.ForeignKey(People, on_delete=models.CASCADE, verbose_name="People")
     amount = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Amount")
     date = models.DateField(verbose_name="Date")
     type = models.CharField(max_length=20, choices=[('Issue', 'Issue'), ('Pay', 'Pay')], verbose_name="Type")
@@ -183,7 +183,7 @@ class PurchaseOrder(models.Model):
  
 class Voucher(models.Model):
     voucher_id = models.AutoField(primary_key=True, verbose_name="Voucher ID")
-    people = models.ForeignKey(People, on_delete=models.CASCADE)
+    people = models.ForeignKey(People, on_delete=models.CASCADE, verbose_name="People")
     amount = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Amount")
     date = models.DateField(verbose_name="Date")
     paid = models.BooleanField(default=False, verbose_name="Paid")
@@ -199,8 +199,8 @@ class ActivityList(models.Model):
     ActivityList_id = models.AutoField(primary_key=True, verbose_name="Program ID")
     program = models.CharField(max_length=100, verbose_name="Program")
     odhafr = models.CharField(max_length=10, verbose_name="ODHAFR")
-    dept = models.ForeignKey(Dept, on_delete=models.CASCADE)
-    fund = models.ForeignKey(Fund, on_delete=models.CASCADE)
+    dept = models.ForeignKey(Dept, on_delete=models.CASCADE, verbose_name="Department")
+    fund = models.ForeignKey(Fund, on_delete=models.CASCADE, verbose_name="Fund")
     rev_gen = models.BooleanField(default=False, verbose_name="Revenue Generating")
     active = models.BooleanField(default=True, verbose_name="Active")
     fphs = models.CharField(max_length=20,verbose_name= "FPHS")
@@ -213,8 +213,8 @@ class ActivityList(models.Model):
  
 class PayPeriod(models.Model):
     payperiod_id = models.CharField(max_length=7, primary_key=True, verbose_name="Pay Period")
-    periodStart = models.DateField()
-    periodEnd = models.DateField()
+    periodStart = models.DateField(verbose_name="Period Start")
+    periodEnd = models.DateField(verbose_name="Periond End")
 
     def __str__(self):
         return ("Pay Period " + str(self.payperiod_id) + " (" + str(self.periodStart) + " - " + str(self.periodEnd)+")")
@@ -226,13 +226,13 @@ class Payroll(models.Model):
     #payroll_id = models.CharField(primary_key=True, max_length=12, verbose_name="Payroll ID")
     beg_date = models.DateField(max_length=20, verbose_name="Beginning Date")
     end_date = models.DateField(max_length=20, verbose_name="End Date")
-    employee = models.ForeignKey(Employee, on_delete=models.CASCADE)
-    ActivityList = models.ForeignKey(ActivityList, on_delete=models.CASCADE)
+    employee = models.ForeignKey(Employee, on_delete=models.CASCADE, verbose_name="Employee")
+    ActivityList = models.ForeignKey(ActivityList, on_delete=models.CASCADE, verbose_name="Activity List")
     #going to get fund from activity list
     #fund = models.ForeignKey(Fund, on_delete=models.CASCADE)
     hours = models.DecimalField(max_digits=6, decimal_places=2, verbose_name="Hours")
     pay_amount = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Pay Amount")
-    payperiod = models.ForeignKey(PayPeriod, on_delete=models.PROTECT)
+    payperiod = models.ForeignKey(PayPeriod, on_delete=models.PROTECT, verbose_name="Pay Period")
     #I think all of these will be properties instead
     #vacation_used = models.DecimalField(max_digits=6, decimal_places=2, verbose_name="Vacation Used")
     #sick_used = models.DecimalField(max_digits=6, decimal_places=2, verbose_name="Sick Used")
@@ -253,7 +253,7 @@ class Payroll(models.Model):
 class Grant(models.Model):
     grant_id = models.AutoField(primary_key=True, verbose_name="Grant ID")
     grant_name = models.CharField(max_length=30, verbose_name="Grant Name")
-    fund = models.ForeignKey(Fund, on_delete=models.CASCADE)
+    fund = models.ForeignKey(Fund, on_delete=models.CASCADE, verbose_name="Fund")
     grant_year = models.PositiveSmallIntegerField(verbose_name="Grant Year")
     cfda = models.CharField(max_length=8, verbose_name="Catalog of Federal Domestic Assistance")
     program_name = models.CharField(max_length=150, verbose_name="Program Name")
@@ -274,7 +274,7 @@ class Grant(models.Model):
 
 class GrantLine(models.Model):
     grantline_id = models.AutoField(primary_key=True, verbose_name="Line ID")
-    grant = models.ForeignKey(Grant, on_delete=models.CASCADE)
+    grant = models.ForeignKey(Grant, on_delete=models.CASCADE, verbose_name="Grant")
     fund_year = models.SmallIntegerField(blank=False, verbose_name="Fund Year")
     line_name = models.CharField(max_length=255, verbose_name="Line Name")
     line_budgeted = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Budgeted")
@@ -328,12 +328,12 @@ class BudgetActions(models.Model):
  
 class Carryover(models.Model):
     co_id = models.AutoField(primary_key=True, verbose_name="Carryover ID")
-    fund = models.ForeignKey(Fund, on_delete=models.CASCADE)
+    fund = models.ForeignKey(Fund, on_delete=models.CASCADE, verbose_name="Fund")
     fy = models.IntegerField(verbose_name="Fiscal Year") #fiscal year, max length 4
     co_amount = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Carryover Amount")
     encumbered = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Encumbered")
     year_end_balance = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Year-End Balance")
-    dept = models.ForeignKey(Dept, on_delete=models.CASCADE)
+    dept = models.ForeignKey(Dept, on_delete=models.CASCADE, verbose_name="Department")
     beg_balance = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Beginning Balance")
     fy_beg_date = models.DateField(verbose_name="Fiscal Year Beginning Date")
     fy_end_date = models.DateField(verbose_name="Fiscal Year End Date")
@@ -357,7 +357,7 @@ class LifeInsurance(models.TextChoices):
     rate2 = 'Rate 2'
  
 class Benefits(models.Model):
-    employee = models.ForeignKey(Employee, on_delete=models.CASCADE)
+    employee = models.ForeignKey(Employee, on_delete=models.CASCADE, verbose_name="Employee")
     hrs_per_pay = models.DecimalField(max_digits=6, decimal_places=2, verbose_name="Hours Per Pay")
     vac_elig = models.BooleanField(default=True, verbose_name="Vacation Eligible") #not sure on default
     ins_type = models.CharField(max_length=10, choices=HealthInsurance.choices, verbose_name="Insurance Type")
@@ -479,12 +479,12 @@ class paymentType(models.TextChoices):
 
 #WCHD Wanted this table split into 2, Revenue and expenses
 class Transaction(models.Model):
-    fund = models.ForeignKey(Fund, on_delete=models.CASCADE)
-    line = models.ForeignKey(Line, on_delete=models.CASCADE)
-    item = models.ForeignKey(Item, on_delete=models.CASCADE)
+    fund = models.ForeignKey(Fund, on_delete=models.CASCADE, verbose_name="Fund")
+    line = models.ForeignKey(Line, on_delete=models.CASCADE, verbose_name="Line")
+    item = models.ForeignKey(Item, on_delete=models.CASCADE, verbose_name="Item")
     date = models.DateField(auto_now_add=True, verbose_name="Date")
     type = models.CharField(max_length=10, choices=transactionType.choices, verbose_name="Type")
-    people = models.ForeignKey(People, on_delete=models.CASCADE)
+    people = models.ForeignKey(People, on_delete=models.CASCADE, verbose_name="People")
     amount = models.IntegerField(verbose_name="Amount")
     payType = models.CharField(max_length=10, choices=paymentType.choices, verbose_name="Payment Type")
     comment = models.CharField(max_length = 500, verbose_name="Comment")
@@ -496,17 +496,17 @@ class Transaction(models.Model):
         db_table = "Transactions"
 
 class Revenue(models.Model):
-    item = models.ForeignKey(Item, on_delete=models.CASCADE)
+    item = models.ForeignKey(Item, on_delete=models.CASCADE, verbose_name="Item")
     date = models.DateField(auto_now_add=True, verbose_name="Date")
-    people = models.ForeignKey(People, on_delete=models.PROTECT)
+    people = models.ForeignKey(People, on_delete=models.PROTECT, verbose_name="People")
     amount = models.DecimalField(max_digits=20, decimal_places=2, verbose_name="Amount")
     payType = models.CharField(max_length=20, choices=paymentType.choices, verbose_name="Payment Type")
     confirmation = models.CharField(max_length=500, verbose_name="Confirmation")
     comment = models.CharField(max_length=500, verbose_name="Comment")
-    ActivityList = models.ForeignKey(ActivityList, on_delete=models.PROTECT)
-    line = models.ForeignKey(Line, on_delete=models.PROTECT)
+    ActivityList = models.ForeignKey(ActivityList, on_delete=models.PROTECT, verbose_name="Activity List")
+    line = models.ForeignKey(Line, on_delete=models.PROTECT, verbose_name="Line")
     odhafr = models.CharField(max_length=50, verbose_name="ODH AFR")
-    employee = models.ForeignKey(Employee, on_delete=models.PROTECT)
+    employee = models.ForeignKey(Employee, on_delete=models.PROTECT, verbose_name="Employee")
     grantLine = models.ForeignKey(GrantLine, on_delete=models.PROTECT, blank=True, null=True, verbose_name="Grant Line")
 
 
