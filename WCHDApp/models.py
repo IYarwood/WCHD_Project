@@ -293,6 +293,7 @@ class GrantLine(models.Model):
     class Meta:
         db_table = "Grant Lines"
 
+#Have a table made but dont use it right now
 class GrantItem(models.Model):
     item_id = models.AutoField(primary_key=True, verbose_name="Item ID")
     fund_type = models.CharField(max_length=50, choices=FundSource.choices, verbose_name="Fund Type")
@@ -318,7 +319,10 @@ class BudgetActions(models.Model):
 
     #Had to change, cant have 2 auto fields ig
     fs_res_no = models.IntegerField(verbose_name="FS Res Number") #field type might change
- 
+    
+    def __str__(self):
+        return self.ba_id
+
     class Meta:
         db_table = "Budget Actions"
  
@@ -333,7 +337,10 @@ class Carryover(models.Model):
     beg_balance = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Beginning Balance")
     fy_beg_date = models.DateField(verbose_name="Fiscal Year Beginning Date")
     fy_end_date = models.DateField(verbose_name="Fiscal Year End Date")
- 
+    
+    def __str__(self):
+        return self.co_id
+
     class Meta:
             db_table = "Carryover"
  
@@ -455,6 +462,9 @@ class Benefits(models.Model):
         value = round(float(self.salary) + float(self.fringes), 2)
         return f"{value:.2f}"
     
+    def __str__(self):
+        return self.employee
+
     class Meta:
             db_table = "Benefits"
  
@@ -479,6 +489,9 @@ class Transaction(models.Model):
     payType = models.CharField(max_length=10, choices=paymentType.choices, verbose_name="Payment Type")
     comment = models.CharField(max_length = 500, verbose_name="Comment")
 
+    def __str__(self):
+        return str(self.date) + " $" + str(self.amount)
+    
     class Meta:
         db_table = "Transactions"
 
