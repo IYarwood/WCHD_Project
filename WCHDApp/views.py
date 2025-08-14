@@ -945,6 +945,7 @@ def lineView(request):
     return render(request, "WCHDApp/lineView.html", context)
 
 def lineTableUpdate(request):
+    message = ""
     fundID = request.GET.get("fund")
     fund = Fund.objects.get(pk=fundID)
     
@@ -975,6 +976,13 @@ def lineTableUpdate(request):
         form = modelform_factory(Line, exclude=["fund","line_budget_spent", "line_budget_remaining"])(request.POST)
         if form.is_valid():
             line = form.save(commit=False)
+
+            #Deconstructing then recontructing line id to fit county
+            paritalLineID = line.line_id
+            fullLineID = str(fundID)+"-"+str(paritalLineID)
+
+            line.line_id = fullLineID
+
             budgeted = line.line_budgeted
             line.line_budget_spent = 0
             line.line_budget_remaining = budgeted
