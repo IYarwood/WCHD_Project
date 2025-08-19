@@ -65,12 +65,12 @@ class Line(models.Model):
     line_budgeted = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Budgeted")
     line_budget_remaining = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Budget Remaining")
     #line_encumbered = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Encumbered")
-    line_budget_spent = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Budget Spent")
-    line_total_income = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Total Income")
+    line_budget_spent = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Budget Spent", default=0)
+    line_total_income = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Total Income", default=0)
     dept = models.ForeignKey(Dept, on_delete=models.CASCADE, null=True, blank=True, verbose_name="Department")
-    cofund = models.CharField(max_length=3, verbose_name="CoFund")
-    gen_ledger = models.IntegerField(blank=False, verbose_name="General Ledger")
-    county_code = models.CharField(max_length = 4, verbose_name="County Code")
+    #cofund = models.CharField(max_length=3, verbose_name="CoFund")
+    #gen_ledger = models.IntegerField(blank=False, verbose_name="General Ledger")
+    #county_code = models.CharField(max_length = 4, verbose_name="County Code")
     lineType = models.CharField(choices=[("Revenue","Revenue"), ("Expense", "Expense")], verbose_name="Line Type")
 
     
@@ -114,6 +114,7 @@ class Employee(models.Model):
     yos = models.FloatField(verbose_name="YoS")
     job_title = models.CharField(max_length=255, verbose_name="Job Title")
     pay_rate = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Pay Rate")
+    adminPayFund = models.ForeignKey(Fund, on_delete=models.PROTECT, related_name="adminPayFund", verbose_name="Admin Pay Fund")
     specialFund = models.ForeignKey(Fund, on_delete=models.PROTECT,related_name="special_fund", verbose_name="Special Fund")
     user = models.ForeignKey(User, on_delete=models.RESTRICT, verbose_name="User account")
     #vac_pay_fund = models.ForeignKey(Fund, on_delete=models.PROTECT,related_name="vac_pay_fund")
@@ -146,7 +147,8 @@ class People(models.Model):
     
     class Meta:
         db_table = "Peoples"
- 
+
+"""
 class Invoice(models.Model):
     invoice_number = models.AutoField(primary_key=True, verbose_name="Invoice Number")
     invoice_amount = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Invoice Amount")
@@ -162,7 +164,7 @@ class Invoice(models.Model):
     
     class Meta:
         db_table = "Invoices"
- 
+
 class PurchaseOrder(models.Model):
     po_num = models.AutoField(primary_key=True, verbose_name="PO Number")
     people = models.ForeignKey(People, on_delete=models.CASCADE, verbose_name="People")
@@ -180,7 +182,7 @@ class PurchaseOrder(models.Model):
     
     class Meta:
         db_table = "PurchaseOrders"
- 
+
 class Voucher(models.Model):
     voucher_id = models.AutoField(primary_key=True, verbose_name="Voucher ID")
     people = models.ForeignKey(People, on_delete=models.CASCADE, verbose_name="People")
@@ -193,6 +195,8 @@ class Voucher(models.Model):
     
     class Meta:
         db_table = "Vouchers"
+"""
+ 
 
 class ActivityList(models.Model):
     #Had to change this from program_id
@@ -476,24 +480,6 @@ class paymentType(models.TextChoices):
     cash = "Cash"
     card = "Card"
     check = "Check"
-
-#WCHD Wanted this table split into 2, Revenue and expenses
-class Transaction(models.Model):
-    fund = models.ForeignKey(Fund, on_delete=models.CASCADE, verbose_name="Fund")
-    line = models.ForeignKey(Line, on_delete=models.CASCADE, verbose_name="Line")
-    item = models.ForeignKey(Item, on_delete=models.CASCADE, verbose_name="Item")
-    date = models.DateField(auto_now_add=True, verbose_name="Date")
-    type = models.CharField(max_length=10, choices=transactionType.choices, verbose_name="Type")
-    people = models.ForeignKey(People, on_delete=models.CASCADE, verbose_name="People")
-    amount = models.IntegerField(verbose_name="Amount")
-    payType = models.CharField(max_length=10, choices=paymentType.choices, verbose_name="Payment Type")
-    comment = models.CharField(max_length = 500, verbose_name="Comment")
-
-    def __str__(self):
-        return str(self.date) + " $" + str(self.amount)
-    
-    class Meta:
-        db_table = "Transactions"
 
 class Revenue(models.Model):
     item = models.ForeignKey(Item, on_delete=models.CASCADE, verbose_name="Item")

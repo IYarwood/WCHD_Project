@@ -973,7 +973,7 @@ def lineTableUpdate(request):
         aliasNames.append(field.verbose_name)  
         fieldNames.append(field.name)
     if request.method == 'POST':
-        form = modelform_factory(Line, exclude=["fund","line_budget_spent", "line_budget_remaining"])(request.POST)
+        form = modelform_factory(Line, exclude=["fund","line_budget_spent", "line_budget_remaining", "line_total_income"])(request.POST)
         if form.is_valid():
             line = form.save(commit=False)
 
@@ -985,6 +985,7 @@ def lineTableUpdate(request):
 
             budgeted = line.line_budgeted
             line.line_budget_spent = 0
+            line.line_total_income = 0
             line.line_budget_remaining = budgeted
 
             line.fund = fund
@@ -996,7 +997,7 @@ def lineTableUpdate(request):
             else:
                 message="Not enough remaining balance in fund"
     else:
-        form = modelform_factory(Line, exclude=["fund","line_budget_spent", "line_budget_remaining"])(request.POST)
+        form = modelform_factory(Line, exclude=["fund","line_budget_spent", "line_budget_remaining", "line_total_income"])(request.POST)
     context = {
         "fields": fieldNames, 
         "aliasNames": aliasNames, 
@@ -1186,8 +1187,6 @@ def clockifyImportPayroll(request, *args, **kwargs):
     }"""
 
     activityFundMap = [
-        "AD-ADMIN",
-        "AD-ADMIN out",
         "AD-COMP",
         "AD-COMP out",
         "AD-HOLIDAY",
@@ -1197,6 +1196,11 @@ def clockifyImportPayroll(request, *args, **kwargs):
         "AD-VAC",
         "AD-VAC out",
         "AD-MAC"
+    ]
+
+    adminCodeMap = [
+        "AD-ADMIN",
+        "AD-ADMIN out",
     ]
 
 
@@ -1279,9 +1283,10 @@ def clockifyImportPayroll(request, *args, **kwargs):
                 activityName = activity.program
                 if activityName in activityFundMap:
                     employee = line['employee']
-                    #fieldName = activityFundMap[activityName]
                     fund = employee.specialFund
-                    #fund = getattr(employee, fieldName)
+                elif activityName in adminCodeMap:
+                    employee = line['employee']
+                    fund = employee.adminPayFund
                 else:
                     fund = activity.fund
                 #This is getting the total from clockify which ALyssa said isnt right all the time
