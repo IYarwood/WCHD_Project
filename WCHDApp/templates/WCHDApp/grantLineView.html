@@ -1,0 +1,29 @@
+{% extends "WCHDApp/masterTemplate.html" %}
+{% load static %}
+{% load custom_filters %}
+
+
+{% block title %}View Grant Lines{% endblock %}
+
+{% block content %}
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="{% static 'WCHDApp/css/formStyling.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'WCHDApp/css/transactionView.css' %}"> 
+    <link rel="stylesheet" type="text/css" href="{% static 'WCHDApp/css/tableStyling.css' %}"> 
+    <h1>Grant Line View</h1>
+    <form>
+        <select name="grant" 
+        hx-get="{% url 'grantLineTableUpdate' %}"
+        hx-target="#output"
+        hx-trigger="change">
+            <option value="" disabled selected>Select Grant</option>
+            {% for grant in grants %}
+            <option value="{{grant.grant_id}}">{{grant.grant_name}}</option>
+            {% endfor %}
+        </select>
+    </form>
+
+    <div id="output"></div>
+    
+{% endblock %}

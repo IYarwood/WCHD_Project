@@ -36,6 +36,8 @@ urlpatterns = [
     path('grantBreakdown/', views.grantBreakdown, name='grantBreakdown'),
     path('lineView/', views.lineView, name='lineView'),
     path('lineTableUpdate/', views.lineTableUpdate, name='lineTableUpdate'),
+    path('grantLineView/', views.grantLineView, name='grantLineView'),
+    path('grantLineTableUpdate/', views.grantLineTableUpdate, name='grantLineTableUpdate'),
 ]
 
     
