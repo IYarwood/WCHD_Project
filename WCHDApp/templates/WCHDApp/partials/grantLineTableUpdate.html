@@ -1,6 +1,6 @@
 {% load static %}
 {% load custom_filters %}
-<div id="tableAndForm">
+<div id="grantTableAndForm">
     
     <table border="1">
         <tr>
@@ -20,14 +20,14 @@
             </tr>
         {% endfor %}
     </table>
-    <h3>Remaining Allowed Budget: {{budgeted_remaining}}</h3>
+    <h3>Remaining Allowed Budget: {{grantAwardAmountRemaining}}</h3>
     <h3>Accumulator:</h3>
     
     <div class="FormContainer">
         <form
             method="POST"
-            hx-post="{% url 'transactionsExpenseTableUpdate' %}?item={{ item.item_id }}"
-            hx-target="#tableAndForm"
+            hx-post="{% url 'grantLineTableUpdate' %}?grant={{ grant.grant_id }}"
+            hx-target="#grantTableAndForm"
             hx-swap="outerHTML"
         >
             {% csrf_token %}

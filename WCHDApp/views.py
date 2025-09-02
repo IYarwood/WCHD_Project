@@ -1,6 +1,6 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import HttpResponse, JsonResponse
-from .models import Fund, Testing, Item
+from .models import Fund, Testing, Item, Grant, GrantLine, Revenue, Expense
 from django.db.models.fields.related import ForeignKey, ManyToManyField, OneToOneField
 from .forms import FundForm, TableSelect, InputSelect, ExportSelect,reconcileForm, activitySelect, FileInput
 from django.forms import modelform_factory, Select
@@ -226,6 +226,19 @@ def index(request):
     session_start_str = request.session.get('session_start_time')
     duration_display = "0h 0m 0s"  # Default
 
+    todayDate = datetime.today()
+
+    expenses = Expense.objects.filter(date=todayDate)
+    revenues = Revenue.objects.filter(date=todayDate)
+
+    expenseTotal = 0
+    revenueTotal = 0
+    for expense in expenses:
+        expenseTotal += expense.amount
+
+    for revenue in revenues:
+        revenueTotal += revenue.amount
+
     if session_start_str:
         session_start = parse_datetime(session_start_str)
         if session_start:
@@ -235,9 +248,15 @@ def index(request):
             minutes = (total_seconds % 3600) // 60
             seconds = total_seconds % 60
             duration_display = f"{hours}h {minutes}m {seconds}s"
+    
+    context ={
+        'duration': duration_display,
+        "revenueTotal": revenueTotal,
+        "expenseTotal": expenseTotal
+    }
 
     # Pass formatted string to template
-    return render(request, "WCHDApp/index.html", {'duration': duration_display})
+    return render(request, "WCHDApp/index.html", context)
 
 #Login page logic
 def logIn(request):
@@ -283,6 +302,8 @@ def viewTableSelect(request):
                 return redirect('transactionsItem')
             elif tableName == "Line":
                 return redirect('lineView')
+            elif tableName == "GrantLine":
+                return redirect('grantLineView')
             if button == "seeTable":
                 return redirect('tableView', tableName)
             elif button == "create":
@@ -376,10 +397,14 @@ def createEntry(request, tableName):
             if form.is_valid():
                 line = form.save(commit=False)
 
+                #Getting input from form
                 budgetedAmount = float(request.POST["line_budgeted"])
+
+                #Selected Grant from previous screen
                 grantID = request.POST['grant']
                 grantModel = apps.get_model("WCHDApp", "Grant")
                 grant = grantModel.objects.get(pk=grantID)
+
 
                 grantLineModel = apps.get_model("WCHDApp", "GrantLine")
                 grantLines = grantLineModel.objects.filter(grant=grant)
@@ -923,6 +948,7 @@ def transactionsExpenseTableUpdate(request):
     else:
         form = expenseForm()
 
+    line = item.line
     context = {
         "expenses": expenseValues,
         "fields": fieldNames, 
@@ -931,7 +957,8 @@ def transactionsExpenseTableUpdate(request):
         "decimalFields": decimalFields,
         "form": form,
         "item": item,
-        "message": message
+        "message": message,
+        "budgeted_remaining": line.line_budget_remaining,
     }
 
     return render(request, "WCHDApp/partials/transactionsTablePartial.html", context)
@@ -998,6 +1025,7 @@ def lineTableUpdate(request):
                 message="Not enough remaining balance in fund"
     else:
         form = modelform_factory(Line, exclude=["fund","line_budget_spent", "line_budget_remaining", "line_total_income"])(request.POST)
+    
     context = {
         "fields": fieldNames, 
         "aliasNames": aliasNames, 
@@ -1005,7 +1033,7 @@ def lineTableUpdate(request):
         "decimalFields": decimalFields,
         "form": form,
         "fund": fund,
-        "message": message
+        "message": message,
     }
 
     return render(request, "WCHDApp/partials/lineTableUpdate.html", context)
@@ -1599,6 +1627,90 @@ def grantBreakdown(request):
     }
 
     return render(request, "WCHDApp/partials/grantBreakdownTable.html", context)
+
+def grantLineView(request):
+    grants = Grant.objects.all()
+    
+    context = {
+        "grants": grants
+    }
+    return render(request, "WCHDApp/grantLineView.html", context)
+
+def grantLineTableUpdate(request):
+    message = ""
+    grantID = request.GET.get("grant")
+    grant = Grant.objects.get(pk=grantID)
+    
+    grantLines = GrantLine.objects.filter(grant=grant)
+
+    #Getting total money that is previously budgeted to lines
+    total = 0
+    hasReceivedLine = False
+    for lineIterable in grantLines:
+        total += lineIterable.line_budgeted
+        if lineIterable.lineType == "Revenue":
+            hasReceivedLine = True
+    grantAwardAmount = grant.award_amount
+    grantAwardAmountRemaining = grantAwardAmount - total
+
+    #Getting just field names from model
+    fields = GrantLine._meta.fields
+
+    #Lists to sort fields for styling
+    fieldNames = []
+    decimalFields = []
+    aliasNames = []
+
+    #Fields that should be accumulated
+    summedFields = {
+        "Fund": "fund_cash_balance", 
+        "Line": "line_total_income",
+        "Transaction": "amount",
+    }
+
+    for field in fields:
+        if isinstance(field, DecimalField):
+                decimalFields.append(field.name)
+        aliasNames.append(field.verbose_name)  
+        fieldNames.append(field.name)
+    if request.method == 'POST':
+        form = modelform_factory(GrantLine, exclude=["grant","line_budget_spent", "line_budget_remaining", "line_total_income"])(request.POST)
+        if form.is_valid():
+            line = form.save(commit=False)
+
+            #Getting input from form
+            budgetedAmount = float(request.POST["line_budgeted"])
+
+
+            if grantAwardAmountRemaining >= budgetedAmount:
+                line.line_budget_spent = 0
+                line.line_budget_remaining = budgetedAmount
+                line.line_total_income = 0
+                line.grant = grant
+                if (hasReceivedLine == True) and (line.lineType == "Revenue"):
+                    message = "Already has a specified line to receive reimbursement"
+                else:
+                    grantAwardAmountRemaining = float(grantAwardAmountRemaining) - budgetedAmount
+                    line.save()
+            else:
+                message = "Budgeted is more than is left in Grant Award"
+    else:
+        form = modelform_factory(GrantLine, exclude=["grant","line_budget_spent", "line_budget_remaining", "line_total_income"])(request.POST)
+    
+    grantLines = GrantLine.objects.filter(grant=grant)
+
+    context = {
+        "fields": fieldNames, 
+        "aliasNames": aliasNames, 
+        "data": grantLines, 
+        "decimalFields": decimalFields,
+        "form": form,
+        "grant": grant,
+        "message": message,
+        "grantAwardAmountRemaining":grantAwardAmountRemaining
+    }
+
+    return render(request, "WCHDApp/partials/grantLineTableUpdate.html", context)
 
 def testingGrantAccess(request):
     grantModel = apps.get_model("WCHDApp", "Grant")

@@ -70,36 +70,8 @@
     <div class="left-panel" id="leftPanel">
         <div class="panel-section">
             <h3>Today's Summary</h3>
-            <p>Total Revenue: <span id="totalRevenue">$14.23</span></p>
-            <p>Total Expenses: <span id="totalExpenses">$0.00</span></p>
-        </div>
-        <div class="panel-section">
-            <h3>Online</h3>
-            <ul id="onlineUsers">
-                <li>{{ request.user.username }} </li>
-            </ul>
-            <script>
-            document.addEventListener('DOMContentLoaded', function () {
-                function fetchOnlineUsers() {
-                    fetch('/api/online_users/')
-                        .then(response => response.json())
-                        .then(data => {
-                            const onlineUsersList = document.getElementById('onlineUsers');
-                            onlineUsersList.innerHTML = `<li>{{ request.user.username }} (You)</li>`;
-                            data.online_users.forEach(username => {
-                                if (username !== '{{ request.user.username }}') {
-                                    const li = document.createElement('li');
-                                    li.textContent = username;
-                                    onlineUsersList.appendChild(li);
-                                }
-                            });
-                        })
-                        .catch(error => console.error('Error fetching online users:', error));
-                }
-                fetchOnlineUsers();
-                setInterval(fetchOnlineUsers, 15000);
-            });
-            </script>
+            <p>Total Revenue: <span id="totalRevenue">${{revenueTotal}}</span></p>
+            <p>Total Expenses: <span id="totalExpenses">${{expenseTotal}}</span></p>
         </div>
     </div>
 
