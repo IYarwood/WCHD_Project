@@ -1026,6 +1026,8 @@ def lineTableUpdate(request):
     else:
         form = modelform_factory(Line, exclude=["fund","line_budget_spent", "line_budget_remaining", "line_total_income"])(request.POST)
     
+
+    remainingToBudget = fund.fund_cash_balance - fund.fund_budgeted
     context = {
         "fields": fieldNames, 
         "aliasNames": aliasNames, 
@@ -1034,6 +1036,7 @@ def lineTableUpdate(request):
         "form": form,
         "fund": fund,
         "message": message,
+        "remainingToBudget": remainingToBudget
     }
 
     return render(request, "WCHDApp/partials/lineTableUpdate.html", context)
