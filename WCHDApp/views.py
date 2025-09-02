@@ -1,6 +1,6 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import HttpResponse, JsonResponse
-from .models import Fund, Testing, Item, Grant, GrantLine
+from .models import Fund, Testing, Item, Grant, GrantLine, Revenue, Expense
 from django.db.models.fields.related import ForeignKey, ManyToManyField, OneToOneField
 from .forms import FundForm, TableSelect, InputSelect, ExportSelect,reconcileForm, activitySelect, FileInput
 from django.forms import modelform_factory, Select
@@ -226,6 +226,19 @@ def index(request):
     session_start_str = request.session.get('session_start_time')
     duration_display = "0h 0m 0s"  # Default
 
+    todayDate = datetime.today()
+
+    expenses = Expense.objects.filter(date=todayDate)
+    revenues = Revenue.objects.filter(date=todayDate)
+
+    expenseTotal = 0
+    revenueTotal = 0
+    for expense in expenses:
+        expenseTotal += expense.amount
+
+    for revenue in revenues:
+        revenueTotal += revenue.amount
+
     if session_start_str:
         session_start = parse_datetime(session_start_str)
         if session_start:
@@ -235,9 +248,15 @@ def index(request):
             minutes = (total_seconds % 3600) // 60
             seconds = total_seconds % 60
             duration_display = f"{hours}h {minutes}m {seconds}s"
+    
+    context ={
+        'duration': duration_display,
+        "revenueTotal": revenueTotal,
+        "expenseTotal": expenseTotal
+    }
 
     # Pass formatted string to template
-    return render(request, "WCHDApp/index.html", {'duration': duration_display})
+    return render(request, "WCHDApp/index.html", context)
 
 #Login page logic
 def logIn(request):
@@ -929,6 +948,7 @@ def transactionsExpenseTableUpdate(request):
     else:
         form = expenseForm()
 
+    line = item.line
     context = {
         "expenses": expenseValues,
         "fields": fieldNames, 
@@ -937,7 +957,8 @@ def transactionsExpenseTableUpdate(request):
         "decimalFields": decimalFields,
         "form": form,
         "item": item,
-        "message": message
+        "message": message,
+        "budgeted_remaining": line.line_budget_remaining,
     }
 
     return render(request, "WCHDApp/partials/transactionsTablePartial.html", context)
@@ -1004,6 +1025,7 @@ def lineTableUpdate(request):
                 message="Not enough remaining balance in fund"
     else:
         form = modelform_factory(Line, exclude=["fund","line_budget_spent", "line_budget_remaining", "line_total_income"])(request.POST)
+    
     context = {
         "fields": fieldNames, 
         "aliasNames": aliasNames, 
@@ -1011,7 +1033,7 @@ def lineTableUpdate(request):
         "decimalFields": decimalFields,
         "form": form,
         "fund": fund,
-        "message": message
+        "message": message,
     }
 
     return render(request, "WCHDApp/partials/lineTableUpdate.html", context)
