@@ -32,7 +32,7 @@ class Dept(models.Model):
 
 class Fund(models.Model):
     SOFChoices = [("local", "Local"), ("state", "State"), ("federal", "Federal")]
-    fund_id = models.SmallIntegerField(blank=True, primary_key=True, verbose_name = "Fund ID")
+    fund_id = models.CharField(max_length=20, primary_key=True, verbose_name = "Fund ID")
     fund_name = models.CharField(max_length=255, blank=False, verbose_name= "Fund Name")
     fund_cash_balance = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Cash Balance")
     fund_total = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Total Given")

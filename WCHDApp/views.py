@@ -432,9 +432,14 @@ def createEntry(request, tableName):
             if form.is_valid():
                 fund = form.save(commit=False)
                 balance = fund.fund_cash_balance
+                baseID = fund.fund_id
                 fund.fund_total = balance
                 fund.fund_budgeted = 0
                 fund.fund_remaining = balance
+                currentDateTime = datetime.now()
+                year = currentDateTime.year
+                fullID = f"{year}-{baseID}"
+                fund.fund_id = fullID
 
                 form.save()
                 return redirect('tableView', tableName)
