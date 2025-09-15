@@ -1,6 +1,6 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import HttpResponse, JsonResponse
-from .models import Fund, Testing, Item, Grant, GrantLine, Revenue, Expense
+from .models import Fund, Testing, Item, Grant, GrantLine, Revenue, Expense, Line
 from django.db.models.fields.related import ForeignKey, ManyToManyField, OneToOneField
 from .forms import FundForm, TableSelect, InputSelect, ExportSelect,reconcileForm, activitySelect, FileInput
 from django.forms import modelform_factory, Select
@@ -1747,3 +1747,149 @@ def testingGrantAccess(request):
     }
     #making change
     return render(request, "WCHDApp/grantExpenseTesting.html", context)
+
+def viewByYear(request):
+    currentDate = datetime.now()
+    year = currentDate.year
+    years = list(range(2000, year+2))
+
+    models = ["Line", "Fund", "Item", "Expense", "Revenue"]
+
+    context = {
+        "years": years,
+        "models": models
+    }
+
+    return render(request, "WCHDApp/viewByYear.html", context)
+
+def viewByYearPartial(request):
+    message = ""
+    #Any property that we define in models need to go here so our logic can include them in the table
+    calculatedProperties = {
+        "Testing": [("fundBalanceMinus3", "Fund Balance Minus 3")],
+        "Benefits": [("pers", "Public Employee Retirement System"), ("medicare", "Medicare"),("wc", "Workers Comp"), ("plar", "Paid Leave Accumulation Rate"), ("vacation", "Vacation"), ("sick", "Sick Leave"), ("holiday", "Holiday Leave"), ("total_hrly", "Total Hourly Cost"), ("percent_leave", "Percent Leave"), ("monthly_hours", "Monthly Hours"), ("board_share_hrly", "Board Share Hourly"), ("life_hourly", "Life Hourly"), ("salary", "Salary"), ("fringes", "Fringes"), ("total_comp", "Total Compensation")],
+        "Payroll": [("pay_rate", "Pay Rate")],
+        "Fund":[("calcRemaining", "Remaining")]
+    }
+
+    #Requests come in as both get and post request whether it is the form being submitted or the htmx triggering the rendering
+    modelName = request.GET.get('model') or request.POST.get('model')
+    year = request.GET.get("year") or request.POST.get("year")
+    model = apps.get_model('WCHDApp', modelName)
+    if modelName == "Fund":
+        values = Fund.objects.filter(fund_id__startswith=year)
+        fields = Fund._meta.fields 
+        if request.method == "POST":
+            form = modelform_factory(model, exclude=["fund_total", "fund_budgeted", "fund_remaining"])(request.POST)
+            if form.is_valid():
+                fund = form.save(commit=False)
+                balance = fund.fund_cash_balance
+                baseID = fund.fund_id
+                fund.fund_total = balance
+                fund.fund_budgeted = 0
+                fund.fund_remaining = balance
+                currentDateTime = datetime.now()
+                year = currentDateTime.year
+                fullID = f"{year}-{baseID}"
+                fund.fund_id = fullID
+
+                messsage = "Fund Created"
+                form.save()
+        else:
+            form = modelform_factory(model, exclude=["fund_total", "fund_budgeted", "fund_remaining"])(request.POST)
+    if modelName == "Line":
+        values = Line.objects.filter(fund__fund_id__startswith=year)
+        fields = Line._meta.fields
+        if request.method == 'POST':
+            form = modelform_factory(Line, exclude=["line_budget_spent", "line_budget_remaining", "line_total_income"])(request.POST)
+            if form.is_valid():
+                line = form.save(commit=False)
+                fund = line.fund
+                fundID = fund.fund_id
+                #Deconstructing then recontructing line id to fit county
+                paritalLineID = line.line_id
+                fullLineID = str(fundID)+"-"+str(paritalLineID)
+
+                line.line_id = fullLineID
+
+                budgeted = line.line_budgeted
+                line.line_budget_spent = 0
+                line.line_total_income = 0
+                line.line_budget_remaining = budgeted
+
+                line.fund = fund
+                remaining = fund.fund_total - fund.fund_budgeted
+                if (remaining >= budgeted):
+                    fund.fund_budgeted += budgeted
+                    fund.save()
+                    line.save()
+                    message="Line Created"
+                else:
+                    message="Not enough remaining balance in fund"
+        else:
+            form = modelform_factory(Line, exclude=["line_budget_spent", "line_budget_remaining", "line_total_income"])(request.POST)
+    if modelName == "Expense":
+        values = Expense.objects.filter(line__fund__fund_id__startswith=year)
+        fields = Expense._meta.fields
+        
+
+    fieldNames = []
+    aliasNames = []
+    decimalFields = []
+    for field in fields:
+        if isinstance(field, DecimalField):
+                decimalFields.append(field.name)
+        aliasNames.append(field.verbose_name)  
+        fieldNames.append(field.name)
+    #Making sure properties are added like normal fields to the tables
+    if modelName in calculatedProperties:
+        for property in calculatedProperties[modelName]:
+            #print(property)
+            aliasNames.append(property[1])
+            fieldNames.append(property[0])
+            decimalFields.append(property[0])
+
+    context = {"fields": fieldNames, 
+               "aliasNames": aliasNames, 
+               "data": values, 
+               "tableName": modelName, 
+               "decimalFields": decimalFields,
+               "form": form,
+               "year":year,
+               "message": message}
+
+    return render(request, "WCHDApp/partials/viewByYearPartial.html", context)
+
+
+def viewByYearPartialFormSubmit(request):
+    modelName = request.GET.get("modelName")
+    if modelName == "Line":
+        if request.method == 'POST':
+            form = modelform_factory(Line, exclude=["line_budget_spent", "line_budget_remaining", "line_total_income"])(request.POST)
+            if form.is_valid():
+                line = form.save(commit=False)
+                fund = line.fund
+                fundID = fund.fund_id
+                print(fundID)
+                #Deconstructing then recontructing line id to fit county
+                paritalLineID = line.line_id
+                fullLineID = str(fundID)+"-"+str(paritalLineID)
+
+                line.line_id = fullLineID
+
+                budgeted = line.line_budgeted
+                line.line_budget_spent = 0
+                line.line_total_income = 0
+                line.line_budget_remaining = budgeted
+
+                line.fund = fund
+                remaining = fund.fund_total - fund.fund_budgeted
+                if (remaining >= budgeted):
+                    fund.fund_budgeted += budgeted
+                    fund.save()
+                    line.save()
+                else:
+                    message="Not enough remaining balance in fund"
+        else:
+            form = modelform_factory(Line, exclude=["line_budget_spent", "line_budget_remaining", "line_total_income"])(request.POST)
+    

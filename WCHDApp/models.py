@@ -51,7 +51,7 @@ class Fund(models.Model):
         return f"{remaining:.2f}" 
 
     def __str__(self):
-        return self.fund_name
+        return f"({self.fund_id}) {self.fund_name}"
     
     class Meta:
         db_table = "Funds"
