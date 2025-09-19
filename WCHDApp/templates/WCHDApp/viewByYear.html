@@ -1,0 +1,36 @@
+{% extends "WCHDApp/masterTemplate.html" %}
+{% load static %}
+{% load custom_filters %}
+
+
+{% block title %}View By Year{% endblock %}
+
+{% block content %}
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="{% static 'WCHDApp/css/formStyling.css' %}">
+    <link rel="stylesheet" type="text/css" href="{% static 'WCHDApp/css/transactionView.css' %}"> 
+    <link rel="stylesheet" type="text/css" href="{% static 'WCHDApp/css/tableStyling.css' %}"> 
+    <h1>View By Year</h1>
+    <form 
+        hx-get="{% url 'viewByYearPartial' %}"
+        hx-target="#output"
+        hx-trigger="submit">
+        <select name="year">
+            <option value="" disabled selected>Select Year</option>
+            {% for year in years %}
+            <option>{{year}}</option>
+            {% endfor %}
+        </select>
+        <select name="model">
+            <option value="" disabled selected>Select Model</option>
+            {% for model in models %}
+            <option>{{model}}</option>
+            {% endfor %}
+        </select>
+        <button>Show</button>
+    </form>
+
+    <div id="output"></div>
+    
+{% endblock %}

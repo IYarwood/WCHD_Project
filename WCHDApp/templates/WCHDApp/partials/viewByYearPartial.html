@@ -1,0 +1,52 @@
+{% load static %}
+{% load custom_filters %}
+
+<link rel="stylesheet" type="text/css" href="{% static 'WCHDApp/css/tableStyling.css' %}"> 
+<div id="tableAndForm">
+    
+    <h1>{{tableName}}</h1>
+    <table border="1">
+        <tr>
+            {% for field in aliasNames%}
+                <th>{{field}}</th>
+            {% endfor%}
+        </tr>
+        {% for row in data%}
+            <tr>
+            {% for field in fields%}
+                {% if field in decimalFields %}
+                    <td style="text-align: right;">{{row|get_attr:field|money}}</td>
+                {% else %}
+                    <td>{{row|get_attr:field}}</td>
+                {% endif %}
+            {% endfor%}
+            </tr>
+        {% endfor %}
+    </table>
+    
+    <div class="FormContainer">
+        <form
+            method="POST"
+            hx-post="{% url 'viewByYearPartial' %}"
+            hx-target="#tableAndForm"
+            hx-swap="outerHTML"
+        >
+            <input type="hidden" name="year" value="{{year}}"/>
+            <input type="hidden" name="model" value="{{tableName}}"/>
+            {% csrf_token %}
+            {% for field in form %}
+    
+                <div class="FormGroup">
+                    {{ field.label_tag }}
+                    {{ field }}
+                </div>
+    
+            {% endfor %}
+            <button type="submit">Submit</button>
+        </form>
+        {{message}}
+    </div>
+</div>
+
+
+
