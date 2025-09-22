@@ -202,7 +202,7 @@ class ActivityList(models.Model):
     #Had to change this from program_id
     ActivityList_id = models.AutoField(primary_key=True, verbose_name="Program ID")
     program = models.CharField(max_length=100, verbose_name="Program")
-    odhafr = models.CharField(max_length=10, verbose_name="ODHAFR")
+    #odhafr = models.CharField(max_length=10, verbose_name="ODHAFR")
     dept = models.ForeignKey(Dept, on_delete=models.CASCADE, verbose_name="Department")
     fund = models.ForeignKey(Fund, on_delete=models.CASCADE, verbose_name="Fund")
     rev_gen = models.BooleanField(default=False, verbose_name="Revenue Generating")
@@ -491,7 +491,7 @@ class Revenue(models.Model):
     comment = models.CharField(max_length=500, verbose_name="Comment")
     ActivityList = models.ForeignKey(ActivityList, on_delete=models.PROTECT, verbose_name="Activity List")
     line = models.ForeignKey(Line, on_delete=models.PROTECT, verbose_name="Line")
-    odhafr = models.CharField(max_length=50, verbose_name="ODH AFR")
+    #odhafr = models.CharField(max_length=50, verbose_name="ODH AFR")
     employee = models.ForeignKey(Employee, on_delete=models.PROTECT, verbose_name="Employee")
     grantLine = models.ForeignKey(GrantLine, on_delete=models.PROTECT, blank=True, null=True, verbose_name="Grant Line")
 
@@ -511,7 +511,7 @@ class Expense(models.Model):
     comment = models.CharField(max_length=500, verbose_name="Comment")
     ActivityList = models.ForeignKey(ActivityList, on_delete=models.PROTECT, verbose_name="Activity List")
     line = models.ForeignKey(Line, on_delete=models.PROTECT, verbose_name="Line")
-    odhafr = models.CharField(max_length=50, verbose_name="ODH AFR")
+    #odhafr = models.CharField(max_length=50, verbose_name="ODH AFR")
     employee = models.ForeignKey(Employee, on_delete=models.PROTECT, verbose_name="Employee")
     grantLine = models.ForeignKey(GrantLine, on_delete=models.PROTECT, blank=True, null=True, verbose_name="Grant Line")
 
