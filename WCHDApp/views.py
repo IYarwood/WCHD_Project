@@ -1653,11 +1653,15 @@ def grantLineTableUpdate(request):
 
     #Getting total money that is previously budgeted to lines
     total = 0
-    hasReceivedLine = False
+    hasMaxReceivedLine = False
+    totalRevenueLines = 0
     for lineIterable in grantLines:
         total += lineIterable.line_budgeted
         if lineIterable.lineType == "Revenue":
-            hasReceivedLine = True
+            totalRevenueLines += 1
+        
+    if totalRevenueLines >= grant.maxRevenueLines:    
+        hasMaxReceivedLine = True
     grantAwardAmount = grant.award_amount
     grantAwardAmountRemaining = grantAwardAmount - total
 
@@ -1695,8 +1699,8 @@ def grantLineTableUpdate(request):
                 line.line_budget_remaining = budgetedAmount
                 line.line_total_income = 0
                 line.grant = grant
-                if (hasReceivedLine == True) and (line.lineType == "Revenue"):
-                    message = "Already has a specified line to receive reimbursement"
+                if (hasMaxReceivedLine == True) and (line.lineType == "Revenue"):
+                    message = "Already has max specified lines to receive reimbursement"
                 else:
                     grantAwardAmountRemaining = float(grantAwardAmountRemaining) - budgetedAmount
                     line.save()

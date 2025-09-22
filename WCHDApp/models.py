@@ -269,6 +269,8 @@ class Grant(models.Model):
     fsid = models.CharField(max_length=10, verbose_name="FSID")
     funder = models.CharField(max_length=50, verbose_name="Funder")
     received = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Received")
+    #Used to tell if a grant is allowed more than one revenue lines
+    maxRevenueLines = models.IntegerField(default=1)
 
     def __str__(self):
         return self.grant_name
