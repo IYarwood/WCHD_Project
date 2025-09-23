@@ -714,6 +714,7 @@ def countyPayrollExport(request):
     return render(request, "WCHDApp/countyPayrollExport.html", context)
 
 #This is for revenue but was named previous to table split
+@permission_required('WCHDApp.has_full_access', raise_exception=True)
 def transactionsItem(request):
     itemModel = apps.get_model('WCHDApp', "Item")
     itemValues = itemModel.objects.filter(line__lineType="Revenue")
@@ -799,7 +800,8 @@ def transactionsView(request):
                     fund = item.fund
                     fund.fund_cash_balance += revenue.amount
                     fund.save()
-                    message = "Revenue Posted"
+                    message = "Revenue Posted Successfully"
+                    form = RevenueForm()
                 else:
                     message = "Please select a revenue line"
 
@@ -944,6 +946,8 @@ def transactionsExpenseTableUpdate(request):
                             line.save()
                             expense.save()
                             fund.save()
+                            message = "Expense Posted Successfully"
+                            form = expenseForm()
                         else:
                             if (line.line_budget_remaining < expense.amount):
                                 message = "Not Enough Line Budgeted"
