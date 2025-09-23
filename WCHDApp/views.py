@@ -1029,10 +1029,12 @@ def lineTableUpdate(request):
                 fund.fund_budgeted += budgeted
                 fund.save()
                 line.save()
+                message = "Line created successfully"
+                form = modelform_factory(Line, exclude=["fund","line_budget_spent", "line_budget_remaining", "line_total_income"])()
             else:
                 message="Not enough remaining balance in fund"
     else:
-        form = modelform_factory(Line, exclude=["fund","line_budget_spent", "line_budget_remaining", "line_total_income"])(request.POST)
+        form = modelform_factory(Line, exclude=["fund","line_budget_spent", "line_budget_remaining", "line_total_income"])()
     
 
     remainingToBudget = fund.fund_cash_balance - fund.fund_budgeted
