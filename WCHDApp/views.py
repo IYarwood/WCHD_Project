@@ -592,6 +592,7 @@ def exports(request):
         
     return render(request, "WCHDApp/exports.html", {"form": form, "message": message})
 
+@permission_required('WCHDApp.has_full_access', raise_exception=True)
 def countyPayrollExport(request):
     payperiodModel = apps.get_model('WCHDApp', "PayPeriod")
     payperiods = payperiodModel.objects.all()
@@ -713,6 +714,7 @@ def countyPayrollExport(request):
     return render(request, "WCHDApp/countyPayrollExport.html", context)
 
 #This is for revenue but was named previous to table split
+@permission_required('WCHDApp.has_full_access', raise_exception=True)
 def transactionsItem(request):
     itemModel = apps.get_model('WCHDApp', "Item")
     itemValues = itemModel.objects.filter(line__lineType="Revenue")
@@ -798,7 +800,8 @@ def transactionsView(request):
                     fund = item.fund
                     fund.fund_cash_balance += revenue.amount
                     fund.save()
-                    message = "Revenue Posted"
+                    message = "Revenue Posted Successfully"
+                    form = RevenueForm()
                 else:
                     message = "Please select a revenue line"
 
@@ -836,6 +839,7 @@ def addPeopleForm(request):
     return render(request, "WCHDApp/partials/formPartial.html", context)
 
 #these are named transaction expense because it was originally built on the transactions table whihc then got split into 2 different tables
+@permission_required('WCHDApp.has_full_access', raise_exception=True)
 def transactionsExpenses(request):
     itemModel = apps.get_model("WCHDApp", "Item")
     items = itemModel.objects.filter(line__lineType="Expense")
@@ -942,6 +946,8 @@ def transactionsExpenseTableUpdate(request):
                             line.save()
                             expense.save()
                             fund.save()
+                            message = "Expense Posted Successfully"
+                            form = expenseForm()
                         else:
                             if (line.line_budget_remaining < expense.amount):
                                 message = "Not Enough Line Budgeted"
@@ -968,6 +974,7 @@ def transactionsExpenseTableUpdate(request):
 
     return render(request, "WCHDApp/partials/transactionsTablePartial.html", context)
 
+@permission_required('WCHDApp.has_full_access', raise_exception=True)
 def lineView(request):
     funds = Fund.objects.all()
     
@@ -1026,10 +1033,12 @@ def lineTableUpdate(request):
                 fund.fund_budgeted += budgeted
                 fund.save()
                 line.save()
+                message = "Line created successfully"
+                form = modelform_factory(Line, exclude=["fund","line_budget_spent", "line_budget_remaining", "line_total_income"])()
             else:
                 message="Not enough remaining balance in fund"
     else:
-        form = modelform_factory(Line, exclude=["fund","line_budget_spent", "line_budget_remaining", "line_total_income"])(request.POST)
+        form = modelform_factory(Line, exclude=["fund","line_budget_spent", "line_budget_remaining", "line_total_income"])()
     
 
     remainingToBudget = fund.fund_cash_balance - fund.fund_budgeted
@@ -1188,6 +1197,7 @@ def checkPrivileges(request):
 def noPrivileges(request, exception):
     return render(request, "WCHDApp/noPrivileges.html")
 
+@permission_required('WCHDApp.has_full_access', raise_exception=True)
 def clockifyImportPayroll(request, *args, **kwargs):
     message = ""
 
@@ -1430,6 +1440,7 @@ def getActivities(request):
     }
     return JsonResponse(data)
 
+@permission_required('WCHDApp.has_full_access', raise_exception=True)
 def payrollView(request, *args, **kwargs):
     payperiodModel = apps.get_model("WCHDApp", "PayPeriod")
     payperiods = payperiodModel.objects.all()
@@ -1568,6 +1579,7 @@ def employeeSummary(request):
 def transactionCustomView(request):
     return render(request, "WCHDApp/transactionCustomView.html")
 
+@permission_required('WCHDApp.has_full_access', raise_exception=True)
 def grantStats(request):
     grantModel = apps.get_model("WCHDApp", "Grant")
     grants = grantModel.objects.all()
@@ -1653,11 +1665,15 @@ def grantLineTableUpdate(request):
 
     #Getting total money that is previously budgeted to lines
     total = 0
-    hasReceivedLine = False
+    hasMaxReceivedLine = False
+    totalRevenueLines = 0
     for lineIterable in grantLines:
         total += lineIterable.line_budgeted
         if lineIterable.lineType == "Revenue":
-            hasReceivedLine = True
+            totalRevenueLines += 1
+        
+    if totalRevenueLines >= grant.maxRevenueLines:    
+        hasMaxReceivedLine = True
     grantAwardAmount = grant.award_amount
     grantAwardAmountRemaining = grantAwardAmount - total
 
@@ -1695,8 +1711,8 @@ def grantLineTableUpdate(request):
                 line.line_budget_remaining = budgetedAmount
                 line.line_total_income = 0
                 line.grant = grant
-                if (hasReceivedLine == True) and (line.lineType == "Revenue"):
-                    message = "Already has a specified line to receive reimbursement"
+                if (hasMaxReceivedLine == True) and (line.lineType == "Revenue"):
+                    message = "Already has max specified lines to receive reimbursement"
                 else:
                     grantAwardAmountRemaining = float(grantAwardAmountRemaining) - budgetedAmount
                     line.save()
@@ -1748,6 +1764,7 @@ def testingGrantAccess(request):
     #making change
     return render(request, "WCHDApp/grantExpenseTesting.html", context)
 
+@permission_required('WCHDApp.has_full_access', raise_exception=True)
 def viewByYear(request):
     currentDate = datetime.now()
     year = currentDate.year
@@ -1859,37 +1876,3 @@ def viewByYearPartial(request):
                "message": message}
 
     return render(request, "WCHDApp/partials/viewByYearPartial.html", context)
-
-
-def viewByYearPartialFormSubmit(request):
-    modelName = request.GET.get("modelName")
-    if modelName == "Line":
-        if request.method == 'POST':
-            form = modelform_factory(Line, exclude=["line_budget_spent", "line_budget_remaining", "line_total_income"])(request.POST)
-            if form.is_valid():
-                line = form.save(commit=False)
-                fund = line.fund
-                fundID = fund.fund_id
-                print(fundID)
-                #Deconstructing then recontructing line id to fit county
-                paritalLineID = line.line_id
-                fullLineID = str(fundID)+"-"+str(paritalLineID)
-
-                line.line_id = fullLineID
-
-                budgeted = line.line_budgeted
-                line.line_budget_spent = 0
-                line.line_total_income = 0
-                line.line_budget_remaining = budgeted
-
-                line.fund = fund
-                remaining = fund.fund_total - fund.fund_budgeted
-                if (remaining >= budgeted):
-                    fund.fund_budgeted += budgeted
-                    fund.save()
-                    line.save()
-                else:
-                    message="Not enough remaining balance in fund"
-        else:
-            form = modelform_factory(Line, exclude=["line_budget_spent", "line_budget_remaining", "line_total_income"])(request.POST)
-    
