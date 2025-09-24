@@ -1,6 +1,7 @@
-from django.db import models
+from django.db import models, transaction
 from djmoney.models.fields import MoneyField
 from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError
 
 
 class FundSource(models.TextChoices):
@@ -49,6 +50,15 @@ class Fund(models.Model):
             total += float(line.line_budget_spent)
         remaining = float(self.fund_budgeted) - total
         return f"{remaining:.2f}" 
+    
+    @property
+    def budgeted(self):
+        lines = self.lines.filter(fund__fund_id=self.fund_id)
+        total = 0
+        for line in lines:
+            total += float(line.line_budgeted)
+    
+        return f"{total:.2f}" 
 
     def __str__(self):
         return f"({self.fund_id}) {self.fund_name}"
@@ -73,6 +83,36 @@ class Line(models.Model):
     #county_code = models.CharField(max_length = 4, verbose_name="County Code")
     lineType = models.CharField(choices=[("Revenue","Revenue"), ("Expense", "Expense")], verbose_name="Line Type")
 
+    def clean(self):
+        lines = Line.objects.filter(fund=self.fund)
+        total = 0
+        for line in lines:
+            if line.line_id != self.line_id:
+                total += line.line_budgeted
+        totalSum = total + self.line_budgeted
+       
+        if self.fund.fund_total < totalSum:
+            raise ValidationError("Not enough remaining balance in fund")
+        
+    def save(self, *args, **kwargs):
+        #Check if this is the first time calling save on this object
+        creating = self._state.adding
+
+        if creating:
+            enteredID = self.line_id 
+            fundID = self.fund.fund_id 
+            fullID = f"{fundID}-{enteredID}"
+            self.line_id = fullID
+
+            budgeted = self.line_budgeted
+            self.line_budget_spent = 0
+            self.line_total_income = 0
+            #THIS WILL HAVE TO CHANGE TO A CALCULATED PROPERTY
+            self.line_budget_remaining = budgeted
+
+        self.full_clean()
+        with transaction.atomic():
+            super().save(*args, **kwargs)
     
     def __str__(self): 
         return self.line_name

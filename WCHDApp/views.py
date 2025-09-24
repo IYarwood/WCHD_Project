@@ -331,7 +331,7 @@ def tableView(request, tableName):
         "Testing": [("fundBalanceMinus3", "Fund Balance Minus 3")],
         "Benefits": [("pers", "Public Employee Retirement System"), ("medicare", "Medicare"),("wc", "Workers Comp"), ("plar", "Paid Leave Accumulation Rate"), ("vacation", "Vacation"), ("sick", "Sick Leave"), ("holiday", "Holiday Leave"), ("total_hrly", "Total Hourly Cost"), ("percent_leave", "Percent Leave"), ("monthly_hours", "Monthly Hours"), ("board_share_hrly", "Board Share Hourly"), ("life_hourly", "Life Hourly"), ("salary", "Salary"), ("fringes", "Fringes"), ("total_comp", "Total Compensation")],
         "Payroll": [("pay_rate", "Pay Rate")],
-        "Fund":[("calcRemaining", "Remaining")]
+        "Fund":[("calcRemaining", "Remaining"), ("budgeted", "Budgeted")]
     }
 
     #This is used to decide which fields we want to show in the accumulator based on each model
