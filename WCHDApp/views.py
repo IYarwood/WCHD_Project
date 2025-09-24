@@ -307,8 +307,6 @@ def viewTableSelect(request):
             if button == "seeTable":
                 return redirect('tableView', tableName)
             elif button == "create":
-                if tableName == "Grant":
-                    return redirect('/admin/WCHDApp/grant/add')
                 return redirect('createEntry', tableName)
     else:
         form = TableSelect()
