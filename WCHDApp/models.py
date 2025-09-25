@@ -59,6 +59,12 @@ class Fund(models.Model):
             total += float(line.line_budgeted)
     
         return f"{total:.2f}" 
+    
+    @property
+    def remainingToBudget(self):
+        total = float(self.fund_cash_balance) - float(self.budgeted)
+    
+        return f"{total:.2f}" 
 
     def __str__(self):
         return f"({self.fund_id}) {self.fund_name}"
@@ -73,15 +79,44 @@ class Line(models.Model):
     fund_year = models.SmallIntegerField(blank=False, verbose_name="Fund Year")
     line_name = models.CharField(max_length=255, verbose_name="Line Name")
     line_budgeted = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Budgeted")
-    line_budget_remaining = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Budget Remaining")
+    #line_budget_remaining = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Budget Remaining")
     #line_encumbered = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Encumbered")
-    line_budget_spent = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Budget Spent", default=0)
-    line_total_income = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Total Income", default=0)
+    #line_budget_spent = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Budget Spent", default=0)
+    #line_total_income = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Total Income", default=0)
     dept = models.ForeignKey(Dept, on_delete=models.CASCADE, null=True, blank=True, verbose_name="Department")
     #cofund = models.CharField(max_length=3, verbose_name="CoFund")
     #gen_ledger = models.IntegerField(blank=False, verbose_name="General Ledger")
     #county_code = models.CharField(max_length = 4, verbose_name="County Code")
     lineType = models.CharField(choices=[("Revenue","Revenue"), ("Expense", "Expense")], verbose_name="Line Type")
+
+    @property
+    def budgetRemaining(self):
+        expenses = Expense.objects.filter(line__line_id=self.line_id)
+        total = 0
+        for expense in expenses:
+            total += expense.amount
+        
+        remaining = self.line_budgeted - total
+
+        return f"{remaining:.2f}"
+    
+    @property
+    def budgetSpent(self):
+        expenses = Expense.objects.filter(line__line_id=self.line_id)
+        total = 0
+        for expense in expenses:
+            total += expense.amount
+        
+        return f"{total:.2f}"
+    
+    @property
+    def totalIncome(self):
+        revenues = Revenue.objects.filter(line__line_id = self.line_id)
+        total = 0
+        for revenue in revenues:
+            total += revenue.amount
+        
+        return f"{total:.2f}"
 
     def clean(self):
         lines = Line.objects.filter(fund=self.fund)
@@ -104,11 +139,6 @@ class Line(models.Model):
             fullID = f"{fundID}-{enteredID}"
             self.line_id = fullID
 
-            budgeted = self.line_budgeted
-            self.line_budget_spent = 0
-            self.line_total_income = 0
-            #THIS WILL HAVE TO CHANGE TO A CALCULATED PROPERTY
-            self.line_budget_remaining = budgeted
 
         self.full_clean()
         with transaction.atomic():

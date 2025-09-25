@@ -967,7 +967,7 @@ def transactionsExpenseTableUpdate(request):
         "form": form,
         "item": item,
         "message": message,
-        "budgeted_remaining": line.line_budget_remaining,
+        "budgeted_remaining": line.budgetRemaining,
     }
 
     return render(request, "WCHDApp/partials/transactionsTablePartial.html", context)
@@ -997,6 +997,14 @@ def lineTableUpdate(request):
     decimalFields = []
     aliasNames = []
 
+    calculatedProperties = {
+        "Testing": [("fundBalanceMinus3", "Fund Balance Minus 3")],
+        "Benefits": [("pers", "Public Employee Retirement System"), ("medicare", "Medicare"),("wc", "Workers Comp"), ("plar", "Paid Leave Accumulation Rate"), ("vacation", "Vacation"), ("sick", "Sick Leave"), ("holiday", "Holiday Leave"), ("total_hrly", "Total Hourly Cost"), ("percent_leave", "Percent Leave"), ("monthly_hours", "Monthly Hours"), ("board_share_hrly", "Board Share Hourly"), ("life_hourly", "Life Hourly"), ("salary", "Salary"), ("fringes", "Fringes"), ("total_comp", "Total Compensation")],
+        "Payroll": [("pay_rate", "Pay Rate")],
+        "Fund":[("calcRemaining", "Remaining"), ("budgeted", "Budgeted")],
+        "Line": [("budgetRemaining", "Budget Remaining"), ("budgetSpent", "Budget Spent"), ("totalIncome", "Total Income")]
+    }
+
     #Fields that should be accumulated
     summedFields = {
         "Fund": "fund_cash_balance", 
@@ -1009,12 +1017,20 @@ def lineTableUpdate(request):
                 decimalFields.append(field.name)
         aliasNames.append(field.verbose_name)  
         fieldNames.append(field.name)
+    #Making sure properties are added like normal fields to the tables
+    if "Line" in calculatedProperties:
+        for property in calculatedProperties["Line"]:
+            #print(property)
+            aliasNames.append(property[1])
+            fieldNames.append(property[0])
+            decimalFields.append(property[0])
     if request.method == 'POST':
         form = modelform_factory(Line, exclude=["fund","line_budget_spent", "line_budget_remaining", "line_total_income"])(request.POST)
+        form.instance.fund = fund
         if form.is_valid():
             line = form.save(commit=False)
 
-            #Deconstructing then recontructing line id to fit county
+            """#Deconstructing then recontructing line id to fit county
             paritalLineID = line.line_id
             fullLineID = str(fundID)+"-"+str(paritalLineID)
 
@@ -1029,17 +1045,17 @@ def lineTableUpdate(request):
             remaining = fund.fund_total - fund.fund_budgeted
             if (remaining >= budgeted):
                 fund.fund_budgeted += budgeted
-                fund.save()
-                line.save()
-                message = "Line created successfully"
-                form = modelform_factory(Line, exclude=["fund","line_budget_spent", "line_budget_remaining", "line_total_income"])()
-            else:
-                message="Not enough remaining balance in fund"
+                fund.save()"""
+            line.save()
+            message = "Line created successfully"
+            form = modelform_factory(Line, exclude=["fund","line_budget_spent", "line_budget_remaining", "line_total_income"])()
+            """else:
+                message="Not enough remaining balance in fund"""
     else:
         form = modelform_factory(Line, exclude=["fund","line_budget_spent", "line_budget_remaining", "line_total_income"])()
     
 
-    remainingToBudget = fund.fund_cash_balance - fund.fund_budgeted
+    #remainingToBudget = fund.fund_cash_balance - fund.fund_budgeted
     context = {
         "fields": fieldNames, 
         "aliasNames": aliasNames, 
@@ -1048,7 +1064,7 @@ def lineTableUpdate(request):
         "form": form,
         "fund": fund,
         "message": message,
-        "remainingToBudget": remainingToBudget
+        "remainingToBudget": fund.remainingToBudget
     }
 
     return render(request, "WCHDApp/partials/lineTableUpdate.html", context)
