@@ -25,6 +25,7 @@ from django.shortcuts import render
 from django.urls import reverse
 from django.utils.timezone import now
 from django.utils.dateparse import parse_datetime
+from django.core.exceptions import ValidationError
 import re
 
 def generate_pdf(request, tableName):
@@ -892,6 +893,7 @@ def transactionsExpenseTableUpdate(request):
     if request.method == 'POST':
         #print("SUBMITTED ON TABLE UPDATE")
         form = expenseForm(request.POST)
+        form.instance.item = item
         #print(request.POST)
         if form.is_valid():
             #Create the instance but don't save it yet
@@ -1678,18 +1680,14 @@ def grantLineTableUpdate(request):
     grantLines = GrantLine.objects.filter(grant=grant)
 
     #Getting total money that is previously budgeted to lines
-    total = 0
     hasMaxReceivedLine = False
     totalRevenueLines = 0
     for lineIterable in grantLines:
-        total += lineIterable.line_budgeted
         if lineIterable.lineType == "Revenue":
             totalRevenueLines += 1
         
     if totalRevenueLines >= grant.maxRevenueLines:    
         hasMaxReceivedLine = True
-    grantAwardAmount = grant.award_amount
-    grantAwardAmountRemaining = grantAwardAmount - total
 
     #Getting just field names from model
     fields = GrantLine._meta.fields
@@ -1698,6 +1696,15 @@ def grantLineTableUpdate(request):
     fieldNames = []
     decimalFields = []
     aliasNames = []
+
+    calculatedProperties = {
+        "Testing": [("fundBalanceMinus3", "Fund Balance Minus 3")],
+        "Benefits": [("pers", "Public Employee Retirement System"), ("medicare", "Medicare"),("wc", "Workers Comp"), ("plar", "Paid Leave Accumulation Rate"), ("vacation", "Vacation"), ("sick", "Sick Leave"), ("holiday", "Holiday Leave"), ("total_hrly", "Total Hourly Cost"), ("percent_leave", "Percent Leave"), ("monthly_hours", "Monthly Hours"), ("board_share_hrly", "Board Share Hourly"), ("life_hourly", "Life Hourly"), ("salary", "Salary"), ("fringes", "Fringes"), ("total_comp", "Total Compensation")],
+        "Payroll": [("pay_rate", "Pay Rate")],
+        "Fund":[("calcRemaining", "Remaining"), ("budgeted", "Budgeted")],
+        "Line": [("budgetRemaining", "Budget Remaining"), ("budgetSpent", "Budget Spent"), ("totalIncome", "Total Income")],
+        "GrantLine": [("budgetRemaining", "Budget Remaining"), ("budgetSpent", "Budget Spent"), ("totalIncome", "Total Income")]
+    }
 
     #Fields that should be accumulated
     summedFields = {
@@ -1711,29 +1718,32 @@ def grantLineTableUpdate(request):
                 decimalFields.append(field.name)
         aliasNames.append(field.verbose_name)  
         fieldNames.append(field.name)
+
+    if "GrantLine" in calculatedProperties:
+        for property in calculatedProperties["GrantLine"]:
+            #print(property)
+            aliasNames.append(property[1])
+            fieldNames.append(property[0])
+            decimalFields.append(property[0])
+
     if request.method == 'POST':
-        form = modelform_factory(GrantLine, exclude=["grant","line_budget_spent", "line_budget_remaining", "line_total_income"])(request.POST)
+        form = modelform_factory(GrantLine, exclude=["grant"])(request.POST)
+        form.instance.grant = grant
+    
         if form.is_valid():
             line = form.save(commit=False)
 
-            #Getting input from form
-            budgetedAmount = float(request.POST["line_budgeted"])
-
-
-            if grantAwardAmountRemaining >= budgetedAmount:
-                line.line_budget_spent = 0
-                line.line_budget_remaining = budgetedAmount
-                line.line_total_income = 0
-                line.grant = grant
-                if (hasMaxReceivedLine == True) and (line.lineType == "Revenue"):
-                    message = "Already has max specified lines to receive reimbursement"
-                else:
-                    grantAwardAmountRemaining = float(grantAwardAmountRemaining) - budgetedAmount
-                    line.save()
+            if (hasMaxReceivedLine == True) and (line.lineType == "Revenue"):
+                message = "Already has max specified lines to receive reimbursement"
             else:
-                message = "Budgeted is more than is left in Grant Award"
+                line.save()
+                message = "Grant Line Created Successfully"
+                form = modelform_factory(GrantLine, exclude=["grant"])()
+        else:
+            errors = form.errors
+            message = errors["line_budgeted"][0]                
     else:
-        form = modelform_factory(GrantLine, exclude=["grant","line_budget_spent", "line_budget_remaining", "line_total_income"])(request.POST)
+        form = modelform_factory(GrantLine, exclude=["grant"])()
     
     grantLines = GrantLine.objects.filter(grant=grant)
 
@@ -1745,7 +1755,7 @@ def grantLineTableUpdate(request):
         "form": form,
         "grant": grant,
         "message": message,
-        "grantAwardAmountRemaining":grantAwardAmountRemaining
+        "grantAwardAmountRemaining":grant.grantAwardAmountRemaining
     }
 
     return render(request, "WCHDApp/partials/grantLineTableUpdate.html", context)
