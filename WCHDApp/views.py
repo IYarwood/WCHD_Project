@@ -1025,7 +1025,7 @@ def lineTableUpdate(request):
             fieldNames.append(property[0])
             decimalFields.append(property[0])
     if request.method == 'POST':
-        form = modelform_factory(Line, exclude=["fund","line_budget_spent", "line_budget_remaining", "line_total_income"])(request.POST)
+        form = modelform_factory(Line, exclude=["fund"])(request.POST)
         form.instance.fund = fund
         if form.is_valid():
             line = form.save(commit=False)
@@ -1048,11 +1048,11 @@ def lineTableUpdate(request):
                 fund.save()"""
             line.save()
             message = "Line created successfully"
-            form = modelform_factory(Line, exclude=["fund","line_budget_spent", "line_budget_remaining", "line_total_income"])()
+            form = modelform_factory(Line, exclude=["fund"])()
             """else:
                 message="Not enough remaining balance in fund"""
     else:
-        form = modelform_factory(Line, exclude=["fund","line_budget_spent", "line_budget_remaining", "line_total_income"])()
+        form = modelform_factory(Line, exclude=["fund"])()
     
 
     #remainingToBudget = fund.fund_cash_balance - fund.fund_budgeted
