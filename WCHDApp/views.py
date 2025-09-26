@@ -896,67 +896,24 @@ def transactionsExpenseTableUpdate(request):
         #print("SUBMITTED ON TABLE UPDATE")
         form = expenseForm(request.POST)
         form.instance.item = item
+        user  = request.user
+        try:
+            employeeModel = apps.get_model('WCHDApp', "employee")
+            employee = employeeModel.objects.get(user=user)
+            form.instance.employee = employee
+        except:
+            message = "No employee with signed in user"
+        
         #print(request.POST)
         if form.is_valid():
             #Create the instance but don't save it yet
-            expense = form.save(commit=False)
-            user  = request.user
-            employeeGrab = False
-            try:
-                employeeModel = apps.get_model('WCHDApp', "employee")
-                employee = employeeModel.objects.get(user=user)
-                expense.employee = employee
-                employeeGrab = True
-            except:
-                message = "No employee with signed in user"
-            #Adding the values from before
-            #transaction.fund = fund
-            #transaction.line = line
-            expense.item = item
-            expense.line = item.line
-            
-            fund = item.fund
-            line = item.line
-            if employeeGrab:
-                if line.lineType == "Expense":
-                    if expense.grantLine:
-                        grantLine = expense.grantLine
-                        if (fund.fund_cash_balance >= expense.amount) and (grantLine.line_budgeted >= expense.amount) and (line.line_budget_remaining >= expense.amount):
-                            fund.fund_cash_balance -= expense.amount
-                            grantLine.line_budget_remaining -= expense.amount
-                            grantLine.line_budget_spent += expense.amount
-                            line.line_budget_remaining -= expense.amount
-                            line.line_budget_spent += expense.amount
-                            line.save()
-                            grantLine.save()
-                            expense.save()
-                            fund.save()
-                            message = "Expense Posted"
-                        else:
-                            if (line.line_budget_remaining < expense.amount):
-                                message = "Not Enough Line Budgeted"
-                            elif (grantLine.line_budgeted < expense.amount):
-                                message = "Not Enough Grant Line Budgeted"
-                            else:
-                                message = "Not enough Fund Cash Balance"
-                            
-                    else:
-                        if (fund.fund_cash_balance >= expense.amount) and (line.line_budget_remaining >= expense.amount):
-                            fund.fund_cash_balance -= expense.amount
-                            line.line_budget_remaining -= expense.amount
-                            line.line_budget_spent += expense.amount
-                            line.save()
-                            expense.save()
-                            fund.save()
-                            message = "Expense Posted Successfully"
-                            form = expenseForm()
-                        else:
-                            if (line.line_budget_remaining < expense.amount):
-                                message = "Not Enough Line Budgeted"
-                            else:
-                                message = "Not enough Fund Cash Balance"
-                else:
-                    message = "Please select an expense line"
+            expense = form.save()
+            message = "Expense Posted Successfully"
+            form = expenseForm()
+        else:
+            errors = form.errors
+            if errors.get("amount"):
+                message = errors["amount"][0]     
             
     else:
         form = expenseForm()

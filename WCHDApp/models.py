@@ -47,8 +47,8 @@ class Fund(models.Model):
         lines = self.lines.filter(lineType="Expense")
         total = 0
         for line in lines:
-            total += float(line.line_budget_spent)
-        remaining = float(self.fund_budgeted) - total
+            total += float(line.budgetSpent)
+        remaining = float(self.budgeted) - total
         return f"{remaining:.2f}" 
     
     @property
@@ -90,17 +90,6 @@ class Line(models.Model):
     lineType = models.CharField(choices=[("Revenue","Revenue"), ("Expense", "Expense")], verbose_name="Line Type")
 
     @property
-    def budgetRemaining(self):
-        expenses = Expense.objects.filter(line__line_id=self.line_id)
-        total = 0
-        for expense in expenses:
-            total += expense.amount
-        
-        remaining = self.line_budgeted - total
-
-        return f"{remaining:.2f}"
-    
-    @property
     def budgetSpent(self):
         expenses = Expense.objects.filter(line__line_id=self.line_id)
         total = 0
@@ -108,6 +97,13 @@ class Line(models.Model):
             total += expense.amount
         
         return f"{total:.2f}"
+    
+    @property
+    def budgetRemaining(self):
+        remaining = float(self.line_budgeted) - float(self.budgetSpent)
+
+        return f"{remaining:.2f}"
+    
     
     @property
     def totalIncome(self):
@@ -648,18 +644,17 @@ class Expense(models.Model):
     grantLine = models.ForeignKey(GrantLine, on_delete=models.PROTECT, blank=True, null=True, verbose_name="Grant Line")
 
     def clean(self):
-        """lines = Line.objects.filter(fund=self.fund)
-        total = 0
-        for line in lines:
-            if line.line_id != self.line_id:
-                total += line.line_budgeted
-        totalSum = total + self.line_budgeted
-       
-        if self.fund.fund_total < totalSum:
-            raise ValidationError("Not enough remaining balance in fund")"""
         line = self.item.line
+        self.line = line
         fund = line.fund
+        if self.grantLine:
+            if float(self.amount) > float(self.grantLine.budgetRemaining):
+                raise ValidationError({"amount": "Amount is greater than remaining budget in Grant Line"})
+        if float(self.amount) > float(self.line.budgetRemaining):
+            raise ValidationError({"amount": "Amount is greater than remaining budget in Line"})
         
+        if float(self.amount ) > float(fund.fund_cash_balance):
+            raise ValidationError({"amount": "Amount is greater than remaining cash balance in Fund"})
     def save(self, *args, **kwargs):
         #Check if this is the first time calling save on this object
         creating = self._state.adding
@@ -670,7 +665,10 @@ class Expense(models.Model):
 
         self.full_clean()
         with transaction.atomic():
+            fund = self.line.fund
             super().save(*args, **kwargs)
+            fund.fund_cash_balance -= self.amount
+            fund.save()
 
 
     def __str__(self):
