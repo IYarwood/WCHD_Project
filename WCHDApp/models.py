@@ -37,7 +37,7 @@ class Fund(models.Model):
     fund_name = models.CharField(max_length=255, blank=False, verbose_name= "Fund Name")
     fund_cash_balance = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Cash Balance")
     fund_total = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Total Given")
-    fund_budgeted = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Budgeted")
+    #fund_budgeted = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Budgeted")
     dept = models.ForeignKey(Dept, on_delete=models.CASCADE, null=True, blank=True, verbose_name="Department")
     sof = models.CharField(max_length=10, blank = False, choices=FundSource.choices, verbose_name="SoF")
     mac_elig = models.BooleanField(blank=False, verbose_name="MACE")
