@@ -121,7 +121,10 @@ class Line(models.Model):
             if line.line_id != self.line_id:
                 total += line.line_budgeted
         totalSum = total + self.line_budgeted
-       
+        
+        if float(self.budgetSpent) > float(self.line_budgeted):
+            raise ValidationError({"line_budgeted": "Expense have already exceeded that budget"})
+
         if self.fund.fund_total < totalSum:
             raise ValidationError({"line_budgeted":"Not enough remaining balance in fund"})
         
