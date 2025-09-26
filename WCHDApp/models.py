@@ -127,7 +127,7 @@ class Line(models.Model):
         totalSum = total + self.line_budgeted
        
         if self.fund.fund_total < totalSum:
-            raise ValidationError("Not enough remaining balance in fund")
+            raise ValidationError({"line_budgeted":"Not enough remaining balance in fund"})
         
     def save(self, *args, **kwargs):
         #Check if this is the first time calling save on this object
@@ -400,13 +400,18 @@ class GrantLine(models.Model):
     def clean(self):
         lines = GrantLine.objects.filter(grant = self.grant)
         total = 0
+        revenueLines = 0
         for line in lines:
             if line.grantline_id != self.grantline_id:
                 total += line.line_budgeted
+                if line.lineType == "Revenue":
+                    revenueLines += 1
         totalSum = total + self.line_budgeted
-        print("TESTING")
+
+        if (revenueLines >= self.grant.maxRevenueLines) and (self.lineType == "Revenue"):
+            raise ValidationError({"lineType": "Already have the max amount of revenue lines for the grant"})
+
         if self.grant.award_amount < totalSum:
-            print("BAD")
             raise ValidationError({"line_budgeted":"Budgeted is more than is left in Grant Award"})
   
     def save(self, *args, **kwargs):

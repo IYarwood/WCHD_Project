@@ -332,7 +332,9 @@ def tableView(request, tableName):
         "Testing": [("fundBalanceMinus3", "Fund Balance Minus 3")],
         "Benefits": [("pers", "Public Employee Retirement System"), ("medicare", "Medicare"),("wc", "Workers Comp"), ("plar", "Paid Leave Accumulation Rate"), ("vacation", "Vacation"), ("sick", "Sick Leave"), ("holiday", "Holiday Leave"), ("total_hrly", "Total Hourly Cost"), ("percent_leave", "Percent Leave"), ("monthly_hours", "Monthly Hours"), ("board_share_hrly", "Board Share Hourly"), ("life_hourly", "Life Hourly"), ("salary", "Salary"), ("fringes", "Fringes"), ("total_comp", "Total Compensation")],
         "Payroll": [("pay_rate", "Pay Rate")],
-        "Fund":[("calcRemaining", "Remaining"), ("budgeted", "Budgeted")]
+        "Fund":[("calcRemaining", "Remaining"), ("budgeted", "Budgeted")],
+        "GrantLine": [("budgetRemaining", "Budget Remaining"), ("budgetSpent", "Budget Spent"), ("totalIncome", "Total Income")],
+        "Grant": [("grantAwardAmountRemaining", "Grant Award Amount Remaining")]
     }
 
     #This is used to decide which fields we want to show in the accumulator based on each model
@@ -1030,29 +1032,14 @@ def lineTableUpdate(request):
         form = modelform_factory(Line, exclude=["fund"])(request.POST)
         form.instance.fund = fund
         if form.is_valid():
-            line = form.save(commit=False)
-
-            """#Deconstructing then recontructing line id to fit county
-            paritalLineID = line.line_id
-            fullLineID = str(fundID)+"-"+str(paritalLineID)
-
-            line.line_id = fullLineID
-
-            budgeted = line.line_budgeted
-            line.line_budget_spent = 0
-            line.line_total_income = 0
-            line.line_budget_remaining = budgeted
-
-            line.fund = fund
-            remaining = fund.fund_total - fund.fund_budgeted
-            if (remaining >= budgeted):
-                fund.fund_budgeted += budgeted
-                fund.save()"""
-            line.save()
+            line = form.save()
             message = "Line created successfully"
             form = modelform_factory(Line, exclude=["fund"])()
-            """else:
-                message="Not enough remaining balance in fund"""
+        else:
+            errors = form.errors
+            if errors.get("line_budgeted"):
+                message = errors["line_budgeted"][0]     
+ 
     else:
         form = modelform_factory(Line, exclude=["fund"])()
     
@@ -1679,16 +1666,6 @@ def grantLineTableUpdate(request):
     
     grantLines = GrantLine.objects.filter(grant=grant)
 
-    #Getting total money that is previously budgeted to lines
-    hasMaxReceivedLine = False
-    totalRevenueLines = 0
-    for lineIterable in grantLines:
-        if lineIterable.lineType == "Revenue":
-            totalRevenueLines += 1
-        
-    if totalRevenueLines >= grant.maxRevenueLines:    
-        hasMaxReceivedLine = True
-
     #Getting just field names from model
     fields = GrantLine._meta.fields
 
@@ -1731,17 +1708,15 @@ def grantLineTableUpdate(request):
         form.instance.grant = grant
     
         if form.is_valid():
-            line = form.save(commit=False)
-
-            if (hasMaxReceivedLine == True) and (line.lineType == "Revenue"):
-                message = "Already has max specified lines to receive reimbursement"
-            else:
-                line.save()
-                message = "Grant Line Created Successfully"
-                form = modelform_factory(GrantLine, exclude=["grant"])()
+            line = form.save()
+            message = "Grant Line Created Successfully"
+            form = modelform_factory(GrantLine, exclude=["grant"])()
         else:
             errors = form.errors
-            message = errors["line_budgeted"][0]                
+            if errors.get("line_budgeted"):
+                message = errors["line_budgeted"][0]     
+            if errors.get("lineType"):
+                message = errors["lineType"][0]           
     else:
         form = modelform_factory(GrantLine, exclude=["grant"])()
     
