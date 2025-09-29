@@ -775,9 +775,8 @@ def transactionsView(request):
         form.instance.item = item
         if form.is_valid():
             #Create the instance but don't save it yet
-            revenue = form.save(commit=False)
-            
-            revenue.save()
+            revenue = form.save()
+
             message = "Revenue Posted Successfully"
             form = RevenueForm()
         else: 
@@ -992,6 +991,90 @@ def lineTableUpdate(request):
     }
 
     return render(request, "WCHDApp/partials/lineTableUpdate.html", context)
+
+def itemView(request):
+    lines = Line.objects.all()
+    
+    context = {
+        "lines": lines
+    }
+    return render(request, "WCHDApp/itemView.html", context)
+
+def itemTableUpdate(request):
+    message = ""
+    lineID = request.GET.get("line")
+    line = Line.objects.get(pk=lineID)
+    
+    items = Item.objects.filter(line=line)
+
+    #Getting just field names from model
+    fields = Item._meta.fields
+
+    #Lists to sort fields for styling
+    fieldNames = []
+    decimalFields = []
+    aliasNames = []
+
+    calculatedProperties = {
+        "Testing": [("fundBalanceMinus3", "Fund Balance Minus 3")],
+        "Benefits": [("pers", "Public Employee Retirement System"), ("medicare", "Medicare"),("wc", "Workers Comp"), ("plar", "Paid Leave Accumulation Rate"), ("vacation", "Vacation"), ("sick", "Sick Leave"), ("holiday", "Holiday Leave"), ("total_hrly", "Total Hourly Cost"), ("percent_leave", "Percent Leave"), ("monthly_hours", "Monthly Hours"), ("board_share_hrly", "Board Share Hourly"), ("life_hourly", "Life Hourly"), ("salary", "Salary"), ("fringes", "Fringes"), ("total_comp", "Total Compensation")],
+        "Payroll": [("pay_rate", "Pay Rate")],
+        "Fund":[("calcRemaining", "Remaining"), ("budgeted", "Budgeted")],
+        "Line": [("budgetRemaining", "Budget Remaining"), ("budgetSpent", "Budget Spent"), ("totalIncome", "Total Income")],
+        "GrantLine": [("budgetRemaining", "Budget Remaining"), ("budgetSpent", "Budget Spent"), ("totalIncome", "Total Income")]
+    }
+
+    #Fields that should be accumulated
+    summedFields = {
+        "Fund": "fund_cash_balance", 
+        "Line": "line_total_income",
+        "Transaction": "amount",
+    }
+
+    for field in fields:
+        if isinstance(field, DecimalField):
+                decimalFields.append(field.name)
+        aliasNames.append(field.verbose_name)  
+        fieldNames.append(field.name)
+
+    if "Item" in calculatedProperties:
+        for property in calculatedProperties["Item"]:
+            #print(property)
+            aliasNames.append(property[1])
+            fieldNames.append(property[0])
+            decimalFields.append(property[0])
+
+    if request.method == 'POST':
+        form = modelform_factory(Item, exclude=["line", "fund", "fund_year", "fund_type"])(request.POST)
+        form.instance.line = line
+        form.instance.fund = line.fund
+        form.instance.fund_type = line.fund.sof
+        form.instance.fund_year = line.fund_year
+    
+        if form.is_valid():
+            item = form.save()
+            message = "Item Created Successfully"
+            form = modelform_factory(Item, exclude=["line", "fund", "fund_year", "fund_type"])()
+        else:
+            errors = form.errors
+            if errors.get("line_budgeted"):
+                message = errors["line_budgeted"][0]     
+            if errors.get("lineType"):
+                message = errors["lineType"][0]           
+    else:
+        form = modelform_factory(Item, exclude=["line", "fund", "fund_year", "fund_type"])()
+
+    context = {
+        "fields": fieldNames, 
+        "aliasNames": aliasNames, 
+        "data": items, 
+        "line": line,
+        "decimalFields": decimalFields,
+        "form": form,
+        "message": message,
+    }
+
+    return render(request, "WCHDApp/partials/itemTableUpdate.html", context)
 
 def dailyReport(request):
     buffer = BytesIO()
@@ -1810,3 +1893,62 @@ def viewByYearPartial(request):
                "message": message}
 
     return render(request, "WCHDApp/partials/viewByYearPartial.html", context)
+
+
+#Might be onto something with this. Cut down on repetition
+def testingTableViewFunction(request, tableName):
+    #Grabbing the model selected in viewTableSelect
+    model = apps.get_model('WCHDApp', tableName)
+
+    #Getting data from that model
+    values = model.objects.all()
+
+    #Getting just field names from model
+    #Use .fields instead of .get_fields() because we do not want reverse relationships
+    fields = model._meta.fields
+
+    #Any property that we define in models need to go here so our logic can include them in the table
+    calculatedProperties = {
+        "Testing": [("fundBalanceMinus3", "Fund Balance Minus 3")],
+        "Benefits": [("pers", "Public Employee Retirement System"), ("medicare", "Medicare"),("wc", "Workers Comp"), ("plar", "Paid Leave Accumulation Rate"), ("vacation", "Vacation"), ("sick", "Sick Leave"), ("holiday", "Holiday Leave"), ("total_hrly", "Total Hourly Cost"), ("percent_leave", "Percent Leave"), ("monthly_hours", "Monthly Hours"), ("board_share_hrly", "Board Share Hourly"), ("life_hourly", "Life Hourly"), ("salary", "Salary"), ("fringes", "Fringes"), ("total_comp", "Total Compensation")],
+        "Payroll": [("pay_rate", "Pay Rate")],
+        "Fund":[("calcRemaining", "Remaining"), ("budgeted", "Budgeted")],
+        "GrantLine": [("budgetRemaining", "Budget Remaining"), ("budgetSpent", "Budget Spent"), ("totalIncome", "Total Income")],
+        "Grant": [("grantAwardAmountRemaining", "Grant Award Amount Remaining"),( "recieved","Recieved")]
+    }
+
+    #This is used to decide which fields we want to show in the accumulator based on each model
+    summedFields = {
+        "Fund": "fund_cash_balance", 
+        "Line": "line_total_income",
+        "Transaction": "amount",
+    }
+    
+
+    fieldNames = []
+    aliasNames = []
+    decimalFields = []
+    for field in fields:
+        if isinstance(field, DecimalField):
+                decimalFields.append(field.name)
+        aliasNames.append(field.verbose_name)  
+        fieldNames.append(field.name)
+    #Making sure properties are added like normal fields to the tables
+    if tableName in calculatedProperties:
+        for property in calculatedProperties[tableName]:
+            #print(property)
+            aliasNames.append(property[1])
+            fieldNames.append(property[0])
+            decimalFields.append(property[0])
+
+    #Getting values based on if we defined them in summedFields in order to make accumulator
+    if tableName in summedFields:
+        field = summedFields[tableName]
+        accumulator = 0
+        for value in values:
+            accumulator += getattr(value, field)
+        context = {"fields": fieldNames, "aliasNames": aliasNames, "data": values, "tableName": tableName, "decimalFields": decimalFields, "accumulator": accumulator}
+    else:
+        context = {"fields": fieldNames, "aliasNames": aliasNames, "data": values, "tableName": tableName, "decimalFields": decimalFields}
+
+    return [fieldNames, aliasNames, decimalFields]
