@@ -963,19 +963,20 @@ def lineTableUpdate(request):
             fieldNames.append(property[0])
             decimalFields.append(property[0])
     if request.method == 'POST':
-        form = modelform_factory(Line, exclude=["fund"])(request.POST)
+        form = modelform_factory(Line, exclude=["fund", "fund_year"])(request.POST)
         form.instance.fund = fund
+        form.instance.fund_year = fund.fund_id.split("-")[0]
         if form.is_valid():
             line = form.save()
             message = "Line created successfully"
-            form = modelform_factory(Line, exclude=["fund"])()
+            form = modelform_factory(Line, exclude=["fund", "fund_year"])()
         else:
             errors = form.errors
             if errors.get("line_budgeted"):
                 message = errors["line_budgeted"][0]     
  
     else:
-        form = modelform_factory(Line, exclude=["fund"])()
+        form = modelform_factory(Line, exclude=["fund", "fund_year"])()
     
 
     #remainingToBudget = fund.fund_cash_balance - fund.fund_budgeted
