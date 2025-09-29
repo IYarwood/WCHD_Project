@@ -337,7 +337,7 @@ class Grant(models.Model):
     end_date = models.DateField(verbose_name="End Date")
     fsid = models.CharField(max_length=10, verbose_name="FSID")
     funder = models.CharField(max_length=50, verbose_name="Funder")
-    received = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Received")
+    #received = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Received")
     #Used to tell if a grant is allowed more than one revenue lines
     maxRevenueLines = models.IntegerField(default=1)
 
@@ -350,6 +350,13 @@ class Grant(models.Model):
         totalRemaining = self.award_amount - total
         return totalRemaining
 
+    @property
+    def recieved(self):
+        grantLines = GrantLine.objects.filter(grant__grant_id = self.grant_id, lineType="Revenue")
+        total = 0
+        for line in grantLines:
+            total += float(line.totalIncome)
+        return total
 
     def __str__(self):
         return self.grant_name
@@ -626,6 +633,26 @@ class Revenue(models.Model):
     employee = models.ForeignKey(Employee, on_delete=models.PROTECT, verbose_name="Employee")
     grantLine = models.ForeignKey(GrantLine, on_delete=models.PROTECT, blank=True, null=True, verbose_name="Grant Line")
 
+    def clean(self):
+        if self.grantLine:
+            if self.grantLine.lineType != "Revenue":
+                raise ValidationError({"grantLine": "Please select a revenue line"})
+
+
+    def save(self, *args, **kwargs):
+        #Check if this is the first time calling save on this object
+        creating = self._state.adding
+
+        if creating:
+            self.line = self.item.line
+
+
+        self.full_clean()
+        with transaction.atomic():
+            fund = self.line.fund
+            super().save(*args, **kwargs)
+            fund.fund_cash_balance += self.amount
+            fund.save()
 
     def __str__(self):
         return (str(self.date) + " $" + str(self.amount))

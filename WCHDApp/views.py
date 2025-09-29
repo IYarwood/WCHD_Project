@@ -334,7 +334,7 @@ def tableView(request, tableName):
         "Payroll": [("pay_rate", "Pay Rate")],
         "Fund":[("calcRemaining", "Remaining"), ("budgeted", "Budgeted")],
         "GrantLine": [("budgetRemaining", "Budget Remaining"), ("budgetSpent", "Budget Spent"), ("totalIncome", "Total Income")],
-        "Grant": [("grantAwardAmountRemaining", "Grant Award Amount Remaining")]
+        "Grant": [("grantAwardAmountRemaining", "Grant Award Amount Remaining"),( "recieved","Recieved")]
     }
 
     #This is used to decide which fields we want to show in the accumulator based on each model
@@ -765,47 +765,25 @@ def transactionsView(request):
 
     if request.method == 'POST':
         form = RevenueForm(request.POST)
+        user  = request.user
+        try:
+            employeeModel = apps.get_model('WCHDApp', "employee")
+            employee = employeeModel.objects.get(user=user)
+            form.instance.employee = employee
+        except:
+            message = "No employee with signed in user"
+        form.instance.item = item
         if form.is_valid():
             #Create the instance but don't save it yet
             revenue = form.save(commit=False)
-            user  = request.user
-            employeeGrab = False
-            try:
-                employeeModel = apps.get_model('WCHDApp', "employee")
-                employee = employeeModel.objects.get(user=user)
-                revenue.employee = employee
-                employeeGrab = True
-            except:
-                message = "No employee with signed in user"
-            #Adding the values from before
-            #transaction.fund = fund
-            #transaction.line = line
-            revenue.item = item
-            revenue.line = item.line
-            line = item.line
-            if employeeGrab:
-                if line.lineType == "Revenue":
-                    grantLine = revenue.grantLine
-                    if grantLine:
-                        grantLine.line_total_income += revenue.amount
-                        if grantLine.lineType == "Revenue":
-                            grant = grantLine.grant
-                            grant.received += revenue.amount
-                            grant.save()
-                        grantLine.save()
-                    
-
-                    line.line_total_income += revenue.amount
-                    revenue.save()
-
-                    fund = item.fund
-                    fund.fund_cash_balance += revenue.amount
-                    fund.save()
-                    message = "Revenue Posted Successfully"
-                    form = RevenueForm()
-                else:
-                    message = "Please select a revenue line"
-
+            
+            revenue.save()
+            message = "Revenue Posted Successfully"
+            form = RevenueForm()
+        else: 
+            errors = form.errors
+            if errors.get("grantLine"):
+                message = errors["grantLine"][0] 
     else:
         form = RevenueForm()
 
