@@ -24,7 +24,7 @@
         class="searchable-select">
             <option value="" disabled selected>Select Grant</option>
             {% for grant in grants %}
-            <option value="{{grant.grant_id}}">{{grant.grant_name}}</option>
+            <option value="{{grant.grant_id}}">{{grant}}</option>
             {% endfor %}
         </select>
         <button>View</button>

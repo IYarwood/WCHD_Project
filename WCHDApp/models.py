@@ -178,7 +178,7 @@ class Item(models.Model):
     month = models.IntegerField(verbose_name="Month")
  
     def __str__(self):
-        return self.item_name
+        return f"({self.item_id}) {self.item_name}"
     
     class Meta:
         db_table = "Items"
@@ -375,7 +375,7 @@ class Grant(models.Model):
         return total
 
     def __str__(self):
-        return self.grant_name
+        return f"({self.grant_id}) {self.grant_name}"
 
     class Meta:
             db_table = "Grants"
