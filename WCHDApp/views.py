@@ -431,21 +431,6 @@ def createEntry(request, tableName):
                         line.save()
                 else:
                     message = "Budgeted is more than is left in Grant Award"
-        elif tableName == "Fund":
-            if form.is_valid():
-                fund = form.save(commit=False)
-                balance = fund.fund_cash_balance
-                baseID = fund.fund_id
-                fund.fund_total = balance
-                fund.fund_budgeted = 0
-                fund.fund_remaining = balance
-                currentDateTime = datetime.now()
-                year = currentDateTime.year
-                fullID = f"{year}-{baseID}"
-                fund.fund_id = fullID
-
-                form.save()
-                return redirect('tableView', tableName)
         elif tableName == "Line":
             if form.is_valid():
                 line = form.save(commit=False)
@@ -995,6 +980,7 @@ def lineTableUpdate(request):
 
     return render(request, "WCHDApp/partials/lineTableUpdate.html", context)
 
+@permission_required('WCHDApp.has_full_access', raise_exception=True)
 def itemView(request):
     lines = Line.objects.all()
     
@@ -1725,13 +1711,13 @@ def grantLineTableUpdate(request):
             decimalFields.append(property[0])
 
     if request.method == 'POST':
-        form = modelform_factory(GrantLine, exclude=["grant"])(request.POST)
+        form = modelform_factory(GrantLine, exclude=["grant", "fund_year"])(request.POST)
         form.instance.grant = grant
-    
+        form.instance.fund_year = grant.fund.fund_id.split("-")[0]
         if form.is_valid():
             line = form.save()
             message = "Grant Line Created Successfully"
-            form = modelform_factory(GrantLine, exclude=["grant"])()
+            form = modelform_factory(GrantLine, exclude=["grant", "fund_year"])()
         else:
             errors = form.errors
             if errors.get("line_budgeted"):
@@ -1739,7 +1725,7 @@ def grantLineTableUpdate(request):
             if errors.get("lineType"):
                 message = errors["lineType"][0]           
     else:
-        form = modelform_factory(GrantLine, exclude=["grant"])()
+        form = modelform_factory(GrantLine, exclude=["grant", "fund_year"])()
     
     grantLines = GrantLine.objects.filter(grant=grant)
 

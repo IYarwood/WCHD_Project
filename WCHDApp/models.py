@@ -66,6 +66,21 @@ class Fund(models.Model):
         total = float(self.fund_cash_balance) - float(self.budgeted)
     
         return f"{total:.2f}" 
+    
+
+    def save(self, *args, **kwargs):
+        #Check if this is the first time calling save on this object
+        creating = self._state.adding
+
+        if creating:
+            fullID = f"{self.year}-{self.fund_id}"
+            self.fund_id = fullID
+            self.fund_total = self.fund_cash_balance
+
+
+        self.full_clean()
+        with transaction.atomic():
+            super().save(*args, **kwargs)        
 
     def __str__(self):
         return f"({self.fund_id}) {self.fund_name}"
