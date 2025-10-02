@@ -983,9 +983,8 @@ def lineTableUpdate(request):
 @permission_required('WCHDApp.has_full_access', raise_exception=True)
 def itemView(request):
     lines = Line.objects.all()
-    
     context = {
-        "lines": lines
+        "lines": lines,
     }
     return render(request, "WCHDApp/itemView.html", context)
 

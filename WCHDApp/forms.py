@@ -92,6 +92,14 @@ class activitySelect(forms.Form):
         activityChoices.append((activity.ActivityList_id, activity.program))
     
     activityName = forms.ChoiceField(choices=activityChoices, label="Select Activity", required=True)
+
+class ModelSelectForm(forms.Form):
+    #Pulling models
+    models = apps.get_app_config('WCHDApp').get_models()
+    modelsDict= {}
+    for model in models:
+        modelsDict[model.__name__] = model.__name__
+    table = forms.ChoiceField(choices=modelsDict, label="Select Table", required=True,  widget=forms.Select(attrs={'class': 'searchable-select'}))
     
     
     
