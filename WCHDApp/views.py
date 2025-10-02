@@ -2,7 +2,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.http import HttpResponse, JsonResponse
 from .models import Fund, Testing, Item, Grant, GrantLine, Revenue, Expense, Line
 from django.db.models.fields.related import ForeignKey, ManyToManyField, OneToOneField
-from .forms import FundForm, TableSelect, InputSelect, ExportSelect,reconcileForm, activitySelect, FileInput
+from .forms import TableSelect, InputSelect, ExportSelect,reconcileForm, activitySelect, FileInput
 from django.forms import modelform_factory, Select
 from django import forms
 from django.apps import apps
@@ -25,6 +25,7 @@ from django.shortcuts import render
 from django.urls import reverse
 from django.utils.timezone import now
 from django.utils.dateparse import parse_datetime
+from django.core.exceptions import ValidationError
 import re
 
 def generate_pdf(request, tableName):
@@ -302,6 +303,8 @@ def viewTableSelect(request):
                 return redirect('transactionsItem')
             elif tableName == "Line":
                 return redirect('lineView')
+            elif tableName == "Item":
+                return redirect('itemView')
             elif tableName == "GrantLine":
                 return redirect('grantLineView')
             if button == "seeTable":
@@ -331,7 +334,9 @@ def tableView(request, tableName):
         "Testing": [("fundBalanceMinus3", "Fund Balance Minus 3")],
         "Benefits": [("pers", "Public Employee Retirement System"), ("medicare", "Medicare"),("wc", "Workers Comp"), ("plar", "Paid Leave Accumulation Rate"), ("vacation", "Vacation"), ("sick", "Sick Leave"), ("holiday", "Holiday Leave"), ("total_hrly", "Total Hourly Cost"), ("percent_leave", "Percent Leave"), ("monthly_hours", "Monthly Hours"), ("board_share_hrly", "Board Share Hourly"), ("life_hourly", "Life Hourly"), ("salary", "Salary"), ("fringes", "Fringes"), ("total_comp", "Total Compensation")],
         "Payroll": [("pay_rate", "Pay Rate")],
-        "Fund":[("calcRemaining", "Remaining")]
+        "Fund":[("calcRemaining", "Remaining"), ("budgeted", "Budgeted")],
+        "GrantLine": [("budgetRemaining", "Budget Remaining"), ("budgetSpent", "Budget Spent"), ("totalIncome", "Total Income")],
+        "Grant": [("grantAwardAmountRemaining", "Grant Award Amount Remaining"),( "recieved","Recieved")]
     }
 
     #This is used to decide which fields we want to show in the accumulator based on each model
@@ -426,21 +431,6 @@ def createEntry(request, tableName):
                         line.save()
                 else:
                     message = "Budgeted is more than is left in Grant Award"
-        elif tableName == "Fund":
-            if form.is_valid():
-                fund = form.save(commit=False)
-                balance = fund.fund_cash_balance
-                baseID = fund.fund_id
-                fund.fund_total = balance
-                fund.fund_budgeted = 0
-                fund.fund_remaining = balance
-                currentDateTime = datetime.now()
-                year = currentDateTime.year
-                fullID = f"{year}-{baseID}"
-                fund.fund_id = fullID
-
-                form.save()
-                return redirect('tableView', tableName)
         elif tableName == "Line":
             if form.is_valid():
                 line = form.save(commit=False)
@@ -762,47 +752,24 @@ def transactionsView(request):
 
     if request.method == 'POST':
         form = RevenueForm(request.POST)
+        user  = request.user
+        try:
+            employeeModel = apps.get_model('WCHDApp', "employee")
+            employee = employeeModel.objects.get(user=user)
+            form.instance.employee = employee
+        except:
+            message = "No employee with signed in user"
+        form.instance.item = item
         if form.is_valid():
             #Create the instance but don't save it yet
-            revenue = form.save(commit=False)
-            user  = request.user
-            employeeGrab = False
-            try:
-                employeeModel = apps.get_model('WCHDApp', "employee")
-                employee = employeeModel.objects.get(user=user)
-                revenue.employee = employee
-                employeeGrab = True
-            except:
-                message = "No employee with signed in user"
-            #Adding the values from before
-            #transaction.fund = fund
-            #transaction.line = line
-            revenue.item = item
-            revenue.line = item.line
-            line = item.line
-            if employeeGrab:
-                if line.lineType == "Revenue":
-                    grantLine = revenue.grantLine
-                    if grantLine:
-                        grantLine.line_total_income += revenue.amount
-                        if grantLine.lineType == "Revenue":
-                            grant = grantLine.grant
-                            grant.received += revenue.amount
-                            grant.save()
-                        grantLine.save()
-                    
+            revenue = form.save()
 
-                    line.line_total_income += revenue.amount
-                    revenue.save()
-
-                    fund = item.fund
-                    fund.fund_cash_balance += revenue.amount
-                    fund.save()
-                    message = "Revenue Posted Successfully"
-                    form = RevenueForm()
-                else:
-                    message = "Please select a revenue line"
-
+            message = "Revenue Posted Successfully"
+            form = RevenueForm()
+        else: 
+            errors = form.errors
+            if errors.get("grantLine"):
+                message = errors["grantLine"][0] 
     else:
         form = RevenueForm()
 
@@ -892,67 +859,25 @@ def transactionsExpenseTableUpdate(request):
     if request.method == 'POST':
         #print("SUBMITTED ON TABLE UPDATE")
         form = expenseForm(request.POST)
+        form.instance.item = item
+        user  = request.user
+        try:
+            employeeModel = apps.get_model('WCHDApp', "employee")
+            employee = employeeModel.objects.get(user=user)
+            form.instance.employee = employee
+        except:
+            message = "No employee with signed in user"
+        
         #print(request.POST)
         if form.is_valid():
             #Create the instance but don't save it yet
-            expense = form.save(commit=False)
-            user  = request.user
-            employeeGrab = False
-            try:
-                employeeModel = apps.get_model('WCHDApp', "employee")
-                employee = employeeModel.objects.get(user=user)
-                expense.employee = employee
-                employeeGrab = True
-            except:
-                message = "No employee with signed in user"
-            #Adding the values from before
-            #transaction.fund = fund
-            #transaction.line = line
-            expense.item = item
-            expense.line = item.line
-            
-            fund = item.fund
-            line = item.line
-            if employeeGrab:
-                if line.lineType == "Expense":
-                    if expense.grantLine:
-                        grantLine = expense.grantLine
-                        if (fund.fund_cash_balance >= expense.amount) and (grantLine.line_budgeted >= expense.amount) and (line.line_budget_remaining >= expense.amount):
-                            fund.fund_cash_balance -= expense.amount
-                            grantLine.line_budget_remaining -= expense.amount
-                            grantLine.line_budget_spent += expense.amount
-                            line.line_budget_remaining -= expense.amount
-                            line.line_budget_spent += expense.amount
-                            line.save()
-                            grantLine.save()
-                            expense.save()
-                            fund.save()
-                            message = "Expense Posted"
-                        else:
-                            if (line.line_budget_remaining < expense.amount):
-                                message = "Not Enough Line Budgeted"
-                            elif (grantLine.line_budgeted < expense.amount):
-                                message = "Not Enough Grant Line Budgeted"
-                            else:
-                                message = "Not enough Fund Cash Balance"
-                            
-                    else:
-                        if (fund.fund_cash_balance >= expense.amount) and (line.line_budget_remaining >= expense.amount):
-                            fund.fund_cash_balance -= expense.amount
-                            line.line_budget_remaining -= expense.amount
-                            line.line_budget_spent += expense.amount
-                            line.save()
-                            expense.save()
-                            fund.save()
-                            message = "Expense Posted Successfully"
-                            form = expenseForm()
-                        else:
-                            if (line.line_budget_remaining < expense.amount):
-                                message = "Not Enough Line Budgeted"
-                            else:
-                                message = "Not enough Fund Cash Balance"
-                else:
-                    message = "Please select an expense line"
+            expense = form.save()
+            message = "Expense Posted Successfully"
+            form = expenseForm()
+        else:
+            errors = form.errors
+            if errors.get("amount"):
+                message = errors["amount"][0]     
             
     else:
         form = expenseForm()
@@ -967,7 +892,7 @@ def transactionsExpenseTableUpdate(request):
         "form": form,
         "item": item,
         "message": message,
-        "budgeted_remaining": line.line_budget_remaining,
+        "budgeted_remaining": line.budgetRemaining,
     }
 
     return render(request, "WCHDApp/partials/transactionsTablePartial.html", context)
@@ -997,6 +922,14 @@ def lineTableUpdate(request):
     decimalFields = []
     aliasNames = []
 
+    calculatedProperties = {
+        "Testing": [("fundBalanceMinus3", "Fund Balance Minus 3")],
+        "Benefits": [("pers", "Public Employee Retirement System"), ("medicare", "Medicare"),("wc", "Workers Comp"), ("plar", "Paid Leave Accumulation Rate"), ("vacation", "Vacation"), ("sick", "Sick Leave"), ("holiday", "Holiday Leave"), ("total_hrly", "Total Hourly Cost"), ("percent_leave", "Percent Leave"), ("monthly_hours", "Monthly Hours"), ("board_share_hrly", "Board Share Hourly"), ("life_hourly", "Life Hourly"), ("salary", "Salary"), ("fringes", "Fringes"), ("total_comp", "Total Compensation")],
+        "Payroll": [("pay_rate", "Pay Rate")],
+        "Fund":[("calcRemaining", "Remaining"), ("budgeted", "Budgeted")],
+        "Line": [("budgetRemaining", "Budget Remaining"), ("budgetSpent", "Budget Spent"), ("totalIncome", "Total Income")]
+    }
+
     #Fields that should be accumulated
     summedFields = {
         "Fund": "fund_cash_balance", 
@@ -1009,37 +942,31 @@ def lineTableUpdate(request):
                 decimalFields.append(field.name)
         aliasNames.append(field.verbose_name)  
         fieldNames.append(field.name)
+    #Making sure properties are added like normal fields to the tables
+    if "Line" in calculatedProperties:
+        for property in calculatedProperties["Line"]:
+            #print(property)
+            aliasNames.append(property[1])
+            fieldNames.append(property[0])
+            decimalFields.append(property[0])
     if request.method == 'POST':
-        form = modelform_factory(Line, exclude=["fund","line_budget_spent", "line_budget_remaining", "line_total_income"])(request.POST)
+        form = modelform_factory(Line, exclude=["fund", "fund_year"])(request.POST)
+        form.instance.fund = fund
+        form.instance.fund_year = fund.fund_id.split("-")[0]
         if form.is_valid():
-            line = form.save(commit=False)
-
-            #Deconstructing then recontructing line id to fit county
-            paritalLineID = line.line_id
-            fullLineID = str(fundID)+"-"+str(paritalLineID)
-
-            line.line_id = fullLineID
-
-            budgeted = line.line_budgeted
-            line.line_budget_spent = 0
-            line.line_total_income = 0
-            line.line_budget_remaining = budgeted
-
-            line.fund = fund
-            remaining = fund.fund_total - fund.fund_budgeted
-            if (remaining >= budgeted):
-                fund.fund_budgeted += budgeted
-                fund.save()
-                line.save()
-                message = "Line created successfully"
-                form = modelform_factory(Line, exclude=["fund","line_budget_spent", "line_budget_remaining", "line_total_income"])()
-            else:
-                message="Not enough remaining balance in fund"
+            line = form.save()
+            message = "Line created successfully"
+            form = modelform_factory(Line, exclude=["fund", "fund_year"])()
+        else:
+            errors = form.errors
+            if errors.get("line_budgeted"):
+                message = errors["line_budgeted"][0]     
+ 
     else:
-        form = modelform_factory(Line, exclude=["fund","line_budget_spent", "line_budget_remaining", "line_total_income"])()
+        form = modelform_factory(Line, exclude=["fund", "fund_year"])()
     
 
-    remainingToBudget = fund.fund_cash_balance - fund.fund_budgeted
+    #remainingToBudget = fund.fund_cash_balance - fund.fund_budgeted
     context = {
         "fields": fieldNames, 
         "aliasNames": aliasNames, 
@@ -1048,10 +975,95 @@ def lineTableUpdate(request):
         "form": form,
         "fund": fund,
         "message": message,
-        "remainingToBudget": remainingToBudget
+        "remainingToBudget": fund.remainingToBudget
     }
 
     return render(request, "WCHDApp/partials/lineTableUpdate.html", context)
+
+@permission_required('WCHDApp.has_full_access', raise_exception=True)
+def itemView(request):
+    lines = Line.objects.all()
+    
+    context = {
+        "lines": lines
+    }
+    return render(request, "WCHDApp/itemView.html", context)
+
+def itemTableUpdate(request):
+    message = ""
+    lineID = request.GET.get("line")
+    line = Line.objects.get(pk=lineID)
+    
+    items = Item.objects.filter(line=line)
+
+    #Getting just field names from model
+    fields = Item._meta.fields
+
+    #Lists to sort fields for styling
+    fieldNames = []
+    decimalFields = []
+    aliasNames = []
+
+    calculatedProperties = {
+        "Testing": [("fundBalanceMinus3", "Fund Balance Minus 3")],
+        "Benefits": [("pers", "Public Employee Retirement System"), ("medicare", "Medicare"),("wc", "Workers Comp"), ("plar", "Paid Leave Accumulation Rate"), ("vacation", "Vacation"), ("sick", "Sick Leave"), ("holiday", "Holiday Leave"), ("total_hrly", "Total Hourly Cost"), ("percent_leave", "Percent Leave"), ("monthly_hours", "Monthly Hours"), ("board_share_hrly", "Board Share Hourly"), ("life_hourly", "Life Hourly"), ("salary", "Salary"), ("fringes", "Fringes"), ("total_comp", "Total Compensation")],
+        "Payroll": [("pay_rate", "Pay Rate")],
+        "Fund":[("calcRemaining", "Remaining"), ("budgeted", "Budgeted")],
+        "Line": [("budgetRemaining", "Budget Remaining"), ("budgetSpent", "Budget Spent"), ("totalIncome", "Total Income")],
+        "GrantLine": [("budgetRemaining", "Budget Remaining"), ("budgetSpent", "Budget Spent"), ("totalIncome", "Total Income")]
+    }
+
+    #Fields that should be accumulated
+    summedFields = {
+        "Fund": "fund_cash_balance", 
+        "Line": "line_total_income",
+        "Transaction": "amount",
+    }
+
+    for field in fields:
+        if isinstance(field, DecimalField):
+                decimalFields.append(field.name)
+        aliasNames.append(field.verbose_name)  
+        fieldNames.append(field.name)
+
+    if "Item" in calculatedProperties:
+        for property in calculatedProperties["Item"]:
+            #print(property)
+            aliasNames.append(property[1])
+            fieldNames.append(property[0])
+            decimalFields.append(property[0])
+
+    if request.method == 'POST':
+        form = modelform_factory(Item, exclude=["line", "fund", "fund_year", "fund_type"])(request.POST)
+        form.instance.line = line
+        form.instance.fund = line.fund
+        form.instance.fund_type = line.fund.sof
+        form.instance.fund_year = line.fund_year
+    
+        if form.is_valid():
+            item = form.save()
+            message = "Item Created Successfully"
+            form = modelform_factory(Item, exclude=["line", "fund", "fund_year", "fund_type"])()
+        else:
+            errors = form.errors
+            if errors.get("line_budgeted"):
+                message = errors["line_budgeted"][0]     
+            if errors.get("lineType"):
+                message = errors["lineType"][0]           
+    else:
+        form = modelform_factory(Item, exclude=["line", "fund", "fund_year", "fund_type"])()
+
+    context = {
+        "fields": fieldNames, 
+        "aliasNames": aliasNames, 
+        "data": items, 
+        "line": line,
+        "decimalFields": decimalFields,
+        "form": form,
+        "message": message,
+    }
+
+    return render(request, "WCHDApp/partials/itemTableUpdate.html", context)
 
 def dailyReport(request):
     buffer = BytesIO()
@@ -1661,20 +1673,6 @@ def grantLineTableUpdate(request):
     
     grantLines = GrantLine.objects.filter(grant=grant)
 
-    #Getting total money that is previously budgeted to lines
-    total = 0
-    hasMaxReceivedLine = False
-    totalRevenueLines = 0
-    for lineIterable in grantLines:
-        total += lineIterable.line_budgeted
-        if lineIterable.lineType == "Revenue":
-            totalRevenueLines += 1
-        
-    if totalRevenueLines >= grant.maxRevenueLines:    
-        hasMaxReceivedLine = True
-    grantAwardAmount = grant.award_amount
-    grantAwardAmountRemaining = grantAwardAmount - total
-
     #Getting just field names from model
     fields = GrantLine._meta.fields
 
@@ -1682,6 +1680,15 @@ def grantLineTableUpdate(request):
     fieldNames = []
     decimalFields = []
     aliasNames = []
+
+    calculatedProperties = {
+        "Testing": [("fundBalanceMinus3", "Fund Balance Minus 3")],
+        "Benefits": [("pers", "Public Employee Retirement System"), ("medicare", "Medicare"),("wc", "Workers Comp"), ("plar", "Paid Leave Accumulation Rate"), ("vacation", "Vacation"), ("sick", "Sick Leave"), ("holiday", "Holiday Leave"), ("total_hrly", "Total Hourly Cost"), ("percent_leave", "Percent Leave"), ("monthly_hours", "Monthly Hours"), ("board_share_hrly", "Board Share Hourly"), ("life_hourly", "Life Hourly"), ("salary", "Salary"), ("fringes", "Fringes"), ("total_comp", "Total Compensation")],
+        "Payroll": [("pay_rate", "Pay Rate")],
+        "Fund":[("calcRemaining", "Remaining"), ("budgeted", "Budgeted")],
+        "Line": [("budgetRemaining", "Budget Remaining"), ("budgetSpent", "Budget Spent"), ("totalIncome", "Total Income")],
+        "GrantLine": [("budgetRemaining", "Budget Remaining"), ("budgetSpent", "Budget Spent"), ("totalIncome", "Total Income")]
+    }
 
     #Fields that should be accumulated
     summedFields = {
@@ -1695,29 +1702,30 @@ def grantLineTableUpdate(request):
                 decimalFields.append(field.name)
         aliasNames.append(field.verbose_name)  
         fieldNames.append(field.name)
+
+    if "GrantLine" in calculatedProperties:
+        for property in calculatedProperties["GrantLine"]:
+            #print(property)
+            aliasNames.append(property[1])
+            fieldNames.append(property[0])
+            decimalFields.append(property[0])
+
     if request.method == 'POST':
-        form = modelform_factory(GrantLine, exclude=["grant","line_budget_spent", "line_budget_remaining", "line_total_income"])(request.POST)
+        form = modelform_factory(GrantLine, exclude=["grant", "fund_year"])(request.POST)
+        form.instance.grant = grant
+        form.instance.fund_year = grant.fund.fund_id.split("-")[0]
         if form.is_valid():
-            line = form.save(commit=False)
-
-            #Getting input from form
-            budgetedAmount = float(request.POST["line_budgeted"])
-
-
-            if grantAwardAmountRemaining >= budgetedAmount:
-                line.line_budget_spent = 0
-                line.line_budget_remaining = budgetedAmount
-                line.line_total_income = 0
-                line.grant = grant
-                if (hasMaxReceivedLine == True) and (line.lineType == "Revenue"):
-                    message = "Already has max specified lines to receive reimbursement"
-                else:
-                    grantAwardAmountRemaining = float(grantAwardAmountRemaining) - budgetedAmount
-                    line.save()
-            else:
-                message = "Budgeted is more than is left in Grant Award"
+            line = form.save()
+            message = "Grant Line Created Successfully"
+            form = modelform_factory(GrantLine, exclude=["grant", "fund_year"])()
+        else:
+            errors = form.errors
+            if errors.get("line_budgeted"):
+                message = errors["line_budgeted"][0]     
+            if errors.get("lineType"):
+                message = errors["lineType"][0]           
     else:
-        form = modelform_factory(GrantLine, exclude=["grant","line_budget_spent", "line_budget_remaining", "line_total_income"])(request.POST)
+        form = modelform_factory(GrantLine, exclude=["grant", "fund_year"])()
     
     grantLines = GrantLine.objects.filter(grant=grant)
 
@@ -1729,7 +1737,7 @@ def grantLineTableUpdate(request):
         "form": form,
         "grant": grant,
         "message": message,
-        "grantAwardAmountRemaining":grantAwardAmountRemaining
+        "grantAwardAmountRemaining":grant.grantAwardAmountRemaining
     }
 
     return render(request, "WCHDApp/partials/grantLineTableUpdate.html", context)
@@ -1874,3 +1882,71 @@ def viewByYearPartial(request):
                "message": message}
 
     return render(request, "WCHDApp/partials/viewByYearPartial.html", context)
+
+
+#Might be onto something with this. Cut down on repetition
+def testingTableViewFunction(request, tableName):
+    #Grabbing the model selected in viewTableSelect
+    model = apps.get_model('WCHDApp', tableName)
+
+    #Getting data from that model
+    values = model.objects.all()
+
+    #Getting just field names from model
+    #Use .fields instead of .get_fields() because we do not want reverse relationships
+    fields = model._meta.fields
+
+    #Any property that we define in models need to go here so our logic can include them in the table
+    calculatedProperties = {
+        "Testing": [("fundBalanceMinus3", "Fund Balance Minus 3")],
+        "Benefits": [("pers", "Public Employee Retirement System"), ("medicare", "Medicare"),("wc", "Workers Comp"), ("plar", "Paid Leave Accumulation Rate"), ("vacation", "Vacation"), ("sick", "Sick Leave"), ("holiday", "Holiday Leave"), ("total_hrly", "Total Hourly Cost"), ("percent_leave", "Percent Leave"), ("monthly_hours", "Monthly Hours"), ("board_share_hrly", "Board Share Hourly"), ("life_hourly", "Life Hourly"), ("salary", "Salary"), ("fringes", "Fringes"), ("total_comp", "Total Compensation")],
+        "Payroll": [("pay_rate", "Pay Rate")],
+        "Fund":[("calcRemaining", "Remaining"), ("budgeted", "Budgeted")],
+        "GrantLine": [("budgetRemaining", "Budget Remaining"), ("budgetSpent", "Budget Spent"), ("totalIncome", "Total Income")],
+        "Grant": [("grantAwardAmountRemaining", "Grant Award Amount Remaining"),( "recieved","Recieved")]
+    }
+
+    #This is used to decide which fields we want to show in the accumulator based on each model
+    summedFields = {
+        "Fund": "fund_cash_balance", 
+        "Line": "line_total_income",
+        "Transaction": "amount",
+    }
+    
+
+    fieldNames = []
+    aliasNames = []
+    decimalFields = []
+    for field in fields:
+        if isinstance(field, DecimalField):
+                decimalFields.append(field.name)
+        aliasNames.append(field.verbose_name)  
+        fieldNames.append(field.name)
+    #Making sure properties are added like normal fields to the tables
+    if tableName in calculatedProperties:
+        for property in calculatedProperties[tableName]:
+            #print(property)
+            aliasNames.append(property[1])
+            fieldNames.append(property[0])
+            decimalFields.append(property[0])
+
+    #Getting values based on if we defined them in summedFields in order to make accumulator
+    if tableName in summedFields:
+        field = summedFields[tableName]
+        accumulator = 0
+        for value in values:
+            accumulator += getattr(value, field)
+        context = {"fields": fieldNames, "aliasNames": aliasNames, "data": values, "tableName": tableName, "decimalFields": decimalFields, "accumulator": accumulator}
+    else:
+        context = {"fields": fieldNames, "aliasNames": aliasNames, "data": values, "tableName": tableName, "decimalFields": decimalFields}
+
+    return [fieldNames, aliasNames, decimalFields]
+
+
+def updateRevenues(request):
+    revenues = Revenue.objects.all()
+    for revenue in revenues:
+        revenue.reference = 1
+        revenue.save()
+    print("Updated")
+    return render(request, "WCHDApp/testing.html")

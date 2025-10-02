@@ -36,10 +36,13 @@ urlpatterns = [
     path('grantBreakdown/', views.grantBreakdown, name='grantBreakdown'),
     path('lineView/', views.lineView, name='lineView'),
     path('lineTableUpdate/', views.lineTableUpdate, name='lineTableUpdate'),
+    path('itemView/', views.itemView, name='itemView'),
+    path('itemTableUpdate/', views.itemTableUpdate, name='itemTableUpdate'),
     path('grantLineView/', views.grantLineView, name='grantLineView'),
     path('grantLineTableUpdate/', views.grantLineTableUpdate, name='grantLineTableUpdate'),
     path('viewByYear/', views.viewByYear, name='viewByYear'),
     path('viewByYearPartial/', views.viewByYearPartial, name='viewByYearPartial'),
+    path('updateRevenues/', views.updateRevenues, name='updateRevenues'),
 ]
 
     

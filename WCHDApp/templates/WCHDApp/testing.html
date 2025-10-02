@@ -6,20 +6,6 @@
 {% block title %}New Line{% endblock %}
 
 {% block content %}
-<link rel="stylesheet" type="text/css" href="{% static 'WCHDApp/css/tableStyling.css' %}"> 
-    <table>
-        <tr>
-        {% for field in verboseNames %}
-            <th>{{ field }}</th>
-        {% endfor %}
-        </tr>
-    {% for obj in objects %}
-        <tr>
-            {% for field in fieldNames %}
-                <td>{{ obj|get_attr:field }}</td>
-            {% endfor %}
-        </tr>
-    {% endfor %}
-    </table>
+    Finished
 {% endblock %}
 

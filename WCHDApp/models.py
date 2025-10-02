@@ -1,6 +1,7 @@
-from django.db import models
+from django.db import models, transaction
 from djmoney.models.fields import MoneyField
 from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError
 
 
 class FundSource(models.TextChoices):
@@ -34,21 +35,52 @@ class Fund(models.Model):
     SOFChoices = [("local", "Local"), ("state", "State"), ("federal", "Federal")]
     fund_id = models.CharField(max_length=20, primary_key=True, verbose_name = "Fund ID")
     fund_name = models.CharField(max_length=255, blank=False, verbose_name= "Fund Name")
+    year = models.IntegerField(blank=False, verbose_name="Year")
     fund_cash_balance = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Cash Balance")
     fund_total = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Total Given")
-    fund_budgeted = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Budgeted")
+    #fund_budgeted = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Budgeted")
     dept = models.ForeignKey(Dept, on_delete=models.CASCADE, null=True, blank=True, verbose_name="Department")
     sof = models.CharField(max_length=10, blank = False, choices=FundSource.choices, verbose_name="SoF")
-    mac_elig = models.BooleanField(blank=False, verbose_name="MACE")
+    #mac_elig = models.BooleanField(blank=False, verbose_name="MACE")
 
     @property
     def calcRemaining(self):
         lines = self.lines.filter(lineType="Expense")
         total = 0
         for line in lines:
-            total += float(line.line_budget_spent)
-        remaining = float(self.fund_budgeted) - total
+            total += float(line.budgetSpent)
+        remaining = float(self.budgeted) - total
         return f"{remaining:.2f}" 
+    
+    @property
+    def budgeted(self):
+        lines = self.lines.filter(fund__fund_id=self.fund_id)
+        total = 0
+        for line in lines:
+            total += float(line.line_budgeted)
+    
+        return f"{total:.2f}" 
+    
+    @property
+    def remainingToBudget(self):
+        total = float(self.fund_cash_balance) - float(self.budgeted)
+    
+        return f"{total:.2f}" 
+    
+
+    def save(self, *args, **kwargs):
+        #Check if this is the first time calling save on this object
+        creating = self._state.adding
+
+        if creating:
+            fullID = f"{self.year}-{self.fund_id}"
+            self.fund_id = fullID
+            self.fund_total = self.fund_cash_balance
+
+
+        self.full_clean()
+        with transaction.atomic():
+            super().save(*args, **kwargs)        
 
     def __str__(self):
         return f"({self.fund_id}) {self.fund_name}"
@@ -63,16 +95,69 @@ class Line(models.Model):
     fund_year = models.SmallIntegerField(blank=False, verbose_name="Fund Year")
     line_name = models.CharField(max_length=255, verbose_name="Line Name")
     line_budgeted = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Budgeted")
-    line_budget_remaining = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Budget Remaining")
+    #line_budget_remaining = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Budget Remaining")
     #line_encumbered = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Encumbered")
-    line_budget_spent = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Budget Spent", default=0)
-    line_total_income = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Total Income", default=0)
+    #line_budget_spent = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Budget Spent", default=0)
+    #line_total_income = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Total Income", default=0)
     dept = models.ForeignKey(Dept, on_delete=models.CASCADE, null=True, blank=True, verbose_name="Department")
     #cofund = models.CharField(max_length=3, verbose_name="CoFund")
     #gen_ledger = models.IntegerField(blank=False, verbose_name="General Ledger")
     #county_code = models.CharField(max_length = 4, verbose_name="County Code")
     lineType = models.CharField(choices=[("Revenue","Revenue"), ("Expense", "Expense")], verbose_name="Line Type")
 
+    @property
+    def budgetSpent(self):
+        expenses = Expense.objects.filter(line__line_id=self.line_id)
+        total = 0
+        for expense in expenses:
+            total += expense.amount
+        
+        return f"{total:.2f}"
+    
+    @property
+    def budgetRemaining(self):
+        remaining = float(self.line_budgeted) - float(self.budgetSpent)
+
+        return f"{remaining:.2f}"
+    
+    
+    @property
+    def totalIncome(self):
+        revenues = Revenue.objects.filter(line__line_id = self.line_id)
+        total = 0
+        for revenue in revenues:
+            total += revenue.amount
+        
+        return f"{total:.2f}"
+
+    def clean(self):
+        lines = Line.objects.filter(fund=self.fund)
+        total = 0
+        for line in lines:
+            if line.line_id != self.line_id:
+                total += line.line_budgeted
+        totalSum = total + self.line_budgeted
+        
+        if float(self.budgetSpent) > float(self.line_budgeted):
+            raise ValidationError({"line_budgeted": "Expense have already exceeded that budget"})
+
+        if self.fund.fund_total < totalSum:
+            raise ValidationError({"line_budgeted":"Not enough remaining balance in fund"})
+        
+    def save(self, *args, **kwargs):
+        #Check if this is the first time calling save on this object
+        creating = self._state.adding
+
+        if creating:
+            enteredID = self.line_id 
+            fundID = self.fund.fund_id 
+            fullID = f"{fundID}-{enteredID}"
+            self.line_id = fullID
+
+
+        self.full_clean()
+        with transaction.atomic():
+            super().save(*args, **kwargs)
     
     def __str__(self): 
         return self.line_name
@@ -268,9 +353,26 @@ class Grant(models.Model):
     end_date = models.DateField(verbose_name="End Date")
     fsid = models.CharField(max_length=10, verbose_name="FSID")
     funder = models.CharField(max_length=50, verbose_name="Funder")
-    received = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Received")
+    #received = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Received")
     #Used to tell if a grant is allowed more than one revenue lines
     maxRevenueLines = models.IntegerField(default=1)
+
+    @property
+    def grantAwardAmountRemaining(self):
+        grantLines = GrantLine.objects.filter(grant__grant_id = self.grant_id)
+        total = 0
+        for line in grantLines:
+            total += line.line_budgeted
+        totalRemaining = self.award_amount - total
+        return totalRemaining
+
+    @property
+    def recieved(self):
+        grantLines = GrantLine.objects.filter(grant__grant_id = self.grant_id, lineType="Revenue")
+        total = 0
+        for line in grantLines:
+            total += float(line.totalIncome)
+        return total
 
     def __str__(self):
         return self.grant_name
@@ -284,14 +386,64 @@ class GrantLine(models.Model):
     fund_year = models.SmallIntegerField(blank=False, verbose_name="Fund Year")
     line_name = models.CharField(max_length=255, verbose_name="Line Name")
     line_budgeted = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Budgeted")
-    line_budget_remaining = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Remaining")
+    #line_budget_remaining = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Remaining")
     #line_encumbered = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Encumbered")
-    line_budget_spent = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Budget Spent")
-    line_total_income = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Total Income")
-    cofund = models.CharField(max_length=3, verbose_name="CoFund")
-    gen_ledger = models.IntegerField(blank=False, verbose_name="General Ledger")
-    county_code = models.CharField(max_length = 4, verbose_name="County Code")
+    #line_budget_spent = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Budget Spent")
+    #line_total_income = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Total Income")
+    #cofund = models.CharField(max_length=3, verbose_name="CoFund")
+    #gen_ledger = models.IntegerField(blank=False, verbose_name="General Ledger")
+    #county_code = models.CharField(max_length = 4, verbose_name="County Code")
     lineType = models.CharField(choices=[("Revenue","Revenue"), ("Expense", "Expense")], verbose_name="Line Type")
+
+    @property
+    def budgetSpent(self):
+        expenses = Expense.objects.filter(grantLine__grantline_id=self.grantline_id)
+        total = 0
+        for expense in expenses:
+            total += expense.amount
+        
+        return f"{total:.2f}"
+    
+    @property
+    def budgetRemaining(self):
+        remaining = float(self.line_budgeted) - float(self.budgetSpent)
+
+        return f"{remaining:.2f}"
+    
+    @property
+    def totalIncome(self):
+        revenues = Revenue.objects.filter(grantLine__grantline_id = self.grantline_id)
+        total = 0
+        for revenue in revenues:
+            total += revenue.amount
+        
+        return f"{total:.2f}"
+
+    def clean(self):
+        lines = GrantLine.objects.filter(grant = self.grant)
+        total = 0
+        revenueLines = 0
+        for line in lines:
+            if line.grantline_id != self.grantline_id:
+                total += line.line_budgeted
+                if line.lineType == "Revenue":
+                    revenueLines += 1
+        totalSum = total + self.line_budgeted
+
+        if (revenueLines >= self.grant.maxRevenueLines) and (self.lineType == "Revenue"):
+            raise ValidationError({"lineType": "Already have the max amount of revenue lines for the grant"})
+
+        if self.grant.award_amount < totalSum:
+            raise ValidationError({"line_budgeted":"Budgeted is more than is left in Grant Award"})
+  
+    def save(self, *args, **kwargs):
+        #Check if this is the first time calling save on this object
+        creating = self._state.adding
+
+
+        self.full_clean()
+        with transaction.atomic():
+            super().save(*args, **kwargs)
 
     def __str__(self):
         return self.line_name
@@ -489,7 +641,7 @@ class Revenue(models.Model):
     people = models.ForeignKey(People, on_delete=models.PROTECT, verbose_name="People")
     amount = models.DecimalField(max_digits=20, decimal_places=2, verbose_name="Amount")
     payType = models.CharField(max_length=20, choices=paymentType.choices, verbose_name="Payment Type")
-    confirmation = models.CharField(max_length=500, verbose_name="Confirmation")
+    reference = models.IntegerField(verbose_name="Reference")
     comment = models.CharField(max_length=500, verbose_name="Comment")
     ActivityList = models.ForeignKey(ActivityList, on_delete=models.PROTECT, verbose_name="Activity List")
     line = models.ForeignKey(Line, on_delete=models.PROTECT, verbose_name="Line")
@@ -497,6 +649,26 @@ class Revenue(models.Model):
     employee = models.ForeignKey(Employee, on_delete=models.PROTECT, verbose_name="Employee")
     grantLine = models.ForeignKey(GrantLine, on_delete=models.PROTECT, blank=True, null=True, verbose_name="Grant Line")
 
+    def clean(self):
+        if self.grantLine:
+            if self.grantLine.lineType != "Revenue":
+                raise ValidationError({"grantLine": "Please select a revenue line"})
+
+
+    def save(self, *args, **kwargs):
+        #Check if this is the first time calling save on this object
+        creating = self._state.adding
+
+        if creating:
+            self.line = self.item.line
+
+
+        self.full_clean()
+        with transaction.atomic():
+            fund = self.line.fund
+            super().save(*args, **kwargs)
+            fund.fund_cash_balance += self.amount
+            fund.save()
 
     def __str__(self):
         return (str(self.date) + " $" + str(self.amount))
@@ -516,6 +688,34 @@ class Expense(models.Model):
     #odhafr = models.CharField(max_length=50, verbose_name="ODH AFR")
     employee = models.ForeignKey(Employee, on_delete=models.PROTECT, verbose_name="Employee")
     grantLine = models.ForeignKey(GrantLine, on_delete=models.PROTECT, blank=True, null=True, verbose_name="Grant Line")
+
+    def clean(self):
+        line = self.item.line
+        self.line = line
+        fund = line.fund
+        if self.grantLine:
+            if float(self.amount) > float(self.grantLine.budgetRemaining):
+                raise ValidationError({"amount": "Amount is greater than remaining budget in Grant Line"})
+        if float(self.amount) > float(self.line.budgetRemaining):
+            raise ValidationError({"amount": "Amount is greater than remaining budget in Line"})
+        
+        if float(self.amount ) > float(fund.fund_cash_balance):
+            raise ValidationError({"amount": "Amount is greater than remaining cash balance in Fund"})
+    def save(self, *args, **kwargs):
+        #Check if this is the first time calling save on this object
+        creating = self._state.adding
+
+        if creating:
+            self.line = self.item.line
+
+
+        self.full_clean()
+        with transaction.atomic():
+            fund = self.line.fund
+            super().save(*args, **kwargs)
+            fund.fund_cash_balance -= self.amount
+            fund.save()
+
 
     def __str__(self):
         return (str(self.date) + " $" + str(self.amount))
