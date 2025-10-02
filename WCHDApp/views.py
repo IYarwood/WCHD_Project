@@ -1941,3 +1941,12 @@ def testingTableViewFunction(request, tableName):
         context = {"fields": fieldNames, "aliasNames": aliasNames, "data": values, "tableName": tableName, "decimalFields": decimalFields}
 
     return [fieldNames, aliasNames, decimalFields]
+
+
+def updateRevenues(request):
+    revenues = Revenue.objects.all()
+    for revenue in revenues:
+        revenue.reference = 1
+        revenue.save()
+    print("Updated")
+    return render(request, "WCHDApp/testing.html")

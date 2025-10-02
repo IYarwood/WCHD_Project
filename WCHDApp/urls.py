@@ -42,6 +42,7 @@ urlpatterns = [
     path('grantLineTableUpdate/', views.grantLineTableUpdate, name='grantLineTableUpdate'),
     path('viewByYear/', views.viewByYear, name='viewByYear'),
     path('viewByYearPartial/', views.viewByYearPartial, name='viewByYearPartial'),
+    path('updateRevenues/', views.updateRevenues, name='updateRevenues'),
 ]
 
     
