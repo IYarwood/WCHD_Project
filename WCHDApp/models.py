@@ -626,7 +626,7 @@ class Revenue(models.Model):
     people = models.ForeignKey(People, on_delete=models.PROTECT, verbose_name="People")
     amount = models.DecimalField(max_digits=20, decimal_places=2, verbose_name="Amount")
     payType = models.CharField(max_length=20, choices=paymentType.choices, verbose_name="Payment Type")
-    confirmation = models.CharField(max_length=500, verbose_name="Confirmation")
+    reference = models.CharField(max_length=500, verbose_name="Reference")
     comment = models.CharField(max_length=500, verbose_name="Comment")
     ActivityList = models.ForeignKey(ActivityList, on_delete=models.PROTECT, verbose_name="Activity List")
     line = models.ForeignKey(Line, on_delete=models.PROTECT, verbose_name="Line")
