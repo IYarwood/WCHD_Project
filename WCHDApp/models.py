@@ -375,9 +375,9 @@ class GrantLine(models.Model):
     #line_encumbered = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Encumbered")
     #line_budget_spent = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Budget Spent")
     #line_total_income = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Total Income")
-    cofund = models.CharField(max_length=3, verbose_name="CoFund")
-    gen_ledger = models.IntegerField(blank=False, verbose_name="General Ledger")
-    county_code = models.CharField(max_length = 4, verbose_name="County Code")
+    #cofund = models.CharField(max_length=3, verbose_name="CoFund")
+    #gen_ledger = models.IntegerField(blank=False, verbose_name="General Ledger")
+    #county_code = models.CharField(max_length = 4, verbose_name="County Code")
     lineType = models.CharField(choices=[("Revenue","Revenue"), ("Expense", "Expense")], verbose_name="Line Type")
 
     @property
