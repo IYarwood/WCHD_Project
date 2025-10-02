@@ -2,11 +2,11 @@ from django import forms
 from .models import Fund,Line
 from django.apps import apps
 
-#New Fund Form/ sets up inputs for the given fields of the model
+"""#New Fund Form/ sets up inputs for the given fields of the model
 class FundForm(forms.ModelForm):
     class Meta:
         model = Fund
-        fields = ["fund_id","fund_name", "fund_cash_balance", "dept", "sof", "mac_elig"]
+        fields = ["fund_id","fund_name", "fund_cash_balance", "dept", "sof", "mac_elig"]"""
 
 """
 class LineForm(forms.ModelForm):
