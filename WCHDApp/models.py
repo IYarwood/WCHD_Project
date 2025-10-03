@@ -153,6 +153,7 @@ class Line(models.Model):
             fundID = self.fund.fund_id 
             fullID = f"{fundID}-{enteredID}"
             self.line_id = fullID
+            self.fund_year = self.fund.fund_id.split("-")[0]
 
 
         self.full_clean()
@@ -177,6 +178,20 @@ class Item(models.Model):
     fee_based = models.BooleanField(verbose_name="Fee Based")
     month = models.IntegerField(verbose_name="Month")
  
+    def save(self, *args, **kwargs):
+        #Check if this is the first time calling save on this object
+        creating = self._state.adding
+
+        if creating:
+            self.fund = self.line.fund 
+            self.fund_type = self.line.fund.sof
+            self.fund_year = self.line.fund_year
+
+
+        self.full_clean()
+        with transaction.atomic():
+            super().save(*args, **kwargs)
+    
     def __str__(self):
         return f"({self.item_id}) {self.item_name}"
     

@@ -31,7 +31,7 @@
             hx-target="#tableAndForm"
             hx-swap="outerHTML"
         >
-            <input type="hidden" name="year" value="{{year}}"/>
+            <input type="hidden" name="yearDropdown" value="{{year}}"/>
             <input type="hidden" name="model" value="{{tableName}}"/>
             {% csrf_token %}
             {% for field in form %}

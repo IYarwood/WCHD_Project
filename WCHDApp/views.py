@@ -385,83 +385,24 @@ def createEntry(request, tableName):
     if request.method == 'POST':
         #Django function that makes a form based off a provided model
         #FORM UPDATES IF NEEDED, MAKE SURE TO ADD EXCLUSIONS IN NON_POST RENDER AS WELL
-        if tableName == "GrantLine":
-            form = modelform_factory(model, exclude=["line_budget_spent", "line_budget_remaining"])(request.POST)
-        elif tableName == "Fund":
-            form = modelform_factory(model, exclude=["fund_total", "fund_budgeted", "fund_remaining"])(request.POST)
-        elif tableName == "Line":
-            form = modelform_factory(model, exclude=["line_budget_spent", "line_budget_remaining"])(request.POST)
+
+        if tableName == "Fund":
+            form = modelform_factory(model, exclude=["fund_total"])(request.POST)
+
         else:
             form = modelform_factory(model, fields="__all__")(request.POST)
 
-        #Data validation then save to table linked to the model
-        #FORM VALIDATION IF NEEDED
-        if tableName == "GrantLine":
-            if form.is_valid():
-                line = form.save(commit=False)
-
-                #Getting input from form
-                budgetedAmount = float(request.POST["line_budgeted"])
-
-                #Selected Grant from previous screen
-                grantID = request.POST['grant']
-                grantModel = apps.get_model("WCHDApp", "Grant")
-                grant = grantModel.objects.get(pk=grantID)
-
-
-                grantLineModel = apps.get_model("WCHDApp", "GrantLine")
-                grantLines = grantLineModel.objects.filter(grant=grant)
-
-                #Getting total money that is previously budgeted to lines
-                total = 0
-                hasReceivedLine = False
-                for lineIterable in grantLines:
-                    total += lineIterable.line_budgeted
-                    if lineIterable.receivingLine == True:
-                        hasReceivedLine = True
-                grantAwardAmount = grant.award_amount
-                grantAwardAmountRemaining = grantAwardAmount - total
-
-                if grantAwardAmountRemaining >= budgetedAmount:
-                    line.line_budget_spent = 0
-                    line.line_budget_remaining = budgetedAmount
-                    if (hasReceivedLine == True) and (line.receivingLine == True):
-                        message = "Already has a specified line to receive reimbursement"
-                    else:
-                        line.save()
-                else:
-                    message = "Budgeted is more than is left in Grant Award"
-        elif tableName == "Line":
-            if form.is_valid():
-                line = form.save(commit=False)
-                budgeted = line.line_budgeted
-                line.line_budget_spent = 0
-                line.line_budget_remaining = budgeted
-
-                fund = line.fund
-                remaining = fund.fund_total - fund.fund_budgeted
-                if (remaining >= budgeted):
-                    fund.fund_budgeted += budgeted
-                    fund.save()
-                    line.save()
-                    return redirect('tableView', tableName)
-                else:
-                    message="Not enough remaining balance in fund"
+      
+        if form.is_valid():
+            form.save()
+            return redirect('tableView', tableName)
         else:
-            if form.is_valid():
-                form.save()
-                return redirect('tableView', tableName)
-            else:
-                print(form.errors)
+            print(form.errors)
     else:
-        if tableName == "GrantLine":
-            form = modelform_factory(model, exclude=["line_budget_spent", "line_budget_remaining"])(request.POST)
-        elif tableName == "Fund":
-            form = modelform_factory(model, exclude=["fund_total", "fund_budgeted", "fund_remaining"])(request.POST)
-        elif tableName == "Line":
-            form = modelform_factory(model, exclude=["line_budget_spent", "line_budget_remaining"])(request.POST)
+        if tableName == "Fund":
+            form = modelform_factory(model, exclude=["fund_total"])()
         else:
-            form = modelform_factory(model, fields="__all__")(request.POST)
+            form = modelform_factory(model, fields="__all__")()
     return render(request, "WCHDApp/createEntry.html", {"form": form, "tableName": tableName, "message": message})
 
 @permission_required('WCHDApp.has_full_access', raise_exception=True)
@@ -1775,7 +1716,7 @@ def viewByYear(request):
     year = currentDate.year
     years = list(range(2000, year+2))
 
-    models = ["Line", "Fund", "Item", "Expense", "Revenue"]
+    models = ["Fund", "Line", "Item"]
 
     context = {
         "years": years,
@@ -1796,63 +1737,52 @@ def viewByYearPartial(request):
 
     #Requests come in as both get and post request whether it is the form being submitted or the htmx triggering the rendering
     modelName = request.GET.get('model') or request.POST.get('model')
-    year = request.GET.get("year") or request.POST.get("year")
+    year = request.GET.get("yearDropdown") or request.POST.get("yearDropdown")
     model = apps.get_model('WCHDApp', modelName)
     if modelName == "Fund":
         values = Fund.objects.filter(fund_id__startswith=year)
         fields = Fund._meta.fields 
         if request.method == "POST":
-            form = modelform_factory(model, exclude=["fund_total", "fund_budgeted", "fund_remaining"])(request.POST)
+            form = modelform_factory(model, exclude=["fund_total"])(request.POST)
             if form.is_valid():
-                fund = form.save(commit=False)
-                balance = fund.fund_cash_balance
-                baseID = fund.fund_id
-                fund.fund_total = balance
-                fund.fund_budgeted = 0
-                fund.fund_remaining = balance
-                currentDateTime = datetime.now()
-                year = currentDateTime.year
-                fullID = f"{year}-{baseID}"
-                fund.fund_id = fullID
-
-                messsage = "Fund Created"
-                form.save()
+                fund = form.save()
+                message = "Fund Created"
+                form = modelform_factory(model, exclude=["fund_total"])()
         else:
-            form = modelform_factory(model, exclude=["fund_total", "fund_budgeted", "fund_remaining"])(request.POST)
+            form = modelform_factory(model, exclude=["fund_total"])()
     if modelName == "Line":
         values = Line.objects.filter(fund__fund_id__startswith=year)
         fields = Line._meta.fields
         if request.method == 'POST':
-            form = modelform_factory(Line, exclude=["line_budget_spent", "line_budget_remaining", "line_total_income"])(request.POST)
+            form = modelform_factory(Line, exclude=["fund_year"])(request.POST)
             if form.is_valid():
-                line = form.save(commit=False)
-                fund = line.fund
-                fundID = fund.fund_id
-                #Deconstructing then recontructing line id to fit county
-                paritalLineID = line.line_id
-                fullLineID = str(fundID)+"-"+str(paritalLineID)
-
-                line.line_id = fullLineID
-
-                budgeted = line.line_budgeted
-                line.line_budget_spent = 0
-                line.line_total_income = 0
-                line.line_budget_remaining = budgeted
-
-                line.fund = fund
-                remaining = fund.fund_total - fund.fund_budgeted
-                if (remaining >= budgeted):
-                    fund.fund_budgeted += budgeted
-                    fund.save()
-                    line.save()
-                    message="Line Created"
-                else:
-                    message="Not enough remaining balance in fund"
+                line = form.save()
+                message = "Line created successfully"
+                form = modelform_factory(Line, exclude=["fund_year"])()
+            else:
+                errors = form.errors
+                if errors.get("line_budgeted"):
+                    message = errors["line_budgeted"][0]     
         else:
-            form = modelform_factory(Line, exclude=["line_budget_spent", "line_budget_remaining", "line_total_income"])(request.POST)
-    if modelName == "Expense":
-        values = Expense.objects.filter(line__fund__fund_id__startswith=year)
-        fields = Expense._meta.fields
+            form = modelform_factory(Line, exclude=["fund_year"])()
+    if modelName == "Item":
+        values = Item.objects.filter(line__fund__fund_id__startswith=year)
+        fields = Item._meta.fields
+        if request.method == 'POST':
+            form = modelform_factory(Item, exclude=["fund", "fund_year", "fund_type"])(request.POST)
+        
+            if form.is_valid():
+                item = form.save()
+                message = "Item Created Successfully"
+                form = modelform_factory(Item, exclude=["fund", "fund_year", "fund_type"])()
+            else:
+                errors = form.errors
+                if errors.get("line_budgeted"):
+                    message = errors["line_budgeted"][0]     
+                if errors.get("lineType"):
+                    message = errors["lineType"][0]           
+        else:
+            form = modelform_factory(Item, exclude=["fund", "fund_year", "fund_type"])()
         
 
     fieldNames = []
