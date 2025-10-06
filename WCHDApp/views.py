@@ -916,7 +916,7 @@ def lineTableUpdate(request):
         "form": form,
         "fund": fund,
         "message": message,
-        "remainingToBudget": fund.remainingToBudget
+        "remainingToBudget": fund.totalAvailable
     }
 
     return render(request, "WCHDApp/partials/lineTableUpdate.html", context)

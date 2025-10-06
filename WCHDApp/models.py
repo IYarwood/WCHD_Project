@@ -67,6 +67,19 @@ class Fund(models.Model):
     
         return f"{total:.2f}" 
     
+    @property
+    def totalAvailable(self):
+        total = float(self.fund_cash_balance)
+        expenseLines = Line.objects.filter(fund__fund_id=self.fund_id, lineType="Expense")
+        revenueLines = Line.objects.filter(fund__fund_id=self.fund_id, lineType="Revenue")
+
+        for line in expenseLines:
+            total -= float(line.line_budgeted)
+
+        for line in revenueLines:
+            total += float(line.line_budgeted)
+    
+        return f"{total:.2f}"
 
     def save(self, *args, **kwargs):
         #Check if this is the first time calling save on this object
@@ -131,18 +144,43 @@ class Line(models.Model):
         return f"{total:.2f}"
 
     def clean(self):
-        lines = Line.objects.filter(fund=self.fund)
+        """lines = Line.objects.filter(fund=self.fund)
         total = 0
         for line in lines:
             if line.line_id != self.line_id:
                 total += line.line_budgeted
-        totalSum = total + self.line_budgeted
-        
-        if float(self.budgetSpent) > float(self.line_budgeted):
-            raise ValidationError({"line_budgeted": "Expense have already exceeded that budget"})
+        totalSum = total + self.line_budgeted"""
 
-        if self.fund.fund_total < totalSum:
-            raise ValidationError({"line_budgeted":"Not enough remaining balance in fund"})
+        total = self.fund.fund_cash_balance
+        expenseLines = Line.objects.filter(fund=self.fund, lineType="Expense")
+        for line in expenseLines:
+            if line.line_id != self.line_id:
+                total -= line.line_budgeted
+
+
+        revenueLines = Line.objects.filter(fund=self.fund, lineType="Revenue")
+        for line in revenueLines:
+            if line.line_id != self.line_id:
+                total += line.line_budgeted
+
+        
+
+        #if self.fund.fund_total < totalSum:
+            #raise ValidationError({"line_budgeted":"Not enough remaining balance in fund"})
+        
+        if self.lineType == "Expense":
+            total -= self.line_budgeted
+            if total < 0:
+                raise ValidationError({"line_budgeted":"Not enough remaining balance in fund"})
+            if float(self.budgetSpent) > float(self.line_budgeted):
+                raise ValidationError({"line_budgeted": "Expense have already exceeded that budget"})
+            
+        if self.lineType == "Revenue":
+            total += self.line_budgeted
+            print(total)
+            if total < 0:
+                raise ValidationError({"line_budgeted":"Trying to decrease remaining balance below what is already budgeted to expenses"})
+
         
     def save(self, *args, **kwargs):
         #Check if this is the first time calling save on this object
