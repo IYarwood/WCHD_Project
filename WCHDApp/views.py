@@ -1280,11 +1280,14 @@ def clockifyImportPayroll(request, *args, **kwargs):
                 if activityName in activityFundMap:
                     employee = line['employee']
                     fund = employee.specialFund
+                    item = employee.specialPayItem
                 elif activityName in adminCodeMap:
                     employee = line['employee']
                     fund = employee.adminPayFund
+                    item = employee.payItem
                 else:
                     fund = activity.fund
+                    item = activity.item
                 #This is getting the total from clockify which ALyssa said isnt right all the time
                 """
                 rate = line['pay_amount']
@@ -1298,6 +1301,21 @@ def clockifyImportPayroll(request, *args, **kwargs):
                 #Old way of testing
                 #amount = line['pay_amount']
                 balance = float(fund.fund_cash_balance)
+                user  = request.user
+                try:
+                    employeeModel = apps.get_model('WCHDApp', "employee")
+                    employee = employeeModel.objects.get(user=user)
+                    expense = Expense(
+                        item=item,
+                        warrant="Payroll",
+                        comment="Payroll",
+                        ActivityList=activity,
+                        line=item.line,
+                        employee=employee)
+                    expense.save()
+                    
+                except:
+                    message = "No employee with signed in user"
                 if balance > amount:
                     balance -= amount
                     fund.fund_cash_balance = balance
