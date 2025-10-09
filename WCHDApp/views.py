@@ -1,12 +1,13 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import HttpResponse, JsonResponse
-from .models import Fund, Testing, Item, Grant, GrantLine, Revenue, Expense, Line
+from .models import Fund, Testing, Item, Grant, GrantLine, Revenue, Expense, Line, People
 from django.db.models.fields.related import ForeignKey, ManyToManyField, OneToOneField
 from .forms import TableSelect, InputSelect, ExportSelect,reconcileForm, FileInput
 from django.forms import modelform_factory, Select
 from django import forms
 from django.apps import apps
 from django.db.models import DecimalField, AutoField
+from django.db import models, transaction
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.decorators import permission_required
 from django.contrib import messages
@@ -1259,73 +1260,93 @@ def clockifyImportPayroll(request, *args, **kwargs):
                     fks.append(field.name)
                 else:
                     lookUpFields.append(field)
-            
-            for line in data:
-                for key in line:
-                    if type(line[key]) == np.int64:
-                        line[key] = int(line[key])
-                    if key in fks:
-                        #Linking objects with the fields we have
-                        parentModel = apps.get_model('WCHDApp', key)
-                        if key == "employee":
-                            names = line[key].split(" ")
-                            line[key] = parentModel.objects.get(first_name=names[0], surname=names[1])
-                        elif key == "ActivityList":
-                            line[key] = parentModel.objects.get(program=line[key])
-                        elif key == "dept":
-                            line[key] = parentModel.objects.get(dept_name=line[key])
-                #print(line)
-                activity = line['ActivityList']
-                activityName = activity.program
-                if activityName in activityFundMap:
-                    employee = line['employee']
-                    fund = employee.specialFund
-                    item = employee.specialPayItem
-                elif activityName in adminCodeMap:
-                    employee = line['employee']
-                    fund = employee.adminPayFund
-                    item = employee.payItem
-                else:
-                    fund = activity.fund
-                    item = activity.item
-                #This is getting the total from clockify which ALyssa said isnt right all the time
-                """
-                rate = line['pay_amount']
-                hours = line['hours']
-                amount = rate * hours
-                """
+            #WANT TO WRAP ALL OF THIS IN TRANSACTION AND RAISE VALIDATION ERRORS
+            try:
+                with transaction.atomic():
+                    for line in data:
+                        for key in line:
+                            if type(line[key]) == np.int64:
+                                line[key] = int(line[key])
+                            if key in fks:
+                                #Linking objects with the fields we have
+                                parentModel = apps.get_model('WCHDApp', key)
+                                if key == "employee":
+                                    names = line[key].split(" ")
+                                    line[key] = parentModel.objects.get(first_name=names[0], surname=names[1])
+                                elif key == "ActivityList":
+                                    line[key] = parentModel.objects.get(program=line[key])
+                                elif key == "dept":
+                                    line[key] = parentModel.objects.get(dept_name=line[key])
+                        #print(line)
+                        activity = line['ActivityList']
+                        activityName = activity.program
+                        if activityName in activityFundMap:
+                            employee = line['employee']
+                            fund = employee.specialFund
+                            item = employee.specialPayItem
+                        elif activityName in adminCodeMap:
+                            employee = line['employee']
+                            fund = employee.adminPayFund
+                            item = employee.payItem
+                        else:
+                            fund = activity.fund
+                            item = activity.item
+                        #This is getting the total from clockify which ALyssa said isnt right all the time
+                        """
+                        rate = line['pay_amount']
+                        hours = line['hours']
+                        amount = rate * hours
+                        """
 
-                payRate = float(line['employee'].pay_rate)
-                hours = line['hours']
-                amount = payRate*hours
-                #Old way of testing
-                #amount = line['pay_amount']
-                balance = float(fund.fund_cash_balance)
-                user  = request.user
-                try:
-                    employeeModel = apps.get_model('WCHDApp', "employee")
-                    employee = employeeModel.objects.get(user=user)
-                    expense = Expense(
-                        item=item,
-                        warrant="Payroll",
-                        comment="Payroll",
-                        ActivityList=activity,
-                        line=item.line,
-                        employee=employee)
-                    expense.save()
-                    
-                except:
-                    message = "No employee with signed in user"
-                if balance > amount:
-                    balance -= amount
-                    fund.fund_cash_balance = balance
-                    fund.save()
-                else:
-                    message += f"Fund doesn't have enough money: {fund} transaction skipped"
-                obj, _ = model.objects.update_or_create(
-                    **line,
-                    defaults = line
-                )    
+                        payRate = float(line['employee'].pay_rate)
+                        hours = line['hours']
+                        amount = payRate*hours
+                        #Old way of testing
+                        #amount = line['pay_amount']
+                        balance = float(fund.fund_cash_balance)
+                        user  = request.user
+                        try:
+                            employeeModel = apps.get_model('WCHDApp', "employee")
+                            employee = employeeModel.objects.get(user=user)
+                            
+                        except:
+                            raise ValidationError({"employee":"No employee with signed in user"})
+                            message = "No employee with signed in user"
+
+                        try:
+                            people = People.objects.get(name=f"{names[0]} {names[1]}")
+                        except:
+                            raise ValidationError({"people":"No People object with this name"})
+                            message = "No 'People' object with this name"
+                        
+                        expense = Expense(
+                            item=item,
+                            amount=amount,
+                            people=people,
+                            warrant="Payroll",
+                            comment="Payroll",
+                            ActivityList=activity,
+                            line=item.line,
+                            employee=employee)
+                        try:
+                            expense.full_clean()
+                            expense.save()
+                            message = "Posted"
+                        except ValidationError as e:
+                            raise ValidationError({"expense":e})
+                            message = e.message
+                        """if balance > amount:
+                            balance -= amount
+                            fund.fund_cash_balance = balance
+                            fund.save()
+                        else:
+                            message += f"Fund doesn't have enough money: {fund} transaction skipped"""
+                        obj, _ = model.objects.update_or_create(
+                            **line,
+                            defaults = line
+                        )
+            except ValidationError as e:
+                message = e.message
     else:
         form = FileInput()
     
