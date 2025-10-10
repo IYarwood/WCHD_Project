@@ -571,6 +571,12 @@ def countyPayrollExport(request):
         exportData = []
         for activity, employeeDict in employeeHoursByActivity.items():
             for employee, hours in employeeDict.items():
+                line = employee.payItem.line
+                fund = line.fund
+                print(fund.fund_id)
+                #fundID = fund.fund_id.split("-")[1]
+                fundID = fund.fund_id
+                accountDistribution = f"{fundID}50290{line.line_id}"
                 exportData.append({
                     "JobNumber": employee.employee_id,
                     "Paycode": activity,
@@ -578,7 +584,7 @@ def countyPayrollExport(request):
                     "Hours": hours,
                     "HourlyRate": employee.pay_rate,
                     "Salary": "",
-                    "AccountDistribution": employee.gen_pay_fund.fund_id
+                    "AccountDistribution": accountDistribution
                 })
         exportData = pd.DataFrame(exportData)
         response = HttpResponse(content_type='text/csv')
