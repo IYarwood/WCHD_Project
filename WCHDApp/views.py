@@ -572,11 +572,14 @@ def countyPayrollExport(request):
         for activity, employeeDict in employeeHoursByActivity.items():
             for employee, hours in employeeDict.items():
                 line = employee.payItem.line
-                fund = line.fund
-                print(fund.fund_id)
-                #fundID = fund.fund_id.split("-")[1]
-                fundID = fund.fund_id
-                accountDistribution = f"{fundID}50290{line.line_id}"
+                fullID = line.line_id
+                splitID = fullID.split("-")
+                if len(splitID)==3:
+                    year, fundID, lineID = splitID[0], splitID[1], splitID[2]
+                else:
+                    fundID, lineID = splitID[0], splitID[1]
+                
+                accountDistribution = f"{fundID}50290{lineID}"
                 exportData.append({
                     "JobNumber": employee.employee_id,
                     "Paycode": activity,
