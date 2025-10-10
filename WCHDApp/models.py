@@ -246,6 +246,7 @@ class Employee(models.Model):
     state = models.CharField(max_length=2, verbose_name="State")
     zip_code = models.IntegerField(verbose_name="Zip Code")
     phone = models.CharField(max_length=12, verbose_name="Phone Number")
+    email = models.EmailField(verbose_name="Email")
     dob = models.DateField(verbose_name="DoB")
     ssn = models.CharField(max_length=11, verbose_name="SSN")
     hire_date = models.DateField(verbose_name="Hire Date")

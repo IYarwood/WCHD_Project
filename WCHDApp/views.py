@@ -1242,9 +1242,11 @@ def clockifyImportPayroll(request, *args, **kwargs):
                         date = row[j]
                         newDate = datetime.strptime(date, "%m/%d/%Y").date()
                         dict[column] = newDate
+                        payPeriodFound = False
                         for period in periods:
                             if period.periodStart <= newDate <= period.periodEnd:
-                                dict['payperiod'] = period
+                                dict['payperiod'] = period   
+                                payPeriodFound = True   
                     else:
                         dict[column] = row[j]
 
@@ -1263,6 +1265,8 @@ def clockifyImportPayroll(request, *args, **kwargs):
             #WANT TO WRAP ALL OF THIS IN TRANSACTION AND RAISE VALIDATION ERRORS
             try:
                 with transaction.atomic():
+                    if payPeriodFound == False:
+                            raise ValidationError({"payperiod": "No payperiod for this date range"})  
                     for line in data:
                         for key in line:
                             if type(line[key]) == np.int64:
@@ -1308,13 +1312,13 @@ def clockifyImportPayroll(request, *args, **kwargs):
                         try:
                             employeeModel = apps.get_model('WCHDApp', "employee")
                             employee = employeeModel.objects.get(user=user)
-                            
+                            employeeEmail = employee.email
                         except:
                             raise ValidationError({"employee":"No employee with signed in user"})
                             message = "No employee with signed in user"
 
                         try:
-                            people = People.objects.get(name=f"{names[0]} {names[1]}")
+                            people = People.objects.get(email=employeeEmail)
                         except:
                             raise ValidationError({"people":"No People object with this name"})
                             message = "No 'People' object with this name"
@@ -1323,7 +1327,7 @@ def clockifyImportPayroll(request, *args, **kwargs):
                             item=item,
                             amount=amount,
                             people=people,
-                            warrant="Payroll",
+                            warrant=1,
                             comment="Payroll",
                             ActivityList=activity,
                             line=item.line,
@@ -1333,7 +1337,7 @@ def clockifyImportPayroll(request, *args, **kwargs):
                             expense.save()
                             message = "Posted"
                         except ValidationError as e:
-                            raise ValidationError({"expense":e})
+                            raise ValidationError(e)
                             message = e.message
                         """if balance > amount:
                             balance -= amount
@@ -1346,7 +1350,30 @@ def clockifyImportPayroll(request, *args, **kwargs):
                             defaults = line
                         )
             except ValidationError as e:
-                message = e.message
+                message = e.message_dict
+                if message.get("warrant"):
+                    message = message['warrant'][0]
+                elif message.get("item"):
+                    message = message['item'][0]
+                elif message.get("amount"):
+                    message = message['amount'][0]
+                elif message.get("comment"):
+                    message = message['comment'][0] 
+                elif message.get("ActivityList"):
+                    message = message['ActivityList'][0]
+                elif message.get("people"):
+                    message = message['people'][0] 
+                elif message.get("employee"):
+                    message = message['employee'][0]
+                elif message.get("payperiod"):
+                    message = message['payperiod'][0]
+                #message = message['people'][0]
+                """if message['people']:
+                    message = message['people'][0]
+                if message['employee']:
+                    message = message['employee'][0]
+                if message['expense']:
+                    message = message['expense'][0]"""
     else:
         form = FileInput()
     
