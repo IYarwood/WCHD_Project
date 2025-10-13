@@ -1192,7 +1192,7 @@ def clockifyImportPayroll(request, *args, **kwargs):
         "AD-MAC": "mac_pay_fund"
     }"""
 
-    activityFundMap = [
+    """ activityFundMap = [
         "AD-COMP",
         "AD-COMP out",
         "AD-HOLIDAY",
@@ -1208,7 +1208,7 @@ def clockifyImportPayroll(request, *args, **kwargs):
         "AD-ADMIN",
         "AD-ADMIN out",
     ]
-
+    """
 
     if request.method == 'POST':
         form = FileInput(request.POST, request.FILES)
@@ -1285,13 +1285,34 @@ def clockifyImportPayroll(request, *args, **kwargs):
                                 parentModel = apps.get_model('WCHDApp', key)
                                 if key == "employee":
                                     names = line[key].split(" ")
-                                    line[key] = parentModel.objects.get(first_name=names[0], surname=names[1])
+                                    try:
+                                        line[key] = parentModel.objects.get(first_name=names[0], surname=names[1])
+                                    except:
+                                        raise ValidationError({"employee": "No employee with this name"})
                                 elif key == "ActivityList":
-                                    line[key] = parentModel.objects.get(program=line[key])
+                                    try:
+                                        line[key] = parentModel.objects.get(program=line[key])
+                                    except:
+                                        raise ValidationError({"ActivityList": "Activity does not exist"})
                                 elif key == "dept":
-                                    line[key] = parentModel.objects.get(dept_name=line[key])
+                                    try:
+                                        line[key] = parentModel.objects.get(dept_name=line[key])
+                                    except:
+                                        raise ValidationError({"dept": "Department does not exist"})
                         #print(line)
                         activity = line['ActivityList']
+
+                        payType = activity.payType
+                        if payType == "special":
+                            employee = line['employee']
+                            item = employee.specialPayItem
+                        elif payType == "admin":
+                            employee = line['employee']
+                            item = employee.payItem
+                        else:
+                            item = activity.item
+                        
+                        """
                         activityName = activity.program
                         if activityName in activityFundMap:
                             employee = line['employee']
@@ -1304,6 +1325,7 @@ def clockifyImportPayroll(request, *args, **kwargs):
                         else:
                             fund = activity.fund
                             item = activity.item
+                        """
                         #This is getting the total from clockify which ALyssa said isnt right all the time
                         """
                         rate = line['pay_amount']
@@ -1316,7 +1338,7 @@ def clockifyImportPayroll(request, *args, **kwargs):
                         amount = payRate*hours
                         #Old way of testing
                         #amount = line['pay_amount']
-                        balance = float(fund.fund_cash_balance)
+                        #balance = float(fund.fund_cash_balance)
                         user  = request.user
                         try:
                             employeeModel = apps.get_model('WCHDApp', "employee")
@@ -1376,6 +1398,8 @@ def clockifyImportPayroll(request, *args, **kwargs):
                     message = message['employee'][0]
                 elif message.get("payperiod"):
                     message = message['payperiod'][0]
+                elif message.get("dept"):
+                    message = message['dept'][0]
                 #message = message['people'][0]
                 """if message['people']:
                     message = message['people'][0]

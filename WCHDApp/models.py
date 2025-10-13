@@ -350,6 +350,9 @@ class ActivityList(models.Model):
     rev_gen = models.BooleanField(default=False, verbose_name="Revenue Generating")
     active = models.BooleanField(default=True, verbose_name="Active")
     fphs = models.CharField(max_length=20,verbose_name= "FPHS")
+
+    #Field to determine where we take the money from based off employee general pay item, admin pay item, or special pay item
+    payType = models.CharField(max_length=10, blank = False, choices=[("general","General"), ("admin","Admin"), ("special","Special")], verbose_name="Pay Type", default="general")
  
     def __str__(self):
         return self.program
