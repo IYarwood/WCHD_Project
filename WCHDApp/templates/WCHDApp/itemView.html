@@ -12,18 +12,29 @@
     <link rel="stylesheet" type="text/css" href="{% static 'WCHDApp/css/transactionView.css' %}"> 
     <link rel="stylesheet" type="text/css" href="{% static 'WCHDApp/css/tableStyling.css' %}"> 
     <h1>Item View</h1>
-    <form>
+    <form
+        hx-get="{% url 'itemTableUpdate' %}"
+        hx-target="#output"
+        hx-trigger="submit"
+    >
         <select name="line" 
         hx-get="{% url 'itemTableUpdate' %}"
         hx-target="#output"
-        hx-trigger="change">
+        hx-trigger="change"
+        class="searchable-select">
             <option value="" disabled selected>Select Line</option>
             {% for line in lines %}
-            <option value="{{line.line_id}}">{{line.line_name}}</option>
+            <option value="{{line.line_id}}">{{line}}</option>
             {% endfor %}
         </select>
+        <button>View</button>
     </form>
 
     <div id="output"></div>
+    <script>
+        $(document).ready(function() {
+            $('.searchable-select').select2();
+        });
+    </script>
     
 {% endblock %}

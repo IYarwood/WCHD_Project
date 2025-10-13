@@ -14,17 +14,23 @@
 
     <h1>Revenue/Reciepts</h1>
 
-    <form>
+    <form
+        hx-get="{% url 'transactionsView' %}"
+        hx-target="#tableAndForm"
+        hx-trigger="submit"
+    >
         {% csrf_token %}
         <select name="itemSelect" 
         hx-get="{% url 'transactionsView' %}"
         hx-target="#tableAndForm"
-        hx-trigger="change">
+        hx-trigger="change"
+        class="searchable-select">
             <option default>Select Item</option>
             {% for item in items %}
                 <option value="{{item.item_id}}">{{item}}</option>
             {% endfor %}
         </select>
+        <button>View</button>
     </form>
     <div id="tableAndForm"></div>
     <!--
@@ -39,4 +45,9 @@
         </form>
     
     -->
+    <script>
+        $(document).ready(function() {
+            $('.searchable-select').select2();
+        });
+    </script>
 {% endblock %}

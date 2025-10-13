@@ -1,12 +1,13 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import HttpResponse, JsonResponse
-from .models import Fund, Testing, Item, Grant, GrantLine, Revenue, Expense, Line
+from .models import Fund, Testing, Item, Grant, GrantLine, Revenue, Expense, Line, People
 from django.db.models.fields.related import ForeignKey, ManyToManyField, OneToOneField
-from .forms import TableSelect, InputSelect, ExportSelect,reconcileForm, activitySelect, FileInput
+from .forms import TableSelect, InputSelect, ExportSelect,reconcileForm, FileInput
 from django.forms import modelform_factory, Select
 from django import forms
 from django.apps import apps
 from django.db.models import DecimalField, AutoField
+from django.db import models, transaction
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.decorators import permission_required
 from django.contrib import messages
@@ -385,83 +386,24 @@ def createEntry(request, tableName):
     if request.method == 'POST':
         #Django function that makes a form based off a provided model
         #FORM UPDATES IF NEEDED, MAKE SURE TO ADD EXCLUSIONS IN NON_POST RENDER AS WELL
-        if tableName == "GrantLine":
-            form = modelform_factory(model, exclude=["line_budget_spent", "line_budget_remaining"])(request.POST)
-        elif tableName == "Fund":
-            form = modelform_factory(model, exclude=["fund_total", "fund_budgeted", "fund_remaining"])(request.POST)
-        elif tableName == "Line":
-            form = modelform_factory(model, exclude=["line_budget_spent", "line_budget_remaining"])(request.POST)
+
+        if tableName == "Fund":
+            form = modelform_factory(model, exclude=["fund_total"])(request.POST)
+
         else:
             form = modelform_factory(model, fields="__all__")(request.POST)
 
-        #Data validation then save to table linked to the model
-        #FORM VALIDATION IF NEEDED
-        if tableName == "GrantLine":
-            if form.is_valid():
-                line = form.save(commit=False)
-
-                #Getting input from form
-                budgetedAmount = float(request.POST["line_budgeted"])
-
-                #Selected Grant from previous screen
-                grantID = request.POST['grant']
-                grantModel = apps.get_model("WCHDApp", "Grant")
-                grant = grantModel.objects.get(pk=grantID)
-
-
-                grantLineModel = apps.get_model("WCHDApp", "GrantLine")
-                grantLines = grantLineModel.objects.filter(grant=grant)
-
-                #Getting total money that is previously budgeted to lines
-                total = 0
-                hasReceivedLine = False
-                for lineIterable in grantLines:
-                    total += lineIterable.line_budgeted
-                    if lineIterable.receivingLine == True:
-                        hasReceivedLine = True
-                grantAwardAmount = grant.award_amount
-                grantAwardAmountRemaining = grantAwardAmount - total
-
-                if grantAwardAmountRemaining >= budgetedAmount:
-                    line.line_budget_spent = 0
-                    line.line_budget_remaining = budgetedAmount
-                    if (hasReceivedLine == True) and (line.receivingLine == True):
-                        message = "Already has a specified line to receive reimbursement"
-                    else:
-                        line.save()
-                else:
-                    message = "Budgeted is more than is left in Grant Award"
-        elif tableName == "Line":
-            if form.is_valid():
-                line = form.save(commit=False)
-                budgeted = line.line_budgeted
-                line.line_budget_spent = 0
-                line.line_budget_remaining = budgeted
-
-                fund = line.fund
-                remaining = fund.fund_total - fund.fund_budgeted
-                if (remaining >= budgeted):
-                    fund.fund_budgeted += budgeted
-                    fund.save()
-                    line.save()
-                    return redirect('tableView', tableName)
-                else:
-                    message="Not enough remaining balance in fund"
+      
+        if form.is_valid():
+            form.save()
+            return redirect('tableView', tableName)
         else:
-            if form.is_valid():
-                form.save()
-                return redirect('tableView', tableName)
-            else:
-                print(form.errors)
+            print(form.errors)
     else:
-        if tableName == "GrantLine":
-            form = modelform_factory(model, exclude=["line_budget_spent", "line_budget_remaining"])(request.POST)
-        elif tableName == "Fund":
-            form = modelform_factory(model, exclude=["fund_total", "fund_budgeted", "fund_remaining"])(request.POST)
-        elif tableName == "Line":
-            form = modelform_factory(model, exclude=["line_budget_spent", "line_budget_remaining"])(request.POST)
+        if tableName == "Fund":
+            form = modelform_factory(model, exclude=["fund_total"])()
         else:
-            form = modelform_factory(model, fields="__all__")(request.POST)
+            form = modelform_factory(model, fields="__all__")()
     return render(request, "WCHDApp/createEntry.html", {"form": form, "tableName": tableName, "message": message})
 
 @permission_required('WCHDApp.has_full_access', raise_exception=True)
@@ -629,6 +571,15 @@ def countyPayrollExport(request):
         exportData = []
         for activity, employeeDict in employeeHoursByActivity.items():
             for employee, hours in employeeDict.items():
+                line = employee.payItem.line
+                fullID = line.line_id
+                splitID = fullID.split("-")
+                if len(splitID)==3:
+                    year, fundID, lineID = splitID[0], splitID[1], splitID[2]
+                else:
+                    fundID, lineID = splitID[0], splitID[1]
+                
+                accountDistribution = f"{fundID}50290{lineID}"
                 exportData.append({
                     "JobNumber": employee.employee_id,
                     "Paycode": activity,
@@ -636,7 +587,7 @@ def countyPayrollExport(request):
                     "Hours": hours,
                     "HourlyRate": employee.pay_rate,
                     "Salary": "",
-                    "AccountDistribution": employee.gen_pay_fund.fund_id
+                    "AccountDistribution": accountDistribution
                 })
         exportData = pd.DataFrame(exportData)
         response = HttpResponse(content_type='text/csv')
@@ -975,7 +926,7 @@ def lineTableUpdate(request):
         "form": form,
         "fund": fund,
         "message": message,
-        "remainingToBudget": fund.remainingToBudget
+        "remainingToBudget": fund.totalAvailable
     }
 
     return render(request, "WCHDApp/partials/lineTableUpdate.html", context)
@@ -983,9 +934,8 @@ def lineTableUpdate(request):
 @permission_required('WCHDApp.has_full_access', raise_exception=True)
 def itemView(request):
     lines = Line.objects.all()
-    
     context = {
-        "lines": lines
+        "lines": lines,
     }
     return render(request, "WCHDApp/itemView.html", context)
 
@@ -1242,7 +1192,7 @@ def clockifyImportPayroll(request, *args, **kwargs):
         "AD-MAC": "mac_pay_fund"
     }"""
 
-    activityFundMap = [
+    """ activityFundMap = [
         "AD-COMP",
         "AD-COMP out",
         "AD-HOLIDAY",
@@ -1258,7 +1208,7 @@ def clockifyImportPayroll(request, *args, **kwargs):
         "AD-ADMIN",
         "AD-ADMIN out",
     ]
-
+    """
 
     if request.method == 'POST':
         form = FileInput(request.POST, request.FILES)
@@ -1301,9 +1251,11 @@ def clockifyImportPayroll(request, *args, **kwargs):
                         date = row[j]
                         newDate = datetime.strptime(date, "%m/%d/%Y").date()
                         dict[column] = newDate
+                        payPeriodFound = False
                         for period in periods:
                             if period.periodStart <= newDate <= period.periodEnd:
-                                dict['payperiod'] = period
+                                dict['payperiod'] = period   
+                                payPeriodFound = True   
                     else:
                         dict[column] = row[j]
 
@@ -1319,55 +1271,142 @@ def clockifyImportPayroll(request, *args, **kwargs):
                     fks.append(field.name)
                 else:
                     lookUpFields.append(field)
-            
-            for line in data:
-                for key in line:
-                    if type(line[key]) == np.int64:
-                        line[key] = int(line[key])
-                    if key in fks:
-                        #Linking objects with the fields we have
-                        parentModel = apps.get_model('WCHDApp', key)
-                        if key == "employee":
-                            names = line[key].split(" ")
-                            line[key] = parentModel.objects.get(first_name=names[0], surname=names[1])
-                        elif key == "ActivityList":
-                            line[key] = parentModel.objects.get(program=line[key])
-                        elif key == "dept":
-                            line[key] = parentModel.objects.get(dept_name=line[key])
-                #print(line)
-                activity = line['ActivityList']
-                activityName = activity.program
-                if activityName in activityFundMap:
-                    employee = line['employee']
-                    fund = employee.specialFund
-                elif activityName in adminCodeMap:
-                    employee = line['employee']
-                    fund = employee.adminPayFund
-                else:
-                    fund = activity.fund
-                #This is getting the total from clockify which ALyssa said isnt right all the time
-                """
-                rate = line['pay_amount']
-                hours = line['hours']
-                amount = rate * hours
-                """
+            #WANT TO WRAP ALL OF THIS IN TRANSACTION AND RAISE VALIDATION ERRORS
+            try:
+                with transaction.atomic():
+                    if payPeriodFound == False:
+                            raise ValidationError({"payperiod": "No payperiod for this date range"})  
+                    for line in data:
+                        for key in line:
+                            if type(line[key]) == np.int64:
+                                line[key] = int(line[key])
+                            if key in fks:
+                                #Linking objects with the fields we have
+                                parentModel = apps.get_model('WCHDApp', key)
+                                if key == "employee":
+                                    names = line[key].split(" ")
+                                    try:
+                                        line[key] = parentModel.objects.get(first_name=names[0], surname=names[1])
+                                    except:
+                                        raise ValidationError({"employee": "No employee with this name"})
+                                elif key == "ActivityList":
+                                    try:
+                                        line[key] = parentModel.objects.get(program=line[key])
+                                    except:
+                                        raise ValidationError({"ActivityList": "Activity does not exist"})
+                                elif key == "dept":
+                                    try:
+                                        line[key] = parentModel.objects.get(dept_name=line[key])
+                                    except:
+                                        raise ValidationError({"dept": "Department does not exist"})
+                        #print(line)
+                        activity = line['ActivityList']
 
-                payRate = float(line['employee'].pay_rate)
-                hours = line['hours']
-                amount = payRate*hours
-                #Old way of testing
-                #amount = line['pay_amount']
-                balance = float(fund.fund_cash_balance)
-                if balance > amount:
-                    balance -= amount
-                    fund.fund_cash_balance = balance
-                    fund.save()
-                else:
-                    message += f"Fund doesn't have enough money: {fund} transaction skipped"
-                obj, _ = model.objects.update_or_create(
-                    **line,
-                    defaults = line
-                )    
+                        payType = activity.payType
+                        if payType == "special":
+                            employee = line['employee']
+                            item = employee.specialPayItem
+                        elif payType == "admin":
+                            employee = line['employee']
+                            item = employee.payItem
+                        else:
+                            item = activity.item
+                        
+                        """
+                        activityName = activity.program
+                        if activityName in activityFundMap:
+                            employee = line['employee']
+                            fund = employee.specialFund
+                            item = employee.specialPayItem
+                        elif activityName in adminCodeMap:
+                            employee = line['employee']
+                            fund = employee.adminPayFund
+                            item = employee.payItem
+                        else:
+                            fund = activity.fund
+                            item = activity.item
+                        """
+                        #This is getting the total from clockify which ALyssa said isnt right all the time
+                        """
+                        rate = line['pay_amount']
+                        hours = line['hours']
+                        amount = rate * hours
+                        """
+
+                        payRate = float(line['employee'].pay_rate)
+                        hours = line['hours']
+                        amount = payRate*hours
+                        #Old way of testing
+                        #amount = line['pay_amount']
+                        #balance = float(fund.fund_cash_balance)
+                        user  = request.user
+                        try:
+                            employeeModel = apps.get_model('WCHDApp', "employee")
+                            employee = employeeModel.objects.get(user=user)
+                            employeeEmail = employee.email
+                        except:
+                            raise ValidationError({"employee":"No employee with signed in user"})
+                            message = "No employee with signed in user"
+
+                        try:
+                            people = People.objects.get(email=employeeEmail)
+                        except:
+                            raise ValidationError({"people":"No People object with this name"})
+                            message = "No 'People' object with this name"
+                        
+                        expense = Expense(
+                            item=item,
+                            amount=amount,
+                            people=people,
+                            warrant=1,
+                            comment="Payroll",
+                            ActivityList=activity,
+                            line=item.line,
+                            employee=employee)
+                        try:
+                            expense.full_clean()
+                            expense.save()
+                            message = "Posted"
+                        except ValidationError as e:
+                            raise ValidationError(e)
+                            message = e.message
+                        """if balance > amount:
+                            balance -= amount
+                            fund.fund_cash_balance = balance
+                            fund.save()
+                        else:
+                            message += f"Fund doesn't have enough money: {fund} transaction skipped"""
+                        obj, _ = model.objects.update_or_create(
+                            **line,
+                            defaults = line
+                        )
+            except ValidationError as e:
+                message = e.message_dict
+                if message.get("warrant"):
+                    message = message['warrant'][0]
+                elif message.get("item"):
+                    message = message['item'][0]
+                elif message.get("amount"):
+                    message = message['amount'][0]
+                elif message.get("comment"):
+                    message = message['comment'][0] 
+                elif message.get("ActivityList"):
+                    message = message['ActivityList'][0]
+                elif message.get("people"):
+                    message = message['people'][0] 
+                elif message.get("employee"):
+                    message = message['employee'][0]
+                elif message.get("payperiod"):
+                    message = message['payperiod'][0]
+                elif message.get("dept"):
+                    message = message['dept'][0]
+                #message = message['people'][0]
+                """if message['people']:
+                    message = message['people'][0]
+                if message['employee']:
+                    message = message['employee'][0]
+                if message['expense']:
+                    message = message['expense'][0]"""
     else:
         form = FileInput()
     
@@ -1776,7 +1815,7 @@ def viewByYear(request):
     year = currentDate.year
     years = list(range(2000, year+2))
 
-    models = ["Line", "Fund", "Item", "Expense", "Revenue"]
+    models = ["Fund", "Line", "Item"]
 
     context = {
         "years": years,
@@ -1797,63 +1836,52 @@ def viewByYearPartial(request):
 
     #Requests come in as both get and post request whether it is the form being submitted or the htmx triggering the rendering
     modelName = request.GET.get('model') or request.POST.get('model')
-    year = request.GET.get("year") or request.POST.get("year")
+    year = request.GET.get("yearDropdown") or request.POST.get("yearDropdown")
     model = apps.get_model('WCHDApp', modelName)
     if modelName == "Fund":
         values = Fund.objects.filter(fund_id__startswith=year)
         fields = Fund._meta.fields 
         if request.method == "POST":
-            form = modelform_factory(model, exclude=["fund_total", "fund_budgeted", "fund_remaining"])(request.POST)
+            form = modelform_factory(model, exclude=["fund_total"])(request.POST)
             if form.is_valid():
-                fund = form.save(commit=False)
-                balance = fund.fund_cash_balance
-                baseID = fund.fund_id
-                fund.fund_total = balance
-                fund.fund_budgeted = 0
-                fund.fund_remaining = balance
-                currentDateTime = datetime.now()
-                year = currentDateTime.year
-                fullID = f"{year}-{baseID}"
-                fund.fund_id = fullID
-
-                messsage = "Fund Created"
-                form.save()
+                fund = form.save()
+                message = "Fund Created"
+                form = modelform_factory(model, exclude=["fund_total"])()
         else:
-            form = modelform_factory(model, exclude=["fund_total", "fund_budgeted", "fund_remaining"])(request.POST)
+            form = modelform_factory(model, exclude=["fund_total"])()
     if modelName == "Line":
         values = Line.objects.filter(fund__fund_id__startswith=year)
         fields = Line._meta.fields
         if request.method == 'POST':
-            form = modelform_factory(Line, exclude=["line_budget_spent", "line_budget_remaining", "line_total_income"])(request.POST)
+            form = modelform_factory(Line, exclude=["fund_year"])(request.POST)
             if form.is_valid():
-                line = form.save(commit=False)
-                fund = line.fund
-                fundID = fund.fund_id
-                #Deconstructing then recontructing line id to fit county
-                paritalLineID = line.line_id
-                fullLineID = str(fundID)+"-"+str(paritalLineID)
-
-                line.line_id = fullLineID
-
-                budgeted = line.line_budgeted
-                line.line_budget_spent = 0
-                line.line_total_income = 0
-                line.line_budget_remaining = budgeted
-
-                line.fund = fund
-                remaining = fund.fund_total - fund.fund_budgeted
-                if (remaining >= budgeted):
-                    fund.fund_budgeted += budgeted
-                    fund.save()
-                    line.save()
-                    message="Line Created"
-                else:
-                    message="Not enough remaining balance in fund"
+                line = form.save()
+                message = "Line created successfully"
+                form = modelform_factory(Line, exclude=["fund_year"])()
+            else:
+                errors = form.errors
+                if errors.get("line_budgeted"):
+                    message = errors["line_budgeted"][0]     
         else:
-            form = modelform_factory(Line, exclude=["line_budget_spent", "line_budget_remaining", "line_total_income"])(request.POST)
-    if modelName == "Expense":
-        values = Expense.objects.filter(line__fund__fund_id__startswith=year)
-        fields = Expense._meta.fields
+            form = modelform_factory(Line, exclude=["fund_year"])()
+    if modelName == "Item":
+        values = Item.objects.filter(line__fund__fund_id__startswith=year)
+        fields = Item._meta.fields
+        if request.method == 'POST':
+            form = modelform_factory(Item, exclude=["fund", "fund_year", "fund_type"])(request.POST)
+        
+            if form.is_valid():
+                item = form.save()
+                message = "Item Created Successfully"
+                form = modelform_factory(Item, exclude=["fund", "fund_year", "fund_type"])()
+            else:
+                errors = form.errors
+                if errors.get("line_budgeted"):
+                    message = errors["line_budgeted"][0]     
+                if errors.get("lineType"):
+                    message = errors["lineType"][0]           
+        else:
+            form = modelform_factory(Item, exclude=["fund", "fund_year", "fund_type"])()
         
 
     fieldNames = []

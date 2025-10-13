@@ -6,24 +6,39 @@
 {% block title %}View Lines{% endblock %}
 
 {% block content %}
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+
 
     <link rel="stylesheet" type="text/css" href="{% static 'WCHDApp/css/formStyling.css' %}">
     <link rel="stylesheet" type="text/css" href="{% static 'WCHDApp/css/transactionView.css' %}"> 
     <link rel="stylesheet" type="text/css" href="{% static 'WCHDApp/css/tableStyling.css' %}"> 
     <h1>Line View</h1>
-    <form>
+    <form 
+        hx-get="{% url 'lineTableUpdate' %}"
+        hx-target="#output"
+        trigger="submit"
+    >
         <select name="fund" 
         hx-get="{% url 'lineTableUpdate' %}"
         hx-target="#output"
-        hx-trigger="change">
+        hx-trigger="change, select2:select"
+        class="searchable-select">
             <option value="" disabled selected>Select Fund</option>
             {% for fund in funds %}
-            <option value="{{fund.fund_id}}">{{fund.fund_name}}</option>
+            <option value="{{fund.fund_id}}">{{fund}}</option>
             {% endfor %}
         </select>
+        <button>View</button>
     </form>
 
     <div id="output"></div>
+    <script>
+        $(document).ready(function() {
+            $('.searchable-select').select2();
+        });
+    </script>
     
 {% endblock %}

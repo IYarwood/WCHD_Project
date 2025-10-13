@@ -67,6 +67,19 @@ class Fund(models.Model):
     
         return f"{total:.2f}" 
     
+    @property
+    def totalAvailable(self):
+        total = float(self.fund_cash_balance)
+        expenseLines = Line.objects.filter(fund__fund_id=self.fund_id, lineType="Expense")
+        revenueLines = Line.objects.filter(fund__fund_id=self.fund_id, lineType="Revenue")
+
+        for line in expenseLines:
+            total -= float(line.line_budgeted)
+
+        for line in revenueLines:
+            total += float(line.line_budgeted)
+    
+        return f"{total:.2f}"
 
     def save(self, *args, **kwargs):
         #Check if this is the first time calling save on this object
@@ -131,18 +144,43 @@ class Line(models.Model):
         return f"{total:.2f}"
 
     def clean(self):
-        lines = Line.objects.filter(fund=self.fund)
+        """lines = Line.objects.filter(fund=self.fund)
         total = 0
         for line in lines:
             if line.line_id != self.line_id:
                 total += line.line_budgeted
-        totalSum = total + self.line_budgeted
-        
-        if float(self.budgetSpent) > float(self.line_budgeted):
-            raise ValidationError({"line_budgeted": "Expense have already exceeded that budget"})
+        totalSum = total + self.line_budgeted"""
 
-        if self.fund.fund_total < totalSum:
-            raise ValidationError({"line_budgeted":"Not enough remaining balance in fund"})
+        total = self.fund.fund_cash_balance
+        expenseLines = Line.objects.filter(fund=self.fund, lineType="Expense")
+        for line in expenseLines:
+            if line.line_id != self.line_id:
+                total -= line.line_budgeted
+
+
+        revenueLines = Line.objects.filter(fund=self.fund, lineType="Revenue")
+        for line in revenueLines:
+            if line.line_id != self.line_id:
+                total += line.line_budgeted
+
+        
+
+        #if self.fund.fund_total < totalSum:
+            #raise ValidationError({"line_budgeted":"Not enough remaining balance in fund"})
+        
+        if self.lineType == "Expense":
+            total -= self.line_budgeted
+            if total < 0:
+                raise ValidationError({"line_budgeted":"Not enough remaining balance in fund"})
+            if float(self.budgetSpent) > float(self.line_budgeted):
+                raise ValidationError({"line_budgeted": "Expense have already exceeded that budget"})
+            
+        if self.lineType == "Revenue":
+            total += self.line_budgeted
+            print(total)
+            if total < 0:
+                raise ValidationError({"line_budgeted":"Trying to decrease remaining balance below what is already budgeted to expenses"})
+
         
     def save(self, *args, **kwargs):
         #Check if this is the first time calling save on this object
@@ -153,6 +191,7 @@ class Line(models.Model):
             fundID = self.fund.fund_id 
             fullID = f"{fundID}-{enteredID}"
             self.line_id = fullID
+            self.fund_year = self.fund.fund_id.split("-")[0]
 
 
         self.full_clean()
@@ -160,7 +199,7 @@ class Line(models.Model):
             super().save(*args, **kwargs)
     
     def __str__(self): 
-        return self.line_name
+        return f"({self.line_id}) {self.line_name}"
     
     class Meta:
         db_table = "Lines"
@@ -177,8 +216,22 @@ class Item(models.Model):
     fee_based = models.BooleanField(verbose_name="Fee Based")
     month = models.IntegerField(verbose_name="Month")
  
+    def save(self, *args, **kwargs):
+        #Check if this is the first time calling save on this object
+        creating = self._state.adding
+
+        if creating:
+            self.fund = self.line.fund 
+            self.fund_type = self.line.fund.sof
+            self.fund_year = self.line.fund_year
+
+
+        self.full_clean()
+        with transaction.atomic():
+            super().save(*args, **kwargs)
+    
     def __str__(self):
-        return self.item_name
+        return f"({self.item_id}) {self.item_name}"
     
     class Meta:
         db_table = "Items"
@@ -193,6 +246,7 @@ class Employee(models.Model):
     state = models.CharField(max_length=2, verbose_name="State")
     zip_code = models.IntegerField(verbose_name="Zip Code")
     phone = models.CharField(max_length=12, verbose_name="Phone Number")
+    email = models.EmailField(verbose_name="Email")
     dob = models.DateField(verbose_name="DoB")
     ssn = models.CharField(max_length=11, verbose_name="SSN")
     hire_date = models.DateField(verbose_name="Hire Date")
@@ -200,6 +254,8 @@ class Employee(models.Model):
     job_title = models.CharField(max_length=255, verbose_name="Job Title")
     pay_rate = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Pay Rate")
     adminPayFund = models.ForeignKey(Fund, on_delete=models.PROTECT, related_name="adminPayFund", verbose_name="Admin Pay Fund")
+    payItem = models.ForeignKey(Item, on_delete=models.PROTECT, related_name="pay_item", verbose_name="Pay Item")
+    specialPayItem = models.ForeignKey(Item, on_delete=models.PROTECT, related_name="special_pay_item", verbose_name="Special Pay Item")
     specialFund = models.ForeignKey(Fund, on_delete=models.PROTECT,related_name="special_fund", verbose_name="Special Fund")
     user = models.ForeignKey(User, on_delete=models.RESTRICT, verbose_name="User account")
     #vac_pay_fund = models.ForeignKey(Fund, on_delete=models.PROTECT,related_name="vac_pay_fund")
@@ -290,9 +346,13 @@ class ActivityList(models.Model):
     #odhafr = models.CharField(max_length=10, verbose_name="ODHAFR")
     dept = models.ForeignKey(Dept, on_delete=models.CASCADE, verbose_name="Department")
     fund = models.ForeignKey(Fund, on_delete=models.CASCADE, verbose_name="Fund")
+    item = models.ForeignKey(Item, on_delete=models.PROTECT, verbose_name="Item")
     rev_gen = models.BooleanField(default=False, verbose_name="Revenue Generating")
     active = models.BooleanField(default=True, verbose_name="Active")
     fphs = models.CharField(max_length=20,verbose_name= "FPHS")
+
+    #Field to determine where we take the money from based off employee general pay item, admin pay item, or special pay item
+    payType = models.CharField(max_length=10, blank = False, choices=[("general","General"), ("admin","Admin"), ("special","Special")], verbose_name="Pay Type")
  
     def __str__(self):
         return self.program
@@ -375,7 +435,7 @@ class Grant(models.Model):
         return total
 
     def __str__(self):
-        return self.grant_name
+        return f"({self.grant_id}) {self.grant_name}"
 
     class Meta:
             db_table = "Grants"

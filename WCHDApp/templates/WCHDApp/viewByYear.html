@@ -16,7 +16,7 @@
         hx-get="{% url 'viewByYearPartial' %}"
         hx-target="#output"
         hx-trigger="submit">
-        <select name="year">
+        <select name="yearDropdown">
             <option value="" disabled selected>Select Year</option>
             {% for year in years %}
             <option>{{year}}</option>
@@ -29,6 +29,7 @@
             {% endfor %}
         </select>
         <button>Show</button>
+        <p>{{message}}</p>
     </form>
 
     <div id="output"></div>
