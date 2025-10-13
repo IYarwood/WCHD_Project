@@ -2,6 +2,7 @@ from django.db import models, transaction
 from djmoney.models.fields import MoneyField
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
+from datetime import datetime
 
 
 class FundSource(models.TextChoices):
@@ -749,6 +750,9 @@ class Expense(models.Model):
     employee = models.ForeignKey(Employee, on_delete=models.PROTECT, verbose_name="Employee")
     grantLine = models.ForeignKey(GrantLine, on_delete=models.PROTECT, blank=True, null=True, verbose_name="Grant Line")
 
+    #Field to use to see if we have duplicates when importing form excel
+    expenseFullID = models.CharField(max_length=50, verbose_name="Expense Full ID")
+
     def clean(self):
         line = self.item.line
         self.line = line
@@ -767,6 +771,13 @@ class Expense(models.Model):
 
         if creating:
             self.line = self.item.line
+            print(f"Full ID: {self.expenseFullID}")
+            if self.expenseFullID == "":
+                timeNow = datetime.now().time()
+                timeNow = timeNow.strftime('%H:%M')
+                date = datetime.now().date()
+                fullID = f"{self.employee.employee_id}-{self.ActivityList.ActivityList_id}-{date.isoformat()}-{timeNow}"
+                self.expenseFullID = fullID
 
 
         self.full_clean()
