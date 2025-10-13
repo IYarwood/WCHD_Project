@@ -352,7 +352,7 @@ class ActivityList(models.Model):
     fphs = models.CharField(max_length=20,verbose_name= "FPHS")
 
     #Field to determine where we take the money from based off employee general pay item, admin pay item, or special pay item
-    payType = models.CharField(max_length=10, blank = False, choices=[("general","General"), ("admin","Admin"), ("special","Special")], verbose_name="Pay Type", default="general")
+    payType = models.CharField(max_length=10, blank = False, choices=[("general","General"), ("admin","Admin"), ("special","Special")], verbose_name="Pay Type")
  
     def __str__(self):
         return self.program
