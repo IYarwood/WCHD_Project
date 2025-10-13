@@ -797,7 +797,7 @@ def transactionsExpenseTableUpdate(request):
         fieldNames.append(field.name)
 
     #Making the view for the cashiers to be able to see and add transaction on the same page
-    expenseForm = modelform_factory(expenseModel, exclude=(["item", "date", "line", "employee"]),  
+    expenseForm = modelform_factory(expenseModel, exclude=(["item", "date", "line", "employee", "expenseFullID"]),  
                                     widgets={
                                         'people': forms.Select(attrs={'class': 'searchable-select'}),
                                         'grantLine': forms.Select(attrs={'class': 'searchable-select'}),
@@ -1242,7 +1242,8 @@ def clockifyImportPayroll(request, *args, **kwargs):
             for i in range(len(file)):
                 dict = {}
                 row = file.iloc[i]
-
+                startTime = row["Start Time"]
+                startTimeHour = startTime.split(" ")[0]
                 for j in neededIndexes:
                     column = columns[j]
                     if column == "beg_date" or column == "end_date":
@@ -1258,7 +1259,7 @@ def clockifyImportPayroll(request, *args, **kwargs):
                                 payPeriodFound = True   
                     else:
                         dict[column] = row[j]
-
+                dict["startTime"] = startTimeHour
                 #dict['payroll_id'] = str(year)+"-"+str(idTracker)
                 idTracker += 1
                 data.append(dict)
@@ -1354,28 +1355,37 @@ def clockifyImportPayroll(request, *args, **kwargs):
                             raise ValidationError({"people":"No People object with this name"})
                             message = "No 'People' object with this name"
                         
-                        expense = Expense(
-                            item=item,
-                            amount=amount,
-                            people=people,
-                            warrant=1,
-                            comment="Payroll",
-                            ActivityList=activity,
-                            line=item.line,
-                            employee=employee)
-                        try:
-                            expense.full_clean()
-                            expense.save()
-                            message = "Posted"
-                        except ValidationError as e:
-                            raise ValidationError(e)
-                            message = e.message
+                        expenseFullID = f"{employee.employee_id}-{activity.ActivityList_id}-{line["beg_date"]}-{line["startTime"]}"
+                        print(expenseFullID)
+                        duplicate = Expense.objects.filter(expenseFullID=expenseFullID).exists()
+                        if duplicate == False:
+                            expense = Expense(
+                                item=item,
+                                amount=amount,
+                                people=people,
+                                warrant=1,
+                                comment="Payroll",
+                                ActivityList=activity,
+                                line=item.line,
+                                employee=employee,
+                                expenseFullID=expenseFullID)
+                            try:
+                                expense.full_clean()
+                                expense.save()
+                                message = "Posted"
+                            except ValidationError as e:
+                                raise ValidationError(e)
+                                message = e.message
+                        else:
+                            print("Expense already posted")
                         """if balance > amount:
                             balance -= amount
                             fund.fund_cash_balance = balance
                             fund.save()
                         else:
                             message += f"Fund doesn't have enough money: {fund} transaction skipped"""
+                        #Deleting start time from dictionary because its not a value in our payroll object
+                        line.pop("startTime", None)
                         obj, _ = model.objects.update_or_create(
                             **line,
                             defaults = line
