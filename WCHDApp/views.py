@@ -1214,6 +1214,8 @@ def clockifyImportPayroll(request, *args, **kwargs):
         form = FileInput(request.POST, request.FILES)
         if form.is_valid():
             selectedFile = form.cleaned_data['file']
+            dateInputted = request.POST.get("date")
+            print(f"DATE INPUTTED: {dateInputted}")
             file = pd.read_csv(selectedFile)
             file.dropna(how='all', inplace=True)
             columns = file.columns
@@ -1275,9 +1277,10 @@ def clockifyImportPayroll(request, *args, **kwargs):
             #WANT TO WRAP ALL OF THIS IN TRANSACTION AND RAISE VALIDATION ERRORS
             try:
                 with transaction.atomic():
-                    if payPeriodFound == False:
-                            raise ValidationError({"payperiod": "No payperiod for this date range"})  
+                    
                     for line in data:
+                        if 'payperiod' not in line:
+                            raise ValidationError({"payperiod": "No payperiod for this date range"}) 
                         for key in line:
                             if type(line[key]) == np.int64:
                                 line[key] = int(line[key])
@@ -1344,31 +1347,48 @@ def clockifyImportPayroll(request, *args, **kwargs):
                         try:
                             employeeModel = apps.get_model('WCHDApp', "employee")
                             employee = employeeModel.objects.get(user=user)
-                            employeeEmail = employee.email
+                            #employeeEmail = employee.email
                         except:
                             raise ValidationError({"employee":"No employee with signed in user"})
                             message = "No employee with signed in user"
 
                         try:
-                            people = People.objects.get(email=employeeEmail)
+                            paidEmployee = line['employee']
+                        except:
+                            raise ValidationError({"employee": "No employee with this name"})
+                        try:
+                            people = People.objects.get(name=line['employee'])
                         except:
                             raise ValidationError({"people":"No People object with this name"})
                             message = "No 'People' object with this name"
                         
-                        expenseFullID = f"{employee.employee_id}-{activity.ActivityList_id}-{line["beg_date"]}-{line["startTime"]}"
+                        expenseFullID = f"{paidEmployee.employee_id}-{activity.ActivityList_id}-{line["beg_date"]}-{line["startTime"]}"
                         print(expenseFullID)
                         duplicate = Expense.objects.filter(expenseFullID=expenseFullID).exists()
                         if duplicate == False:
-                            expense = Expense(
-                                item=item,
-                                amount=amount,
-                                people=people,
-                                warrant=1,
-                                comment="Payroll",
-                                ActivityList=activity,
-                                line=item.line,
-                                employee=employee,
-                                expenseFullID=expenseFullID)
+                            if dateInputted == "":
+                                expense = Expense(
+                                    item=item,
+                                    amount=amount,
+                                    people=people,
+                                    warrant=1,
+                                    comment="Payroll",
+                                    ActivityList=activity,
+                                    line=item.line,
+                                    employee=employee,
+                                    expenseFullID=expenseFullID)
+                            else:
+                                expense = Expense(
+                                    item=item,
+                                    date=dateInputted,
+                                    amount=amount,
+                                    people=people,
+                                    warrant=1,
+                                    comment="Payroll",
+                                    ActivityList=activity,
+                                    line=item.line,
+                                    employee=employee,
+                                    expenseFullID=expenseFullID)
                             try:
                                 expense.full_clean()
                                 expense.save()
