@@ -10,7 +10,10 @@
     <form method="post" enctype="multipart/form-data">
         {% csrf_token %}
         {{form}}
+        <label for="date">Expense Posting Date:</label>
+        <input type="date" name="date" id="date">
         <button type="submit" name = "button" id="import" value = "import">Import</button>
+
     </form>
     {{message}}
     <p>Redirected, please submit again</p>

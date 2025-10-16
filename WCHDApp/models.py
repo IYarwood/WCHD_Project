@@ -3,6 +3,7 @@ from djmoney.models.fields import MoneyField
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from datetime import datetime
+from django.utils import timezone
 
 
 class FundSource(models.TextChoices):
@@ -739,7 +740,7 @@ class Revenue(models.Model):
 
 class Expense(models.Model):
     item = models.ForeignKey(Item, on_delete=models.CASCADE, verbose_name="Item")
-    date = models.DateField(auto_now_add=True, verbose_name="Date")
+    date = models.DateField(default=timezone.now, verbose_name="Date", editable=False)
     people = models.ForeignKey(People, on_delete=models.PROTECT, verbose_name="People")
     amount = models.DecimalField(max_digits=20, decimal_places=2, verbose_name="Amount")
     warrant = models.IntegerField(verbose_name="Warrant")
