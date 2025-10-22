@@ -230,6 +230,7 @@ def index(request):
 
     todayDate = datetime.today()
 
+    #For displaying totals for the day
     expenses = Expense.objects.filter(date=todayDate)
     revenues = Revenue.objects.filter(date=todayDate)
 
@@ -290,6 +291,8 @@ def viewTableSelect(request):
         #Logic to figure out which button sent the request so that we can correctly redirect
         #Each button has a different value aligning to their names, this is set in the html file "viewTableSelect"
         button = request.POST.get('button')
+        #Redirect for custom views else use default dynamic view
+        #All of these redirect are to different views in this file named accordingly
         if form.is_valid():
             tableName = form.cleaned_data['table'] 
             if tableName == 'Payroll':
@@ -377,6 +380,8 @@ def tableView(request, tableName):
     return render(request, "WCHDApp/tableView.html", context)
 
 #New system to dynamically create forms based of model
+#Default way of creating objects dynamically based on table name
+#Some have overrides as stated above
 @permission_required('WCHDApp.has_full_access', raise_exception=True)
 def createEntry(request, tableName):
     message = ""
@@ -389,7 +394,6 @@ def createEntry(request, tableName):
 
         if tableName == "Fund":
             form = modelform_factory(model, exclude=["fund_total"])(request.POST)
-
         else:
             form = modelform_factory(model, fields="__all__")(request.POST)
 
@@ -406,6 +410,7 @@ def createEntry(request, tableName):
             form = modelform_factory(model, fields="__all__")()
     return render(request, "WCHDApp/createEntry.html", {"form": form, "tableName": tableName, "message": message})
 
+#Default import logic, payroll has its own logic and is redirect to its own view
 @permission_required('WCHDApp.has_full_access', raise_exception=True)
 def imports(request):
     message = ""
@@ -534,6 +539,7 @@ def countyPayrollExport(request):
         payrollModel = apps.get_model('WCHDApp', "Payroll")
         entries = payrollModel.objects.select_related('employee', "ActivityList").filter(payperiod__payperiod_id = payperiod)
 
+        #Values for mapping codes later in code
         employeeHoursByActivity = {}
         codeMappings = {
             "SICK": "S",
@@ -552,14 +558,17 @@ def countyPayrollExport(request):
 
         for entry in entries:
             activityName = entry.ActivityList.program.upper()
+            #If the Activity contains a word that is present in codeMapping aka "SICK" it sets the paycode to the abbreviation
             for keyword, code in codeMappings.items():
                 if keyword in activityName:
                     paycode = code
                     break
                 else:
                     paycode = "R"
+            #Reverting back to a full name
             paycodeName = secondaryMapping[paycode]
 
+            #Creating a dictionary that holds employees hours with paycodes as keys to make running totals
             if paycodeName not in employeeHoursByActivity:
                 employeeHoursByActivity[paycodeName] = {}
 
@@ -568,6 +577,7 @@ def countyPayrollExport(request):
             else:
                 employeeHoursByActivity[paycodeName][entry.employee] = entry.hours
 
+        #Creating the csv export
         exportData = []
         for activity, employeeDict in employeeHoursByActivity.items():
             for employee, hours in employeeDict.items():
@@ -595,57 +605,6 @@ def countyPayrollExport(request):
         exportData.to_csv(path_or_buf=response, index=False)
 
         return response
-        """
-        for entry in entries:
-            if entry.ActivityList not in employeeHoursByActivity:
-                if entry.ActivityList == 
-                employeeHoursByActivity[entry.ActivityList] = {}
-            if entry.employee in employeeHoursByActivity[entry.ActivityList]:
-                employeeHoursByActivity[entry.ActivityList][entry.employee] += entry.hours
-            else:
-                employeeHoursByActivity[entry.ActivityList][entry.employee] = entry.hours
-        """
-        """
-        Setting up dictionary to track workers total hours
-        employeeHoursByActivity = {
-            Gen Pay {
-                empObject:80,
-                empObject:90
-            }
-            Sick {
-                empObject: 70
-            }
-        }
-        """
-
-        """
-        employeeHours = {}
-        for entry in entries:
-            if entry.employee in employeeHours:
-                employeeHours[entry.employee] += entry.hours
-            else:
-                employeeHours[entry.employee] = entry.hours
-
-        exportData = []
-        for employee, hours in employeeHours.items():
-            #Gotta figure out how to do paycode
-            exportData.append({
-                "JobNumber": employee.employee_id,
-                "Paycode": "R-REGULAR PA",
-                "Time Group/Description": "",
-                "Hours": hours,
-                "HourlyRate": employee.pay_rate,
-                "Salary": "",
-                "AccountDistribution": employee.gen_pay_fund.fund_id
-            })
-        exportData = pd.DataFrame(exportData)
-        response = HttpResponse(content_type='text/csv')
-        response['Content-Disposition'] = f'attachment; filename="{fileName}.csv"'
-        exportData.to_csv(path_or_buf=response, index=False)
-
-        return response
-        print(exportData)
-        """
 
     context = {
         "payperiods": payperiods
@@ -655,6 +614,9 @@ def countyPayrollExport(request):
 #This is for revenue but was named previous to table split
 @permission_required('WCHDApp.has_full_access', raise_exception=True)
 def transactionsItem(request):
+    #This view is just to pull what item we want and pass it to the partial
+    #This is a common pattern you will see 
+    #TransactionsView is the partial linked to this view others are named better
     itemModel = apps.get_model('WCHDApp', "Item")
     itemValues = itemModel.objects.filter(line__lineType="Revenue")
     if request.method == "POST":
@@ -727,7 +689,7 @@ def transactionsView(request):
     #return render(request, "WCHDApp/transactionsView.html", {"item": itemID, "revenue": revenueValues,"fields": fieldNames, "aliasNames": aliasNames, "data": revenueValues, "decimalFields": decimalFields, "form":form})
     return render(request, "WCHDApp/partials/revenueTableAndForm.html", {"itemObj":item, "item": itemID, "revenue": revenueValues,"fields": fieldNames, "aliasNames": aliasNames, "data": revenueValues, "decimalFields": decimalFields, "form":form, "message":message})
 
-
+#Used to create a people form within another form for entry time creation
 def addPeopleForm(request):
     peopleModel = apps.get_model("WCHDApp", "people")
     PeopleForm = modelform_factory(peopleModel, fields="__all__")
@@ -901,6 +863,7 @@ def lineTableUpdate(request):
             fieldNames.append(property[0])
             decimalFields.append(property[0])
     if request.method == 'POST':
+        #Excluding fields that are automatic in the model side
         form = modelform_factory(Line, exclude=["fund", "fund_year"])(request.POST)
         form.instance.fund = fund
         form.instance.fund_year = fund.fund_id.split("-")[0]
@@ -1176,40 +1139,6 @@ def clockifyImportPayroll(request, *args, **kwargs):
         "Duration (decimal)": "hours"
     }
 
-    #Creating a list of activities that are tracked by employee so we can grab fund from employee not from activity
-    #employeeTrackedActivities = ["AD-ADMIN", "AD-ADMIN out", "AD-COMP", "AD-COMP out", "AD-HOLIDAY", "AD-HOLIDAY out", "AD-MAC", "AD-SICK", "AD-SICK out", "AD-VAC", "AD-VAC out"]
-    """activityFundMap = {
-        "AD-ADMIN": "gen_pay_fund",
-        "AD-ADMIN out": "gen_pay_fund",
-        "AD-COMP": "comp_pay_fund",
-        "AD-COMP out": "comp_pay_fund",
-        "AD-HOLIDAY": "holiday_pay_fund",
-        "AD-HOLIDAY out": "holiday_pay_fund",
-        "AD-SICK": "sick_pay_fund",
-        "AD-SICK out": "sick_pay_fund",
-        "AD-VAC": "vac_pay_fund",
-        "AD-VAC out": "vac_pay_fund",
-        "AD-MAC": "mac_pay_fund"
-    }"""
-
-    """ activityFundMap = [
-        "AD-COMP",
-        "AD-COMP out",
-        "AD-HOLIDAY",
-        "AD-HOLIDAY out",
-        "AD-SICK",
-        "AD-SICK out",
-        "AD-VAC",
-        "AD-VAC out",
-        "AD-MAC"
-    ]
-
-    adminCodeMap = [
-        "AD-ADMIN",
-        "AD-ADMIN out",
-    ]
-    """
-
     if request.method == 'POST':
         form = FileInput(request.POST, request.FILES)
         if form.is_valid():
@@ -1274,8 +1203,8 @@ def clockifyImportPayroll(request, *args, **kwargs):
                     fks.append(field.name)
                 else:
                     lookUpFields.append(field)
-            #WANT TO WRAP ALL OF THIS IN TRANSACTION AND RAISE VALIDATION ERRORS
             try:
+                #transaction so that if something fails everything leading up to it is rolled back, no half imports
                 with transaction.atomic():
                     
                     for line in data:
@@ -1316,33 +1245,10 @@ def clockifyImportPayroll(request, *args, **kwargs):
                         else:
                             item = activity.item
                         
-                        """
-                        activityName = activity.program
-                        if activityName in activityFundMap:
-                            employee = line['employee']
-                            fund = employee.specialFund
-                            item = employee.specialPayItem
-                        elif activityName in adminCodeMap:
-                            employee = line['employee']
-                            fund = employee.adminPayFund
-                            item = employee.payItem
-                        else:
-                            fund = activity.fund
-                            item = activity.item
-                        """
-                        #This is getting the total from clockify which ALyssa said isnt right all the time
-                        """
-                        rate = line['pay_amount']
-                        hours = line['hours']
-                        amount = rate * hours
-                        """
 
                         payRate = float(line['employee'].pay_rate)
                         hours = line['hours']
                         amount = payRate*hours
-                        #Old way of testing
-                        #amount = line['pay_amount']
-                        #balance = float(fund.fund_cash_balance)
                         user  = request.user
                         try:
                             employeeModel = apps.get_model('WCHDApp', "employee")
@@ -1350,7 +1256,6 @@ def clockifyImportPayroll(request, *args, **kwargs):
                             #employeeEmail = employee.email
                         except:
                             raise ValidationError({"employee":"No employee with signed in user"})
-                            message = "No employee with signed in user"
 
                         try:
                             paidEmployee = line['employee']
@@ -1360,12 +1265,12 @@ def clockifyImportPayroll(request, *args, **kwargs):
                             people = People.objects.get(name=line['employee'])
                         except:
                             raise ValidationError({"people":"No People object with this name"})
-                            message = "No 'People' object with this name"
                         
+                        #Need a full id in order to tell if we are trying to reenter lines
                         expenseFullID = f"{paidEmployee.employee_id}-{activity.ActivityList_id}-{line["beg_date"]}-{line["startTime"]}"
-                        print(expenseFullID)
                         duplicate = Expense.objects.filter(expenseFullID=expenseFullID).exists()
                         if duplicate == False:
+                            #Whether or not we entered a posting date
                             if dateInputted == "":
                                 expense = Expense(
                                     item=item,
@@ -1395,15 +1300,10 @@ def clockifyImportPayroll(request, *args, **kwargs):
                                 message = "Posted"
                             except ValidationError as e:
                                 raise ValidationError(e)
-                                message = e.message
+                                
                         else:
                             print("Expense already posted")
-                        """if balance > amount:
-                            balance -= amount
-                            fund.fund_cash_balance = balance
-                            fund.save()
-                        else:
-                            message += f"Fund doesn't have enough money: {fund} transaction skipped"""
+                   
                         #Deleting start time from dictionary because its not a value in our payroll object
                         line.pop("startTime", None)
                         obj, _ = model.objects.update_or_create(
@@ -1411,6 +1311,7 @@ def clockifyImportPayroll(request, *args, **kwargs):
                             defaults = line
                         )
             except ValidationError as e:
+                #Setting messages for the frontend to the error messages from both view or model
                 message = e.message_dict
                 if message.get("warrant"):
                     message = message['warrant'][0]
@@ -1430,13 +1331,6 @@ def clockifyImportPayroll(request, *args, **kwargs):
                     message = message['payperiod'][0]
                 elif message.get("dept"):
                     message = message['dept'][0]
-                #message = message['people'][0]
-                """if message['people']:
-                    message = message['people'][0]
-                if message['employee']:
-                    message = message['employee'][0]
-                if message['expense']:
-                    message = message['expense'][0]"""
     else:
         form = FileInput()
     
