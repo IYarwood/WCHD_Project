@@ -146,13 +146,6 @@ class Line(models.Model):
         return f"{total:.2f}"
 
     def clean(self):
-        """lines = Line.objects.filter(fund=self.fund)
-        total = 0
-        for line in lines:
-            if line.line_id != self.line_id:
-                total += line.line_budgeted
-        totalSum = total + self.line_budgeted"""
-
         total = self.fund.fund_cash_balance
         expenseLines = Line.objects.filter(fund=self.fund, lineType="Expense")
         for line in expenseLines:
@@ -164,11 +157,6 @@ class Line(models.Model):
         for line in revenueLines:
             if line.line_id != self.line_id:
                 total += line.line_budgeted
-
-        
-
-        #if self.fund.fund_total < totalSum:
-            #raise ValidationError({"line_budgeted":"Not enough remaining balance in fund"})
         
         if self.lineType == "Expense":
             total -= self.line_budgeted
