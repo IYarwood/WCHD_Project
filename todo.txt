@@ -18,3 +18,5 @@ Each request should include the value for each dropdown to filter entries in the
 
 
 THIS IS HOW TO EXPORT THE DATABASE docker compose exec db pg_dump -U postgres -d WCHD > db_dump_again.sql
+IMPORT docker compose exec -T db psql -U postgres -d mydb < dump.sql
+       docker compose exec -T db psql -U postgres -d WCHD < dump.sql
